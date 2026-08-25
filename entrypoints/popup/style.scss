@@ -1,0 +1,166 @@
+@use "../../src/styles/mixins" as *;
+
+body {
+  width: 370px;
+}
+
+.popup-shell {
+  position: relative;
+  display: flex;
+  min-height: 420px;
+  overflow: hidden;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  background:
+    radial-gradient(circle at 94% 0, color-mix(in oklch, var(--primary), transparent 76%), transparent 210px),
+    var(--background);
+}
+
+.popup-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.24;
+  background-image:
+    linear-gradient(color-mix(in oklch, var(--border), transparent 35%) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklch, var(--border), transparent 35%) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: linear-gradient(to bottom, black, transparent 78%);
+}
+
+.popup-header,
+.popup-brand,
+.popup-telemetry {
+  @include flex-center;
+  position: relative;
+}
+
+.popup-header {
+  justify-content: space-between;
+}
+
+.popup-brand {
+  gap: 9px;
+  @include telemetry-label(10px);
+  color: var(--foreground);
+  font-weight: 700;
+  letter-spacing: 0.13em;
+}
+
+.popup-brand svg {
+  width: 18px;
+  height: 18px;
+  color: var(--primary);
+}
+
+.status-card {
+  @include glass-surface(18px, 0.11);
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  border-color: color-mix(in oklch, var(--primary), transparent 76%);
+}
+
+.status-card::after {
+  position: absolute;
+  top: -48px;
+  right: -48px;
+  width: 140px;
+  height: 140px;
+  border: 1px solid color-mix(in oklch, var(--primary), transparent 82%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 28px color-mix(in oklch, var(--primary), transparent 94%);
+  content: "";
+}
+
+.status-orb {
+  @include grid-center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  color: var(--muted-foreground);
+  background: var(--muted);
+}
+
+.status-orb svg {
+  width: 18px;
+  height: 18px;
+}
+
+.status-orb--allowed {
+  color: var(--signal);
+  border-color: color-mix(in oklch, var(--signal), transparent 45%);
+  background: color-mix(in oklch, var(--signal), transparent 90%);
+  box-shadow: 0 10px 26px color-mix(in oklch, var(--signal), transparent 78%);
+}
+
+.status-orb--challenge {
+  color: var(--warning);
+  border-color: color-mix(in oklch, var(--warning), transparent 45%);
+  background: color-mix(in oklch, var(--warning), transparent 90%);
+  box-shadow: 0 10px 26px color-mix(in oklch, var(--warning), transparent 80%);
+}
+
+.status-orb--waiting {
+  color: var(--destructive);
+  border-color: color-mix(in oklch, var(--destructive), transparent 45%);
+  background: color-mix(in oklch, var(--destructive), transparent 90%);
+  box-shadow: 0 10px 26px color-mix(in oklch, var(--destructive), transparent 82%);
+}
+
+.status-card [data-slot="card-title"] {
+  max-width: 270px;
+  font-size: 25px;
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+}
+
+.status-card [data-slot="card-content"] {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 22px;
+}
+
+.status-card p,
+.popup-note {
+  margin: 0;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+
+.popup-telemetry {
+  @include telemetry-label;
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  letter-spacing: 0.12em;
+}
+
+.popup-telemetry span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted-foreground);
+}
+
+.popup-telemetry svg {
+  width: 13px;
+  height: 13px;
+}
+
+.popup-telemetry strong {
+  color: var(--primary);
+}
+
+.popup-note {
+  position: relative;
+  padding: 0 8px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-align: center;
+}

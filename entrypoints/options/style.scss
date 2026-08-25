@@ -1,0 +1,599 @@
+@use "../../src/styles/mixins" as *;
+
+body {
+  overflow: hidden;
+}
+
+.options-shell {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 82% -12%, color-mix(in oklch, var(--primary), transparent 79%), transparent 30rem),
+    radial-gradient(circle at 16% 112%, color-mix(in oklch, var(--accent), transparent 70%), transparent 32rem),
+    var(--background);
+}
+
+.ambient-grid {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.25;
+  background-image:
+    linear-gradient(color-mix(in oklch, var(--border), transparent 45%) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklch, var(--border), transparent 45%) 1px, transparent 1px);
+  background-size: 54px 54px;
+  mask-image: linear-gradient(to bottom, black, transparent 85%);
+}
+
+.mission-header {
+  position: relative;
+  display: flex;
+  min-height: 90px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 18px 26px;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in oklch, var(--background), transparent 18%);
+  backdrop-filter: blur(22px);
+}
+
+.brand-lockup,
+.mission-actions,
+.rail-heading,
+.editor-heading,
+.editor-actions,
+.preview-title-row,
+.match-result {
+  @include flex-center;
+}
+
+.brand-lockup {
+  gap: 14px;
+}
+
+.brand-glyph,
+.card-heading-icon,
+.empty-orbit {
+  @include grid-center;
+  color: var(--primary);
+  border: 1px solid color-mix(in oklch, var(--primary), transparent 50%);
+  background: color-mix(in oklch, var(--primary), transparent 91%);
+  box-shadow: inset 0 0 24px color-mix(in oklch, var(--primary), transparent 88%);
+}
+
+.brand-glyph {
+  width: 42px;
+  height: 42px;
+  border-radius: 14px 4px 14px 4px;
+}
+
+.brand-glyph svg,
+.card-heading-icon svg,
+.empty-orbit svg {
+  width: 18px;
+  height: 18px;
+}
+
+.mission-header h1,
+.rail-heading h2,
+.editor-heading h2,
+.empty-deck h2 {
+  margin: 0;
+  letter-spacing: -0.045em;
+}
+
+.mission-header h1 {
+  margin-top: 2px;
+  font-size: clamp(20px, 2vw, 28px);
+}
+
+.kicker {
+  @include telemetry-label(10px);
+  display: block;
+  color: var(--primary);
+  font-weight: 600;
+  letter-spacing: 0.17em;
+}
+
+.mission-actions {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.mission-alert {
+  position: relative;
+  width: min(900px, calc(100% - 40px));
+  margin: 16px auto 0;
+}
+
+.mission-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: 284px minmax(560px, 1fr) minmax(330px, 390px);
+  min-height: calc(100vh - 90px);
+}
+
+.rule-rail {
+  display: flex;
+  min-width: 0;
+  height: calc(100vh - 90px);
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px 16px 14px;
+  border-right: 1px solid var(--sidebar-border);
+  background: var(--sidebar);
+  backdrop-filter: blur(20px);
+}
+
+.rail-heading {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rail-heading h2 {
+  margin-top: 4px;
+  font-size: 19px;
+}
+
+.rule-scroll {
+  min-height: 0;
+  flex: 1;
+}
+
+.rule-stack,
+.editor-stack,
+.preview-stack,
+.loading-stack,
+.challenge-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.rule-stack {
+  gap: 7px;
+  padding-right: 8px;
+}
+
+.rule-stack [data-slot="button"] {
+  min-width: 0;
+  gap: 10px;
+  padding: 11px 9px;
+}
+
+.rule-index,
+.challenge-number {
+  flex: 0 0 auto;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.rule-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  text-align: left;
+}
+
+.rule-copy strong,
+.rule-copy small {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rule-copy strong {
+  font-weight: 600;
+}
+
+.rule-copy small {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+.conflict-icon {
+  display: inline-grid;
+  place-items: center;
+  color: var(--warning);
+}
+
+.conflict-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.rail-footer {
+  @include telemetry-label;
+  display: flex;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid var(--sidebar-border);
+  letter-spacing: 0.12em;
+}
+
+.editor-deck,
+.preview-deck {
+  height: calc(100vh - 90px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.editor-deck {
+  padding: 30px clamp(20px, 3vw, 48px) 100px;
+}
+
+.editor-stack,
+.loading-stack {
+  width: min(900px, 100%);
+  margin: 0 auto;
+  gap: 18px;
+}
+
+.editor-heading {
+  min-height: 68px;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.editor-heading h2 {
+  margin-top: 5px;
+  font-size: clamp(28px, 3vw, 44px);
+  line-height: 1;
+}
+
+.editor-actions {
+  gap: 6px;
+}
+
+.editor-stack > [data-slot="card"] {
+  @include glass-surface(18px, 0.08);
+  border-color: color-mix(in oklch, var(--border), transparent 10%);
+  background: color-mix(in oklch, var(--card), transparent 4%);
+}
+
+.editor-stack > [data-slot="card"] > [data-slot="card-header"] {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-heading-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.form-columns,
+.target-columns,
+.challenge-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.target-columns {
+  grid-template-columns: 0.75fr 1.35fr 1fr;
+}
+
+.span-full {
+  grid-column: 1 / -1;
+}
+
+.schedule-console {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: color-mix(in oklch, var(--muted), transparent 35%);
+}
+
+.month-toggle-grid {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(8, minmax(34px, 1fr));
+}
+
+.challenge-stack {
+  gap: 10px;
+}
+
+.challenge-unit {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  background: color-mix(in oklch, var(--muted), transparent 42%);
+  content-visibility: auto;
+  contain-intrinsic-size: 0 170px;
+}
+
+.challenge-number {
+  @include grid-center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid color-mix(in oklch, var(--primary), transparent 58%);
+  border-radius: 50%;
+  color: var(--primary);
+  background: color-mix(in oklch, var(--primary), transparent 91%);
+}
+
+.challenge-actions {
+  display: flex;
+  gap: 3px;
+}
+
+.preview-deck {
+  padding: 30px 20px 80px 0;
+  border-left: 1px solid color-mix(in oklch, var(--border), transparent 35%);
+}
+
+.preview-stack {
+  gap: 16px;
+}
+
+.preview-title-row {
+  width: 100%;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.preview-card {
+  overflow: hidden;
+}
+
+.mini-gate {
+  position: relative;
+  min-height: 410px;
+  overflow: hidden;
+  padding: 18px;
+  border: 1px solid color-mix(in oklch, var(--primary), transparent 76%);
+  border-radius: var(--radius-2xl);
+  background:
+    radial-gradient(circle at 16% 12%, color-mix(in oklch, var(--primary), transparent 80%), transparent 42%),
+    color-mix(in oklch, var(--background), transparent 3%);
+  box-shadow:
+    inset 0 0 80px color-mix(in oklch, var(--primary), transparent 93%),
+    0 18px 46px color-mix(in oklch, var(--shadow-color), transparent 90%);
+}
+
+.mini-orbit {
+  position: absolute;
+  top: -40px;
+  right: -88px;
+  width: 300px;
+  height: 300px;
+  fill: none;
+  stroke: color-mix(in oklch, var(--primary), transparent 76%);
+  stroke-width: 1;
+}
+
+.mini-orbit path {
+  stroke-dasharray: 5 9;
+}
+
+.mini-orbit .orbit-node {
+  fill: var(--primary);
+  stroke: none;
+  filter: drop-shadow(0 0 8px var(--primary));
+}
+
+.mini-gate-head {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.15em;
+}
+
+.mini-gate-head svg {
+  width: 16px;
+  height: 16px;
+  color: var(--primary);
+}
+
+.mini-gate-copy {
+  position: relative;
+  display: flex;
+  min-height: 235px;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.mini-gate-copy small,
+.match-result small {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.mini-gate-copy strong {
+  max-width: 90%;
+  margin-top: 7px;
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: 0.95;
+  letter-spacing: -0.055em;
+}
+
+.mini-gate-copy p {
+  max-width: 86%;
+  color: var(--muted-foreground);
+  line-height: 1.6;
+}
+
+.preview-console {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 15px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--muted-foreground);
+  background: color-mix(in oklch, var(--card), transparent 20%);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.preview-console svg,
+.match-result svg {
+  width: 17px;
+  height: 17px;
+  color: var(--primary);
+}
+
+.preview-stack [data-slot="card-content"] {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.match-result {
+  gap: 12px;
+}
+
+.match-result div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.match-result strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty-deck {
+  display: flex;
+  min-height: calc(100vh - 180px);
+  max-width: 620px;
+  margin: 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.empty-deck h2 {
+  font-size: clamp(34px, 5vw, 62px);
+}
+
+.empty-deck > p:not(.kicker) {
+  max-width: 480px;
+  margin: 0 0 12px;
+  color: var(--muted-foreground);
+  line-height: 1.7;
+}
+
+.empty-orbit {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  box-shadow: 0 0 60px color-mix(in oklch, var(--primary), transparent 75%);
+}
+
+.preview-trigger {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  display: none;
+  box-shadow: 0 18px 50px color-mix(in oklch, var(--shadow-color), transparent 86%);
+}
+
+.preview-sheet {
+  width: min(440px, 92vw) !important;
+  max-width: none !important;
+  overflow-y: auto;
+}
+
+@media (max-width: 1340px) {
+  .mission-grid {
+    grid-template-columns: 270px minmax(0, 1fr);
+  }
+
+  .preview-deck {
+    display: none;
+  }
+
+  .preview-trigger {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 860px) {
+  body {
+    overflow: auto;
+  }
+
+  .mission-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mission-actions {
+    justify-content: flex-start;
+  }
+
+  .mission-grid {
+    display: block;
+  }
+
+  .rule-rail,
+  .editor-deck {
+    height: auto;
+  }
+
+  .rule-rail {
+    border-right: 0;
+    border-bottom: 1px solid var(--sidebar-border);
+  }
+
+  .rule-scroll {
+    max-height: 280px;
+  }
+
+  .editor-deck {
+    overflow: visible;
+  }
+
+  .target-columns,
+  .form-columns,
+  .challenge-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .month-toggle-grid {
+    grid-template-columns: repeat(6, minmax(34px, 1fr));
+  }
+
+  .challenge-unit {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .challenge-actions {
+    grid-column: 2;
+  }
+}

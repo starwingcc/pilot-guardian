@@ -1,0 +1,10 @@
+node_modules/
+.output/
+.wxt/
+coverage/
+playwright-report/
+test-results/
+*.log
+.agents/
+.claude/
+docs/

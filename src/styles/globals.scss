@@ -1,0 +1,90 @@
+@use "./mixins" as *;
+
+$minimum-viewport: 320px;
+
+:root {
+  color-scheme: light;
+  --radius: 0.85rem;
+  --background: oklch(0.975 0.009 214);
+  --foreground: oklch(0.205 0.035 235);
+  --card: oklch(0.995 0.004 210 / 90%);
+  --card-foreground: oklch(0.205 0.035 235);
+  --popover: oklch(0.998 0.003 210);
+  --popover-foreground: oklch(0.205 0.035 235);
+  --primary: oklch(0.505 0.125 190);
+  --primary-foreground: oklch(0.99 0.004 195);
+  --secondary: oklch(0.915 0.025 213);
+  --secondary-foreground: oklch(0.245 0.04 228);
+  --muted: oklch(0.935 0.014 220);
+  --muted-foreground: oklch(0.46 0.035 228);
+  --accent: oklch(0.9 0.045 192);
+  --accent-foreground: oklch(0.235 0.04 215);
+  --destructive: oklch(0.56 0.2 27);
+  --border: oklch(0.76 0.03 218 / 66%);
+  --input: oklch(0.72 0.035 218 / 78%);
+  --ring: oklch(0.56 0.14 190);
+  --signal: oklch(0.5 0.145 154);
+  --signal-foreground: oklch(0.99 0.004 195);
+  --warning: oklch(0.53 0.135 72);
+  --warning-foreground: oklch(0.99 0.006 88);
+  --sidebar: oklch(0.952 0.016 214 / 94%);
+  --sidebar-foreground: oklch(0.23 0.035 232);
+  --sidebar-primary: oklch(0.505 0.125 190);
+  --sidebar-primary-foreground: oklch(0.99 0.004 195);
+  --sidebar-accent: oklch(0.9 0.04 198);
+  --sidebar-accent-foreground: oklch(0.235 0.04 215);
+  --sidebar-border: oklch(0.75 0.03 218 / 58%);
+  --sidebar-ring: oklch(0.56 0.14 190);
+  --shadow-color: oklch(0.24 0.045 232);
+}
+
+* {
+  box-sizing: border-box;
+  border-color: var(--border);
+  outline-color: color-mix(in oklch, var(--ring), transparent 50%);
+}
+
+html {
+  min-width: $minimum-viewport;
+  background: var(--background);
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+.password-input[data-masked="true"] {
+  -webkit-text-security: disc;
+}
+
+.password-visibility-toggle,
+.password-visibility-toggle:focus-visible {
+  border: 0;
+}
+
+@include reduce-motion {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

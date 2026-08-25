@@ -1,0 +1,30 @@
+import { defineConfig } from 'wxt'
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  modules: ['@wxt-dev/module-react'],
+  vite: () => ({
+    plugins: [tailwindcss()],
+  }),
+  manifest: {
+    name: 'Pilot Guardian',
+    description: '为受控网页增加口令与周期闸门。',
+    version: '0.1.0',
+    minimum_chrome_version: '102',
+    permissions: [
+      'alarms',
+      'declarativeNetRequest',
+      'storage',
+      'tabs',
+      'webNavigation',
+    ],
+    host_permissions: ['<all_urls>'],
+    incognito: 'not_allowed',
+    web_accessible_resources: [
+      {
+        resources: ['gate.html'],
+        matches: ['<all_urls>'],
+      },
+    ],
+  },
+})

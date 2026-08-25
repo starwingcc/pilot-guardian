@@ -1,0 +1,33 @@
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+}
+
+@mixin grid-center {
+  display: grid;
+  place-items: center;
+}
+
+@mixin telemetry-label($size: 9px) {
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: $size;
+  letter-spacing: 0.13em;
+}
+
+@mixin glass-surface($blur: 18px, $shadow-alpha: 0.1) {
+  $shadow-weight: $shadow-alpha * 100%;
+
+  background: color-mix(in oklch, var(--card), transparent 2%);
+  box-shadow:
+    0 24px 70px color-mix(in oklch, var(--shadow-color) #{$shadow-weight}, transparent),
+    0 2px 8px color-mix(in oklch, var(--shadow-color) 5%, transparent),
+    inset 0 1px color-mix(in oklch, var(--background), transparent 8%);
+  backdrop-filter: blur($blur);
+}
+
+@mixin reduce-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
