@@ -1,0 +1,39 @@
+tests/e2e/gate.spec.ts
+  s_5efa1413b7f22f::t_415a95bf4ff355 67
+entrypoints/options/components/RuleEditor.tsx
+  s_5efa1413b7f22f::t_415a95bf4ff355 59,247,250,274
+entrypoints/gate/GateApp.tsx
+  s_5efa1413b7f22f::t_415a95bf4ff355 17,192,198-199,201-202,207,263
+src/domain/policy.test.ts
+  s_5efa1413b7f22f::t_415a95bf4ff355 24
+entrypoints/options/style.scss
+  s_5efa1413b7f22f::t_415a95bf4ff355 278,582
+src/runtime/dnr.test.ts
+  s_5efa1413b7f22f::t_415a95bf4ff355 24
+src/domain/url-pattern.test.ts
+  s_5efa1413b7f22f::t_415a95bf4ff355 21
+src/domain/validation.ts
+  s_5efa1413b7f22f::t_415a95bf4ff355 85,88
+src/domain/validation.test.ts
+  s_5efa1413b7f22f::t_415a95bf4ff355 18
+entrypoints/options/components/MissionPreview.tsx
+  s_5efa1413b7f22f::t_415a95bf4ff355 18,20,51
+src/runtime/messages.ts
+  s_5efa1413b7f22f::t_415a95bf4ff355 39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.43-trip",
+  "base_commit_sha": "341af989a091a4f16afbdda07abd5cc317b514ad",
+  "prompts": {},
+  "sessions": {
+    "s_5efa1413b7f22f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a033ce-3511-75e0-a4a0-8123764e546a",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "starwingcc <707491663@qq.com>"
+    }
+  }
+}
