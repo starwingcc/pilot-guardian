@@ -1,0 +1,33 @@
+src/components/challenge/SandboxFrame.tsx
+  s_5efa1413b7f22f::t_352eb804ed9fe6 1,6,15,19,27,31,34-35,54,68
+entrypoints/options/style.scss
+  s_5efa1413b7f22f::t_893c69ab60bb6e 627-689,691-692,722-729
+src/components/challenge/SandboxPreviewPanel.tsx
+  s_5efa1413b7f22f::t_e0c183552e668e 1-142,146-160
+  s_5efa1413b7f22f::t_2975d8183b684a 143-145
+entrypoints/sandbox/main.ts
+  s_5efa1413b7f22f::t_352eb804ed9fe6 6,18,24,35,57-77,127
+entrypoints/options/components/RuleEditor.tsx
+  s_5efa1413b7f22f::t_98010fcd065f7c 58,448-451,454
+  s_5efa1413b7f22f::t_b27addf4c28948 358,437-443,452-453
+src/sandbox/protocol.ts
+  s_5efa1413b7f22f::t_352eb804ed9fe6 4-12,22,25,30,33,40,55
+src/components/challenge/ChallengeDocumentEditor.tsx
+  s_5efa1413b7f22f::t_98010fcd065f7c 16,111-124
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.43-trip",
+  "base_commit_sha": "257705746205a5406003fd501a49657c46a3830a",
+  "prompts": {},
+  "sessions": {
+    "s_5efa1413b7f22f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a033ce-3511-75e0-a4a0-8123764e546a",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "starwingcc <707491663@qq.com>"
+    }
+  }
+}
