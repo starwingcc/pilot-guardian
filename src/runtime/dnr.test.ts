@@ -21,7 +21,7 @@ function accessRule(id: string, dnrRuleId: number, priority: number): AccessRule
     priority,
     target: { schemes: ['https'], host: 'example.com', includeSubdomains: false, path: '/*' },
     mode: 'password',
-    challenges: [{ id: 'step', prompt: '口令', answer: 'answer' }],
+    challenges: [{ id: 'step', answer: 'answer' }],
     accessDurationMinutes: 30,
   }
 }

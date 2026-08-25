@@ -23,7 +23,6 @@ export function createDefaultRule(dnrRuleId: number): AccessRule {
     challenges: [
       {
         id: crypto.randomUUID(),
-        prompt: '请输入口令',
         answer: '',
       },
     ],

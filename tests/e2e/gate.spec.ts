@@ -64,7 +64,7 @@ test('在目标文档执行前展示闸门，并在口令通过后恢复原 URL'
             path: '/focus*',
           },
           mode: 'password',
-          challenges: [{ id: 'step', prompt: '测试口令', answer: 'fly' }],
+          challenges: [{ id: 'step', answer: 'fly' }],
           accessDurationMinutes: 30,
         }],
       })

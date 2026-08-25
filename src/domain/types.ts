@@ -12,7 +12,6 @@ export interface TargetPattern {
 
 export interface ChallengeStep {
   id: string
-  prompt: string
   answer: string
 }
 
@@ -86,7 +85,6 @@ export interface PolicyEvaluation {
 
 export interface PublicChallengeStep {
   id: string
-  prompt: string
 }
 
 export type PublicAccessRule = Omit<AccessRule, 'challenges'> & {

@@ -82,14 +82,12 @@ function parseRule(value: unknown, index: number, errors: string[]): AccessRule 
   }
 
   const challenges = Array.isArray(value.challenges)
-    ? value.challenges.flatMap((challenge, challengeIndex) => {
+      ? value.challenges.flatMap((challenge, challengeIndex) => {
         if (!isRecord(challenge)) return []
-        const prompt = typeof challenge.prompt === 'string' ? challenge.prompt.trim() : ''
         const answer = typeof challenge.answer === 'string' ? challenge.answer : ''
-        if (!prompt || !answer) errors.push(`${label}的第 ${challengeIndex + 1} 道口令不完整`)
+        if (!answer) errors.push(`${label}的第 ${challengeIndex + 1} 道口令不完整`)
         return [{
           id: typeof challenge.id === 'string' && challenge.id ? challenge.id : crypto.randomUUID(),
-          prompt,
           answer,
         }]
       })

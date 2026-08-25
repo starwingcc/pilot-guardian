@@ -69,15 +69,6 @@ button:disabled,
   cursor: not-allowed;
 }
 
-.password-input[data-masked="true"] {
-  -webkit-text-security: disc;
-}
-
-.password-visibility-toggle,
-.password-visibility-toggle:focus-visible {
-  border: 0;
-}
-
 @include reduce-motion {
   *,
   *::before,

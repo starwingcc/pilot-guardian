@@ -15,9 +15,9 @@ interface MissionPreviewProps {
 }
 
 export function MissionPreview({ rule, testUrl, onTestUrlChange, testMatch }: MissionPreviewProps) {
-  const prompt = rule.mode === 'schedule'
+  const gateMessage = rule.mode === 'schedule'
     ? '当前周期尚未开放，请保持航向。'
-    : rule.challenges[0]?.prompt || '请输入口令'
+    : '请输入口令'
   const progress = rule.mode === 'schedule' ? 42 : Math.max(18, 100 / Math.max(rule.challenges.length, 1))
 
   return (
@@ -48,7 +48,7 @@ export function MissionPreview({ rule, testUrl, onTestUrlChange, testMatch }: Mi
             <div className="mini-gate-copy">
               <small>受控航线</small>
               <strong>{rule.name || '未命名规则'}</strong>
-              <p>{prompt}</p>
+              <p>{gateMessage}</p>
             </div>
             <div className="preview-console">
               <KeyRoundIcon aria-hidden="true" />

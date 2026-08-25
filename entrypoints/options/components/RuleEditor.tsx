@@ -16,7 +16,6 @@ import { Badge } from '@/src/components/ui/badge'
 import { Button } from '@/src/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/src/components/ui/card'
 import { Checkbox } from '@/src/components/ui/checkbox'
-import { PasswordInput } from '@/src/components/password-input'
 import {
   Field,
   FieldDescription,
@@ -57,7 +56,7 @@ export function RuleEditor({ rule, index, total, hasConflict, onUpdate, onMove, 
       draft.mode = mode as RuleMode
       if (draft.mode !== 'password' && !draft.schedule) draft.schedule = defaultSchedule('interval')
       if (draft.mode !== 'schedule' && draft.challenges.length === 0) {
-        draft.challenges = [{ id: crypto.randomUUID(), prompt: '请输入口令', answer: '' }]
+        draft.challenges = [{ id: crypto.randomUUID(), answer: '' }]
       }
     })
   }
@@ -245,14 +244,10 @@ function ChallengeEditor({ rule, onUpdate }: Pick<RuleEditorProps, 'rule' | 'onU
           {rule.challenges.map((challenge, index) => (
             <div className="challenge-unit" key={challenge.id}>
               <div className="challenge-number">{String(index + 1).padStart(2, '0')}</div>
-              <FieldGroup className="challenge-fields">
-                <Field data-invalid={!challenge.prompt.trim()}>
-                  <FieldLabel htmlFor={`prompt-${challenge.id}`}>提示</FieldLabel>
-                  <Input id={`prompt-${challenge.id}`} value={challenge.prompt} aria-invalid={!challenge.prompt.trim()} onChange={(event) => onUpdate((draft) => { if (draft.challenges[index]) draft.challenges[index].prompt = event.target.value })} />
-                </Field>
+              <FieldGroup>
                 <Field data-invalid={!challenge.answer}>
                   <FieldLabel htmlFor={`answer-${challenge.id}`}>口令</FieldLabel>
-                  <PasswordInput id={`answer-${challenge.id}`} value={challenge.answer} aria-invalid={!challenge.answer} autoComplete="new-password" onChange={(event) => onUpdate((draft) => { if (draft.challenges[index]) draft.challenges[index].answer = event.target.value })} />
+                  <Input id={`answer-${challenge.id}`} type="text" inputMode="text" value={challenge.answer} aria-invalid={!challenge.answer} autoComplete="off" spellCheck={false} onChange={(event) => onUpdate((draft) => { if (draft.challenges[index]) draft.challenges[index].answer = event.target.value })} />
                   <FieldDescription>仅在此设备本地明文保存。</FieldDescription>
                 </Field>
               </FieldGroup>
@@ -276,7 +271,7 @@ function ChallengeEditor({ rule, onUpdate }: Pick<RuleEditorProps, 'rule' | 'onU
         </div>
       </CardContent>
       <CardFooter>
-        <Button variant="outline" onClick={() => onUpdate((draft) => { draft.challenges.push({ id: crypto.randomUUID(), prompt: '新的口令提示', answer: '' }) })}>
+        <Button variant="outline" onClick={() => onUpdate((draft) => { draft.challenges.push({ id: crypto.randomUUID(), answer: '' }) })}>
           <PlusIcon data-icon="inline-start" />添加挑战步骤
         </Button>
       </CardFooter>

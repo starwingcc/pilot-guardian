@@ -275,8 +275,7 @@ body {
 }
 
 .form-columns,
-.target-columns,
-.challenge-fields {
+.target-columns {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
@@ -580,8 +579,7 @@ body {
   }
 
   .target-columns,
-  .form-columns,
-  .challenge-fields {
+  .form-columns {
     grid-template-columns: 1fr;
   }
 

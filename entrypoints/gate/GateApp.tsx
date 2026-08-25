@@ -14,10 +14,10 @@ import { Badge } from '@/src/components/ui/badge'
 import { Button } from '@/src/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/src/components/ui/field'
+import { Input } from '@/src/components/ui/input'
 import { Progress } from '@/src/components/ui/progress'
 import { Skeleton } from '@/src/components/ui/skeleton'
 import { Spinner } from '@/src/components/ui/spinner'
-import { PasswordInput } from '@/src/components/password-input'
 import type { GateContext, GateSubmitResponse } from '../../src/runtime/messages'
 import { sendRuntimeMessage } from '../../src/ui/runtime-client'
 import { formatDateTime, formatRemaining } from '../../src/ui/time'
@@ -189,19 +189,22 @@ export function GateApp() {
                   <Card className="challenge-card">
                     <CardHeader>
                       <CardDescription>CHALLENGE {String(context.stepIndex + 1).padStart(2, '0')} / {String(totalSteps).padStart(2, '0')}</CardDescription>
-                      <CardTitle>{step.prompt}</CardTitle>
+                      <CardTitle>请输入口令</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <form onSubmit={submit}>
                         <FieldGroup>
                           <Field data-invalid={Boolean(error)}>
-                            <FieldLabel htmlFor="answer">{step.prompt}</FieldLabel>
-                            <PasswordInput
+                            <FieldLabel htmlFor="answer">口令</FieldLabel>
+                            <Input
                               id="answer"
+                              type="text"
+                              inputMode="text"
                               value={answer}
                               aria-invalid={Boolean(error)}
                               onChange={(event) => setAnswer(event.target.value)}
                               autoComplete="off"
+                              spellCheck={false}
                               autoFocus
                             />
                             <FieldDescription>口令只在当前设备中校验。</FieldDescription>
@@ -257,7 +260,7 @@ export function GateApp() {
       </motion.div>
 
       <footer className="gate-footer">
-        <span>ENCRYPTED LOCAL CONTROL</span>
+        <span>LOCAL ACCESS CONTROL</span>
         <span><i className="signal-rotor"><LoaderCircleIcon aria-hidden="true" /></i> SIGNAL LOCKED</span>
       </footer>
     </main>

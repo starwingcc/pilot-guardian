@@ -18,7 +18,7 @@ function rule(id: string, priority: number, pattern = target): AccessRule {
     priority,
     target: pattern,
     mode: 'password',
-    challenges: [{ id: `${id}-step`, prompt: '口令', answer: 'answer' }],
+    challenges: [{ id: `${id}-step`, answer: 'answer' }],
     accessDurationMinutes: 30,
   }
 }

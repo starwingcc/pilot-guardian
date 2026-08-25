@@ -36,6 +36,6 @@ export interface RuleStatus {
 export function toPublicRule(rule: AccessRule): PublicAccessRule {
   return {
     ...rule,
-    challenges: rule.challenges.map(({ id, prompt }) => ({ id, prompt })),
+    challenges: rule.challenges.map(({ id }) => ({ id })),
   }
 }

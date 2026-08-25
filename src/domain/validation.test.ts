@@ -15,7 +15,7 @@ const validRule = {
     path: '/*',
   },
   mode: 'password',
-  challenges: [{ id: 'step', prompt: '口令', answer: '明文答案' }],
+  challenges: [{ id: 'step', answer: '明文答案' }],
   accessDurationMinutes: 30,
 }
 
