@@ -4,10 +4,8 @@ import {
   ArrowUpIcon,
   BracesIcon,
   Clock3Icon,
-  CopyIcon,
   KeyRoundIcon,
   MousePointerClickIcon,
-  PlayIcon,
   PlusIcon,
   RadarIcon,
   RouteIcon,
@@ -55,21 +53,17 @@ import { Separator } from '@/src/components/ui/separator'
 import { Switch } from '@/src/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/src/components/ui/toggle-group'
 import { ChallengeDocumentEditor } from '@/src/components/challenge/ChallengeDocumentEditor'
-import { SandboxPreviewPanel } from '@/src/components/challenge/SandboxPreviewPanel'
-import { OFFICIAL_TEMPLATES, renderOfficialTemplate } from '../../../src/domain/challenge-templates'
+import { OFFICIAL_TEMPLATES, officialTemplate } from '../../../src/domain/challenge-templates'
 import { hasUnreviewedDocuments } from '../../../src/domain/custom-documents'
 import {
   DEFAULT_CUSTOM_DOCUMENT,
-  DEFAULT_INTERACTIVE_DOCUMENT,
   createChallenge,
   createTextChallenge,
-  defaultTemplateSource,
 } from '../../../src/domain/defaults'
 import type {
   AccessRule,
   ChallengeStep,
   InteractiveChallengeStep,
-  OfficialTemplateSource,
   RuleMode,
   Schedule,
   Scheme,
@@ -343,120 +337,6 @@ function TextStepEditor({
   )
 }
 
-function TemplateSourceEditor({
-  idPrefix,
-  source,
-  onChange,
-  onCopy,
-}: {
-  idPrefix: string
-  source: OfficialTemplateSource
-  onChange: (source: OfficialTemplateSource) => void
-  onCopy: () => void
-}) {
-  const [previewSession, setPreviewSession] = useState('')
-  const [previewCompleted, setPreviewCompleted] = useState(false)
-  const html = renderOfficialTemplate(source)
-  return (
-    <div className="template-editor">
-      <FieldGroup>
-        <Field>
-          <FieldLabel htmlFor={`official-template-${idPrefix}`}>官方模板</FieldLabel>
-          <Select
-            value={source.templateId}
-            onValueChange={(templateId) => onChange(defaultTemplateSource(templateId as OfficialTemplateSource['templateId']))}
-          >
-            <SelectTrigger id={`official-template-${idPrefix}`}><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {OFFICIAL_TEMPLATES.map((template) => (
-                  <SelectItem key={template.id} value={template.id}>{template.name}</SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          <FieldDescription>{OFFICIAL_TEMPLATES.find((template) => template.id === source.templateId)?.description}</FieldDescription>
-        </Field>
-        {source.templateId === 'wooden-fish' ? (
-          <Field>
-            <FieldLabel htmlFor={`wooden-fish-hits-${idPrefix}`}>完成所需点击次数</FieldLabel>
-            <Input
-              id={`wooden-fish-hits-${idPrefix}`}
-              type="number"
-              min="1"
-              max="20"
-              value={source.parameters.requiredHits}
-              onChange={(event) => onChange({
-                ...source,
-                parameters: { requiredHits: Number(event.target.value) },
-              })}
-            />
-          </Field>
-        ) : (
-          <div className="template-parameter-grid">
-            <Field>
-              <FieldLabel htmlFor={`reaction-minimum-${idPrefix}`}>最短等待（毫秒）</FieldLabel>
-              <Input
-                id={`reaction-minimum-${idPrefix}`}
-                type="number"
-                min="500"
-                max="10000"
-                value={source.parameters.minimumDelayMs}
-                onChange={(event) => onChange({ ...source, parameters: { ...source.parameters, minimumDelayMs: Number(event.target.value) } })}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor={`reaction-maximum-${idPrefix}`}>最长等待（毫秒）</FieldLabel>
-              <Input
-                id={`reaction-maximum-${idPrefix}`}
-                type="number"
-                min="500"
-                max="15000"
-                value={source.parameters.maximumDelayMs}
-                onChange={(event) => onChange({ ...source, parameters: { ...source.parameters, maximumDelayMs: Number(event.target.value) } })}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor={`reaction-window-${idPrefix}`}>成功窗口（毫秒）</FieldLabel>
-              <Input
-                id={`reaction-window-${idPrefix}`}
-                type="number"
-                min="100"
-                max="3000"
-                value={source.parameters.successWindowMs}
-                onChange={(event) => onChange({ ...source, parameters: { ...source.parameters, successWindowMs: Number(event.target.value) } })}
-              />
-            </Field>
-          </div>
-        )}
-      </FieldGroup>
-      <div className="document-toolbar">
-        <Button type="button" variant="outline" onClick={onCopy}>
-          <CopyIcon data-icon="inline-start" />复制为自定义代码
-        </Button>
-        <Button
-          type="button"
-          onClick={() => {
-            setPreviewCompleted(false)
-            setPreviewSession(crypto.randomUUID())
-          }}
-        >
-          <PlayIcon data-icon="inline-start" />运行模板预览
-        </Button>
-      </div>
-      {previewSession ? (
-        <SandboxPreviewPanel
-          html={html}
-          sessionId={previewSession}
-          title="官方模板预览"
-          completed={previewCompleted}
-          onComplete={() => setPreviewCompleted(true)}
-        />
-      ) : null}
-    </div>
-  )
-}
-
 function InteractiveStepEditor({
   step,
   onChange,
@@ -467,55 +347,44 @@ function InteractiveStepEditor({
   return (
     <FieldGroup>
       <Field>
-        <FieldTitle id={`source-${step.id}`}>互动来源</FieldTitle>
-        <ToggleGroup
-          type="single"
-          value={step.source.kind}
-          onValueChange={(kind) => {
-            if (kind === 'template') onChange((draft) => { draft.source = defaultTemplateSource('wooden-fish') })
-            if (kind === 'custom') onChange((draft) => {
-              draft.source = {
-                kind: 'custom',
-                document: { html: DEFAULT_INTERACTIVE_DOCUMENT, reviewState: 'required' },
-              }
-            })
-          }}
-          variant="outline"
-          spacing={2}
-          aria-labelledby={`source-${step.id}`}
-        >
-          <ToggleGroupItem value="template"><MousePointerClickIcon data-icon="inline-start" />官方模板</ToggleGroupItem>
-          <ToggleGroupItem value="custom"><BracesIcon data-icon="inline-start" />自定义 HTML</ToggleGroupItem>
-        </ToggleGroup>
-      </Field>
-      {step.source.kind === 'template' ? (
-        <TemplateSourceEditor
-          idPrefix={step.id}
-          source={step.source}
-          onChange={(source) => onChange((draft) => { draft.source = source })}
-          onCopy={() => onChange((draft) => {
+        <FieldLabel htmlFor={`preset-${step.id}`}>从官方预设加载</FieldLabel>
+        <Select
+          value=""
+          onValueChange={(templateId) => onChange((draft) => {
             draft.source = {
               kind: 'custom',
-              document: { html: renderOfficialTemplate(step.source as OfficialTemplateSource), reviewState: 'required' },
+              document: {
+                html: officialTemplate(templateId as Parameters<typeof officialTemplate>[0]).html,
+                reviewState: 'ready',
+              },
             }
           })}
-        />
-      ) : (
-        <>
-          <Alert>
-            <BracesIcon />
-            <AlertTitle>完成接口</AlertTitle>
-            <AlertDescription>在交互达成时调用 <code>window.PilotGuardian.complete()</code>，重复调用只会生效一次。</AlertDescription>
-          </Alert>
-          <ChallengeDocumentEditor
-            document={step.source.document}
-            title="交互挑战 HTML"
-            onChange={(document) => onChange((draft) => {
-              if (draft.source.kind === 'custom') draft.source.document = document
-            })}
-          />
-        </>
-      )}
+        >
+          <SelectTrigger id={`preset-${step.id}`}>
+            <SelectValue placeholder="选择官方预设,载入后可继续编辑" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              {OFFICIAL_TEMPLATES.map((template) => (
+                <SelectItem key={template.id} value={template.id}>{template.name}</SelectItem>
+              ))}
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        <FieldDescription>
+          载入预设会覆盖下方编辑器内容;之后在这里修改的结果独立于预设本身。
+        </FieldDescription>
+      </Field>
+      <Alert>
+        <BracesIcon />
+        <AlertTitle>完成接口</AlertTitle>
+        <AlertDescription>在交互达成时调用 <code>window.PilotGuardian.complete()</code>，重复调用只会生效一次。</AlertDescription>
+      </Alert>
+      <ChallengeDocumentEditor
+        document={step.source.document}
+        title="交互挑战 HTML"
+        onChange={(document) => onChange((draft) => { draft.source.document = document })}
+      />
     </FieldGroup>
   )
 }

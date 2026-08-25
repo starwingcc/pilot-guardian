@@ -28,26 +28,6 @@ export interface TextChallengeStep {
   scene: TextChallengeScene
 }
 
-export interface WoodenFishTemplateSource {
-  kind: 'template'
-  templateId: 'wooden-fish'
-  parameters: {
-    requiredHits: number
-  }
-}
-
-export interface ReactionTestTemplateSource {
-  kind: 'template'
-  templateId: 'reaction-test'
-  parameters: {
-    minimumDelayMs: number
-    maximumDelayMs: number
-    successWindowMs: number
-  }
-}
-
-export type OfficialTemplateSource = WoodenFishTemplateSource | ReactionTestTemplateSource
-
 export interface CustomInteractiveSource {
   kind: 'custom'
   document: CustomChallengeDocument
@@ -56,7 +36,7 @@ export interface CustomInteractiveSource {
 export interface InteractiveChallengeStep {
   id: string
   type: 'interactive'
-  source: OfficialTemplateSource | CustomInteractiveSource
+  source: CustomInteractiveSource
 }
 
 export type ChallengeStep = TextChallengeStep | InteractiveChallengeStep

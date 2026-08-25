@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- 模板参数;构建 / 预览时由 challenge-templates 注入。自定义文档可直接改这里的 JSON。 -->
+  <script type="application/json" id="pg-params">{"requiredHits": 10}</script>
+  <style>
+    :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; overflow: hidden; background: #edf4ef; color: #13231d; }
+    body::before { content: ""; position: fixed; inset: -30%; background: radial-gradient(circle at 60% 44%, rgba(204, 111, 48, .2), transparent 20%), radial-gradient(circle at 36% 56%, rgba(70, 112, 90, .22), transparent 28%); filter: blur(50px); }
+    main { position: relative; min-height: 100vh; display: grid; grid-template-columns: minmax(18rem, 1fr) minmax(20rem, 36rem); align-items: center; gap: clamp(2rem, 9vw, 10rem); padding: clamp(2rem, 7vw, 8rem); }
+    .copy { align-self: end; padding-bottom: 4vh; }
+    .eyebrow { margin: 0 0 1rem; font-size: .72rem; font-weight: 700; letter-spacing: .24em; text-transform: uppercase; color: #5d7369; }
+    h1 { max-width: 8ch; margin: 0; font: 500 clamp(3.8rem, 9vw, 9rem)/.82 Georgia, serif; letter-spacing: -.07em; }
+    .instruction { max-width: 30rem; margin: 2rem 0 0; color: #52635c; font-size: clamp(1rem, 1.5vw, 1.2rem); line-height: 1.7; }
+    .ritual { display: grid; place-items: center; gap: 2rem; }
+    button { position: relative; width: min(28rem, 72vw); aspect-ratio: 1; border: 0; border-radius: 50%; background: rgba(255,255,255,.48); box-shadow: 0 3rem 7rem rgba(31, 63, 49, .16), inset 0 0 0 1px rgba(255,255,255,.75); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    button:focus-visible { outline: 3px solid #35644e; outline-offset: 8px; }
+    .fish { position: absolute; inset: 21% 16%; border-radius: 52% 48% 44% 56% / 56% 54% 46% 44%; background: linear-gradient(145deg, #a95024, #dd874b 52%, #873b20); box-shadow: inset 1.2rem 1.3rem 2rem rgba(255, 209, 151, .24), inset -1rem -1.2rem 1.5rem rgba(72, 24, 13, .24), 0 2.3rem 3rem rgba(107, 52, 26, .25); transition: transform .16s cubic-bezier(.2,.8,.2,1); }
+    .fish::before { content: ""; position: absolute; inset: 17% 20%; border: 2px solid rgba(76, 30, 15, .22); border-radius: inherit; }
+    .fish::after { content: ""; position: absolute; width: 20%; height: 11%; right: 4%; top: 45%; border-radius: 50%; background: #6c2e1a; box-shadow: inset 0 2px 5px rgba(30,8,4,.28); }
+    button:active .fish, button.hit .fish { transform: scale(.94) rotate(-1deg); }
+    .count { display: flex; align-items: baseline; gap: .8rem; font-variant-numeric: tabular-nums; }
+    .count strong { font-size: 2.6rem; font-weight: 500; letter-spacing: -.06em; }
+    .count span { color: #61726a; }
+    .track { width: min(24rem, 68vw); height: 3px; overflow: hidden; background: rgba(31,67,50,.14); }
+    .track i { display: block; width: 0; height: 100%; background: #b85c2e; transition: width .35s cubic-bezier(.2,.8,.2,1); }
+    @media (max-width: 760px) { main { grid-template-columns: 1fr; align-content: center; padding: 2rem; } .copy { align-self: auto; padding: 0; } h1 { font-size: clamp(3.8rem, 18vw, 6rem); } .instruction { margin-top: 1rem; } button { width: min(22rem, 75vw); } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="copy">
+      <p class="eyebrow">Attention ritual / 01</p>
+      <h1>敲击，回到此刻。</h1>
+      <p class="instruction">完成 <strong class="js-required-hits"></strong> 次清晰的点击。每一次动作都应当是有意识的选择。</p>
+    </section>
+    <section class="ritual" aria-live="polite">
+      <button id="fishButton" type="button" aria-label="敲击木鱼"><span class="fish"></span></button>
+      <div class="count"><strong id="count">0</strong><span>/ <strong class="js-required-hits"></strong></span></div>
+      <div class="track" aria-hidden="true"><i id="progress"></i></div>
+    </section>
+  </main>
+  <script>
+    const params = JSON.parse(document.getElementById('pg-params').textContent);
+    const { requiredHits } = params;
+
+    for (const el of document.querySelectorAll('.js-required-hits')) el.textContent = String(requiredHits);
+
+    const button = document.getElementById('fishButton');
+    const count = document.getElementById('count');
+    const progress = document.getElementById('progress');
+    let hits = 0;
+    button.addEventListener('click', () => {
+      if (hits >= requiredHits) return;
+      hits += 1;
+      count.textContent = String(hits);
+      progress.style.width = ((hits / requiredHits) * 100) + '%';
+      button.classList.remove('hit');
+      requestAnimationFrame(() => button.classList.add('hit'));
+      window.setTimeout(() => button.classList.remove('hit'), 180);
+      if (hits === requiredHits) window.setTimeout(() => window.PilotGuardian.complete(), 320);
+    });
+  </script>
+</body>
+</html>

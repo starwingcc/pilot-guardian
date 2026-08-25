@@ -7,7 +7,6 @@ import {
   type CustomChallengeDocument,
   type ExportBundle,
   type MonthlySchedule,
-  type OfficialTemplateSource,
   type Schedule,
   type StoredConfig,
   type TextChallengeScene,
@@ -95,47 +94,6 @@ function parseTextScene(value: unknown, errors: string[], label: string): TextCh
   return { kind: 'default' }
 }
 
-function parseTemplateSource(
-  value: Record<string, unknown>,
-  errors: string[],
-  label: string,
-): OfficialTemplateSource | undefined {
-  const parameters = isRecord(value.parameters) ? value.parameters : {}
-  if (value.templateId === 'wooden-fish') {
-    const requiredHits = parameters.requiredHits
-    if (!Number.isInteger(requiredHits) || Number(requiredHits) < 1 || Number(requiredHits) > 20) {
-      errors.push(`${label}的木鱼点击次数必须是 1 到 20 之间的整数`)
-      return undefined
-    }
-    return {
-      kind: 'template',
-      templateId: 'wooden-fish',
-      parameters: { requiredHits: Number(requiredHits) },
-    }
-  }
-  if (value.templateId === 'reaction-test') {
-    const minimumDelayMs = Number(parameters.minimumDelayMs)
-    const maximumDelayMs = Number(parameters.maximumDelayMs)
-    const successWindowMs = Number(parameters.successWindowMs)
-    if (!Number.isFinite(minimumDelayMs) || minimumDelayMs < 500 || minimumDelayMs > 10_000) {
-      errors.push(`${label}的最短等待时间必须在 500 到 10000 毫秒之间`)
-    }
-    if (!Number.isFinite(maximumDelayMs) || maximumDelayMs < minimumDelayMs || maximumDelayMs > 15_000) {
-      errors.push(`${label}的最长等待时间必须大于等于最短等待时间且不超过 15000 毫秒`)
-    }
-    if (!Number.isFinite(successWindowMs) || successWindowMs < 100 || successWindowMs > 3_000) {
-      errors.push(`${label}的成功窗口必须在 100 到 3000 毫秒之间`)
-    }
-    return {
-      kind: 'template',
-      templateId: 'reaction-test',
-      parameters: { minimumDelayMs, maximumDelayMs, successWindowMs },
-    }
-  }
-  errors.push(`${label}引用了未知官方模板`)
-  return undefined
-}
-
 function parseChallenge(value: unknown, index: number, errors: string[], ruleLabel: string): ChallengeStep | undefined {
   const label = `${ruleLabel}的第 ${index + 1} 个挑战步骤`
   if (!isRecord(value)) {
@@ -158,16 +116,12 @@ function parseChallenge(value: unknown, index: number, errors: string[], ruleLab
       errors.push(`${label}缺少互动来源`)
       return undefined
     }
-    if (value.source.kind === 'template') {
-      const source = parseTemplateSource(value.source, errors, label)
-      return source ? { id, type: 'interactive', source } : undefined
+    if (value.source.kind !== 'custom') {
+      errors.push(`${label}的互动来源类型无效`)
+      return undefined
     }
-    if (value.source.kind === 'custom') {
-      const document = parseDocument(value.source.document, errors, `${label}的互动文档`)
-      return document ? { id, type: 'interactive', source: { kind: 'custom', document } } : undefined
-    }
-    errors.push(`${label}的互动来源类型无效`)
-    return undefined
+    const document = parseDocument(value.source.document, errors, `${label}的互动文档`)
+    return document ? { id, type: 'interactive', source: { kind: 'custom', document } } : undefined
   }
   errors.push(`${label}的挑战类型无效`)
   return undefined
@@ -178,7 +132,7 @@ function hasPendingReview(rule: AccessRule): boolean {
     if (challenge.type === 'text') {
       return challenge.scene.kind === 'custom' && challenge.scene.document.reviewState === 'required'
     }
-    return challenge.source.kind === 'custom' && challenge.source.document.reviewState === 'required'
+    return challenge.source.document.reviewState === 'required'
   })
 }
 

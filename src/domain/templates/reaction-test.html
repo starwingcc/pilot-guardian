@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- 模板参数;构建 / 预览时由 challenge-templates 注入。自定义文档可直接改这里的 JSON。 -->
+  <script type="application/json" id="pg-params">{"minimumDelay": 900, "maximumDelay": 2400, "successWindow": 480}</script>
+  <style>
+    :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: #f3f5ef; color: #17231d; }
+    button { width: 100%; min-height: 100vh; border: 0; padding: clamp(2rem, 7vw, 8rem); color: inherit; background: transparent; text-align: left; cursor: pointer; transition: background .22s ease, color .22s ease; }
+    button::before { content: ""; position: fixed; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(24,43,34,.08) 1px, transparent 1px), linear-gradient(rgba(24,43,34,.08) 1px, transparent 1px); background-size: 72px 72px; mask-image: linear-gradient(to bottom, black, transparent 80%); }
+    button:focus-visible { outline: 4px solid #234f3b; outline-offset: -8px; }
+    button[data-state="waiting"] { background: #e9eee7; cursor: crosshair; }
+    button[data-state="ready"] { background: #d8ff45; color: #0d170f; }
+    .layout { position: relative; min-height: calc(100vh - clamp(4rem, 14vw, 16rem)); display: flex; flex-direction: column; justify-content: space-between; }
+    .topline { display: flex; justify-content: space-between; gap: 2rem; font-size: .72rem; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; }
+    .index { color: #6a7971; }
+    .signal { max-width: 12ch; margin: 10vh 0; font: 500 clamp(4rem, 12vw, 11rem)/.8 Georgia, serif; letter-spacing: -.075em; }
+    .detail { display: flex; align-items: end; justify-content: space-between; gap: 2rem; }
+    .detail p { max-width: 32rem; margin: 0; font-size: clamp(1rem, 1.7vw, 1.3rem); line-height: 1.6; }
+    .timing { font: 500 clamp(2.2rem, 6vw, 5rem)/1 ui-monospace, monospace; letter-spacing: -.08em; font-variant-numeric: tabular-nums; }
+    @media (max-width: 640px) { button { padding: 2rem; } .signal { margin: 12vh 0; } .detail { align-items: start; flex-direction: column; } }
+    @media (prefers-reduced-motion: reduce) { button { transition: none; } }
+  </style>
+</head>
+<body>
+  <button id="surface" type="button" data-state="idle" aria-live="assertive">
+    <span class="layout">
+      <span class="topline"><span>Reaction field</span><span class="index">Window / <span class="js-success-window"></span>ms</span></span>
+      <strong class="signal" id="signal">点击开始。</strong>
+      <span class="detail"><p id="detail">开始后保持等待。颜色切换时，在 <span class="js-success-window"></span> 毫秒内点击画面。</p><span class="timing" id="timing">—</span></span>
+    </span>
+  </button>
+  <script>
+    const params = JSON.parse(document.getElementById('pg-params').textContent);
+    const { minimumDelay, maximumDelay, successWindow } = params;
+
+    for (const el of document.querySelectorAll('.js-success-window')) el.textContent = String(successWindow);
+
+    const surface = document.getElementById('surface');
+    const signal = document.getElementById('signal');
+    const detail = document.getElementById('detail');
+    const timing = document.getElementById('timing');
+    let state = 'idle';
+    let readyAt = 0;
+    let waitTimer = 0;
+    let lateTimer = 0;
+
+    function reset(message) {
+      window.clearTimeout(waitTimer);
+      window.clearTimeout(lateTimer);
+      state = 'idle';
+      surface.dataset.state = state;
+      signal.textContent = message || '再次开始。';
+      detail.textContent = '点击画面重新开始，等待信号后再作出反应。';
+      timing.textContent = '—';
+    }
+
+    function start() {
+      state = 'waiting';
+      surface.dataset.state = state;
+      signal.textContent = '保持等待。';
+      detail.textContent = '提前点击会让测试重新开始。';
+      timing.textContent = 'WAIT';
+      const delay = minimumDelay + Math.random() * (maximumDelay - minimumDelay);
+      waitTimer = window.setTimeout(() => {
+        state = 'ready';
+        surface.dataset.state = state;
+        readyAt = performance.now();
+        signal.textContent = '现在。';
+        detail.textContent = '立即点击画面。';
+        timing.textContent = 'GO';
+        lateTimer = window.setTimeout(() => reset('太慢了。'), successWindow);
+      }, delay);
+    }
+
+    surface.addEventListener('click', () => {
+      if (state === 'idle') { start(); return; }
+      if (state === 'waiting') { reset('提前了。'); return; }
+      const elapsed = Math.round(performance.now() - readyAt);
+      window.clearTimeout(lateTimer);
+      if (elapsed > successWindow) { reset('太慢了。'); return; }
+      state = 'complete';
+      signal.textContent = '通过。';
+      detail.textContent = '注意力链路已经建立。';
+      timing.textContent = elapsed + 'ms';
+      window.setTimeout(() => window.PilotGuardian.complete(), 420);
+    });
+  </script>
+</body>
+</html>

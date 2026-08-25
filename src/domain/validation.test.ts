@@ -60,7 +60,28 @@ describe('配置校验', () => {
     expect(result).toEqual({ ok: false, errors: ['不支持的导出文件版本'] })
   })
 
-  it('接受参数受约束的官方交互模板', () => {
+  it('接受从官方模板载入并审核过的自定义交互文档', () => {
+    const result = validateStoredConfig({
+      schemaVersion: CONFIG_SCHEMA_VERSION,
+      rules: [{
+        ...validRule,
+        challenges: [{
+          id: 'interactive',
+          type: 'interactive',
+          source: {
+            kind: 'custom',
+            document: {
+              html: `<!doctype html><script type="application/json" id="pg-params">{"minimumDelay":1500,"maximumDelay":4000,"successWindow":600}</script><button>响应</button>`,
+              reviewState: 'ready',
+            },
+          },
+        }],
+      }],
+    })
+    expect(result.ok).toBe(true)
+  })
+
+  it('拒绝旧版官方模板引用(kind: template)', () => {
     const result = validateStoredConfig({
       schemaVersion: CONFIG_SCHEMA_VERSION,
       rules: [{
@@ -70,13 +91,13 @@ describe('配置校验', () => {
           type: 'interactive',
           source: {
             kind: 'template',
-            templateId: 'reaction-test',
-            parameters: { minimumDelayMs: 1500, maximumDelayMs: 4000, successWindowMs: 600 },
+            templateId: 'wooden-fish',
+            parameters: { requiredHits: 3 },
           },
         }],
       }],
     })
-    expect(result.ok).toBe(true)
+    expect(result.ok).toBe(false)
   })
 
   it('拒绝启用尚未预览的自定义文档', () => {

@@ -2,11 +2,11 @@ import type {
   AccessRule,
   ChallengeStep,
   InteractiveChallengeStep,
-  OfficialTemplateSource,
   StoredConfig,
   TextChallengeStep,
 } from './types'
 import { CONFIG_SCHEMA_VERSION } from './types'
+import { officialTemplate } from './challenge-templates'
 
 export const EMPTY_CONFIG: StoredConfig = {
   schemaVersion: CONFIG_SCHEMA_VERSION,
@@ -32,28 +32,6 @@ export const DEFAULT_CUSTOM_DOCUMENT = `<!doctype html>
 </body>
 </html>`
 
-export const DEFAULT_INTERACTIVE_DOCUMENT = `<!doctype html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <style>
-    :root { color-scheme: light; font-family: system-ui, sans-serif; }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #eef5f2; color: #10201c; }
-    button { border: 0; border-radius: 999px; padding: 1rem 1.5rem; background: #183c30; color: white; font: inherit; cursor: pointer; }
-  </style>
-</head>
-<body>
-  <button id="complete" type="button">完成挑战</button>
-  <script>
-    document.getElementById('complete').addEventListener('click', () => {
-      window.PilotGuardian.complete();
-    });
-  </script>
-</body>
-</html>`
-
 export function createTextChallenge(): TextChallengeStep {
   return {
     id: crypto.randomUUID(),
@@ -63,26 +41,14 @@ export function createTextChallenge(): TextChallengeStep {
   }
 }
 
-export function defaultTemplateSource(templateId: OfficialTemplateSource['templateId']): OfficialTemplateSource {
-  if (templateId === 'wooden-fish') {
-    return { kind: 'template', templateId, parameters: { requiredHits: 3 } }
-  }
-  return {
-    kind: 'template',
-    templateId,
-    parameters: {
-      minimumDelayMs: 1_500,
-      maximumDelayMs: 4_000,
-      successWindowMs: 600,
-    },
-  }
-}
-
 export function createInteractiveChallenge(): InteractiveChallengeStep {
   return {
     id: crypto.randomUUID(),
     type: 'interactive',
-    source: defaultTemplateSource('wooden-fish'),
+    source: {
+      kind: 'custom',
+      document: { html: officialTemplate('wooden-fish').html, reviewState: 'ready' },
+    },
   }
 }
 

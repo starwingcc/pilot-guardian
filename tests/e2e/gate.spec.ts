@@ -87,9 +87,29 @@ test('依次完成自定义文本场景与官方交互模板后恢复原 URL', a
               id: 'interactive-step',
               type: 'interactive',
               source: {
-                kind: 'template',
-                templateId: 'wooden-fish',
-                parameters: { requiredHits: 3 },
+                kind: 'custom',
+                document: {
+                  html: `<!doctype html>
+<html><head><meta charset="utf-8">
+<script type="application/json" id="pg-params">{"requiredHits":3}</script>
+<style>body{margin:0;display:grid;place-items:center;min-height:100vh;font-family:sans-serif;background:#eef;color:#102}button{padding:1rem 2rem;font:inherit;cursor:pointer}</style>
+</head><body>
+<button id="hit">敲击 (<span id="count">0</span>/3)</button>
+<script>
+  const { requiredHits } = JSON.parse(document.getElementById('pg-params').textContent);
+  const btn = document.getElementById('hit');
+  const count = document.getElementById('count');
+  let hits = 0;
+  btn.addEventListener('click', () => {
+    if (hits >= requiredHits) return;
+    hits += 1;
+    count.textContent = String(hits);
+    if (hits === requiredHits) window.setTimeout(() => window.PilotGuardian.complete(), 200);
+  });
+</script>
+</body></html>`,
+                  reviewState: 'ready',
+                },
               },
             },
           ],
