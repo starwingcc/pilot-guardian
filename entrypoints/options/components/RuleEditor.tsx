@@ -55,7 +55,7 @@ import { Separator } from '@/src/components/ui/separator'
 import { Switch } from '@/src/components/ui/switch'
 import { ToggleGroup, ToggleGroupItem } from '@/src/components/ui/toggle-group'
 import { ChallengeDocumentEditor } from '@/src/components/challenge/ChallengeDocumentEditor'
-import { SandboxFrame } from '@/src/components/challenge/SandboxFrame'
+import { SandboxPreviewPanel } from '@/src/components/challenge/SandboxPreviewPanel'
 import { OFFICIAL_TEMPLATES, renderOfficialTemplate } from '../../../src/domain/challenge-templates'
 import { hasUnreviewedDocuments } from '../../../src/domain/custom-documents'
 import {
@@ -355,6 +355,7 @@ function TemplateSourceEditor({
   onCopy: () => void
 }) {
   const [previewSession, setPreviewSession] = useState('')
+  const [previewCompleted, setPreviewCompleted] = useState(false)
   const html = renderOfficialTemplate(source)
   return (
     <div className="template-editor">
@@ -433,20 +434,24 @@ function TemplateSourceEditor({
         <Button type="button" variant="outline" onClick={onCopy}>
           <CopyIcon data-icon="inline-start" />复制为自定义代码
         </Button>
-        <Button type="button" onClick={() => setPreviewSession(crypto.randomUUID())}>
+        <Button
+          type="button"
+          onClick={() => {
+            setPreviewCompleted(false)
+            setPreviewSession(crypto.randomUUID())
+          }}
+        >
           <PlayIcon data-icon="inline-start" />运行模板预览
         </Button>
       </div>
       {previewSession ? (
-        <Card className="document-preview-card">
-          <CardHeader>
-            <CardDescription>OFFICIAL TEMPLATE</CardDescription>
-            <CardTitle>隔离预览</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <SandboxFrame html={html} sessionId={previewSession} title="官方模板沙箱预览" />
-          </CardContent>
-        </Card>
+        <SandboxPreviewPanel
+          html={html}
+          sessionId={previewSession}
+          title="官方模板预览"
+          completed={previewCompleted}
+          onComplete={() => setPreviewCompleted(true)}
+        />
       ) : null}
     </div>
   )

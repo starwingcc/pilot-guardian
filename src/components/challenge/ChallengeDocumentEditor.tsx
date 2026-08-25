@@ -1,6 +1,5 @@
 import { useRef, useState, type ChangeEvent } from 'react'
 import {
-  BadgeCheckIcon,
   CircleAlertIcon,
   FileCode2Icon,
   PlayIcon,
@@ -10,12 +9,11 @@ import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '@/src/components/ui/alert'
 import { Badge } from '@/src/components/ui/badge'
 import { Button } from '@/src/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/src/components/ui/card'
 import { Field, FieldDescription, FieldGroup, FieldLabel } from '@/src/components/ui/field'
 import { Input } from '@/src/components/ui/input'
 import { MAX_CUSTOM_DOCUMENT_BYTES, type CustomChallengeDocument } from '@/src/domain/types'
 import { CodeEditor } from './CodeEditor'
-import { SandboxFrame } from './SandboxFrame'
+import { SandboxPreviewPanel } from './SandboxPreviewPanel'
 
 interface PreviewState {
   html: string
@@ -110,30 +108,20 @@ export function ChallengeDocumentEditor({
       ) : null}
 
       {preview ? (
-        <Card className="document-preview-card">
-          <CardHeader>
-            <div>
-              <CardDescription>OFFLINE SANDBOX</CardDescription>
-              <CardTitle>隔离预览</CardTitle>
-            </div>
-            {completed ? <Badge><BadgeCheckIcon data-icon="inline-start" />已收到完成信号</Badge> : null}
-          </CardHeader>
-          <CardContent>
-            <SandboxFrame
-              html={preview.html}
-              sessionId={preview.sessionId}
-              title={`${title}沙箱预览`}
-              onBoot={() => {
-                setPreviewError('')
-                if (preview.html === document.html && document.reviewState !== 'ready') {
-                  onChange({ ...document, reviewState: 'ready' })
-                }
-              }}
-              onComplete={() => setCompleted(true)}
-              onError={setPreviewError}
-            />
-          </CardContent>
-        </Card>
+        <SandboxPreviewPanel
+          html={preview.html}
+          sessionId={preview.sessionId}
+          title="隔离预览"
+          completed={completed}
+          onBoot={() => {
+            setPreviewError('')
+            if (preview.html === document.html && document.reviewState !== 'ready') {
+              onChange({ ...document, reviewState: 'ready' })
+            }
+          }}
+          onComplete={() => setCompleted(true)}
+          onError={setPreviewError}
+        />
       ) : null}
     </div>
   )

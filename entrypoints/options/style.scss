@@ -624,7 +624,72 @@ body {
     padding: 0;
   }
 
+  &:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+    background: var(--background);
+
+    > [data-slot='card-content'] {
+      min-height: 0;
+      height: auto;
+      flex: 1;
+    }
+  }
+}
+
+.document-preview-controls,
+.document-preview-readout {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.document-preview-controls {
+  justify-content: flex-end;
+}
+
+.document-preview-readout {
+  min-height: 2.5rem;
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+}
+
+.document-preview-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: color-mix(in oklch, var(--muted), transparent 42%);
+  background-image:
+    linear-gradient(45deg, color-mix(in oklch, var(--border), transparent 55%) 25%, transparent 25%),
+    linear-gradient(-45deg, color-mix(in oklch, var(--border), transparent 55%) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, color-mix(in oklch, var(--border), transparent 55%) 75%),
+    linear-gradient(-45deg, transparent 75%, color-mix(in oklch, var(--border), transparent 55%) 75%);
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+  background-size: 16px 16px;
+  overscroll-behavior: contain;
+
+  &.is-fit {
+    display: grid;
+    place-items: start center;
+    overflow: hidden;
+  }
+}
+
+.document-preview-canvas {
+  position: relative;
+  flex: none;
+  overflow: hidden;
+  background: var(--background);
+  box-shadow: 0 1.25rem 4rem color-mix(in oklch, var(--shadow-color), transparent 82%);
+
   .challenge-sandbox-frame {
+    position: absolute;
+    inset: 0;
     display: block;
     width: 100%;
     height: 100%;
@@ -652,6 +717,16 @@ body {
   .document-heading {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .document-preview-card > [data-slot='card-header'] {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .document-preview-controls {
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .template-parameter-grid {

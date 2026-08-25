@@ -3,6 +3,7 @@ import {
   SANDBOX_HOST_CHANNEL,
   isSandboxDocumentEvent,
   isSandboxLoadMessage,
+  type SandboxMetrics,
   type SandboxHostEvent,
 } from '../../src/sandbox/protocol'
 import './style.scss'
@@ -14,12 +15,13 @@ const root = rootElement
 let documentFrame: HTMLIFrameElement | undefined
 let activeToken = ''
 
-function reply(type: SandboxHostEvent['type'], detail?: string): void {
+function reply(type: SandboxHostEvent['type'], detail?: string, metrics?: SandboxMetrics): void {
   const message: SandboxHostEvent = {
     channel: SANDBOX_HOST_CHANNEL,
     type,
     token: activeToken,
     ...(detail ? { detail } : {}),
+    ...(metrics ? { metrics } : {}),
   }
   parent.postMessage(message, '*')
 }
@@ -30,7 +32,7 @@ function bridgeSource(token: string): string {
     const token = ${JSON.stringify(token)};
     let failed = false;
     let completed = false;
-    const send = (type, detail) => parent.postMessage({ channel, type, token, ...(detail ? { detail } : {}) }, '*');
+    const send = (type, detail, metrics) => parent.postMessage({ channel, type, token, ...(detail ? { detail } : {}), ...(metrics ? { metrics } : {}) }, '*');
     const complete = () => {
       if (completed) return;
       completed = true;
@@ -52,7 +54,27 @@ function bridgeSource(token: string): string {
       send('error', reason);
     });
     window.addEventListener('DOMContentLoaded', () => {
-      window.setTimeout(() => { if (!failed) send('booted'); }, 120);
+      const reportMetrics = () => {
+        const root = document.documentElement;
+        const body = document.body;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const contentWidth = Math.max(root.scrollWidth, body?.scrollWidth || 0);
+        const contentHeight = Math.max(root.scrollHeight, body?.scrollHeight || 0);
+        send('metrics', undefined, {
+          contentWidth,
+          contentHeight,
+          viewportWidth,
+          viewportHeight,
+          overflowX: contentWidth > viewportWidth + 1,
+          overflowY: contentHeight > viewportHeight + 1,
+        });
+      };
+      const observer = new ResizeObserver(reportMetrics);
+      observer.observe(document.documentElement);
+      if (document.body) observer.observe(document.body);
+      window.addEventListener('resize', reportMetrics, { passive: true });
+      window.setTimeout(() => { if (!failed) send('booted'); reportMetrics(); }, 120);
     }, { once: true });
   })();`
 }
@@ -102,5 +124,5 @@ window.addEventListener('message', (event: MessageEvent<unknown>) => {
   }
   if (event.source !== documentFrame?.contentWindow || !isSandboxDocumentEvent(event.data)) return
   if (event.data.token !== activeToken) return
-  reply(event.data.type, event.data.detail)
+  reply(event.data.type, event.data.detail, event.data.metrics)
 })

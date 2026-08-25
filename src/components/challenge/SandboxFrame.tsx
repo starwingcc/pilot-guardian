@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, type CSSProperties } from 'react'
 import { cn } from '@/src/lib/utils'
 import {
   SANDBOX_HOST_CHANNEL,
   isSandboxHostEvent,
+  type SandboxMetrics,
   type SandboxLoadMessage,
 } from '@/src/sandbox/protocol'
 
@@ -11,9 +12,11 @@ interface SandboxFrameProps {
   sessionId: string
   title: string
   className?: string
+  style?: CSSProperties
   onBoot?: () => void
   onComplete?: () => void
   onError?: (message: string) => void
+  onMetrics?: (metrics: SandboxMetrics) => void
 }
 
 export function SandboxFrame({
@@ -21,13 +24,15 @@ export function SandboxFrame({
   sessionId,
   title,
   className,
+  style,
   onBoot,
   onComplete,
   onError,
+  onMetrics,
 }: SandboxFrameProps) {
   const frameRef = useRef<HTMLIFrameElement>(null)
-  const callbacksRef = useRef({ onBoot, onComplete, onError })
-  callbacksRef.current = { onBoot, onComplete, onError }
+  const callbacksRef = useRef({ onBoot, onComplete, onError, onMetrics })
+  callbacksRef.current = { onBoot, onComplete, onError, onMetrics }
 
   const loadDocument = useCallback(() => {
     const message: SandboxLoadMessage = {
@@ -46,6 +51,7 @@ export function SandboxFrame({
       if (event.data.type === 'booted') callbacksRef.current.onBoot?.()
       if (event.data.type === 'complete') callbacksRef.current.onComplete?.()
       if (event.data.type === 'error') callbacksRef.current.onError?.(event.data.detail ?? '自定义文档运行失败')
+      if (event.data.type === 'metrics' && event.data.metrics) callbacksRef.current.onMetrics?.(event.data.metrics)
     }
     window.addEventListener('message', receiveMessage)
     return () => window.removeEventListener('message', receiveMessage)
@@ -59,6 +65,7 @@ export function SandboxFrame({
     <iframe
       ref={frameRef}
       className={cn('challenge-sandbox-frame', className)}
+      style={style}
       src={chrome.runtime.getURL('/sandbox.html')}
       title={title}
       onLoad={loadDocument}
