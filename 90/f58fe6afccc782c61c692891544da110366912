@@ -1,0 +1,59 @@
+src/domain/templates/wooden-fish.html
+  s_d252b4bfade5d8::t_a4fb3e3287c410 48-49
+  s_d252b4bfade5d8::t_084251a59b7b68 21
+  s_d252b4bfade5d8::t_a54e4e4180e9ed 1-5,8-20,22-38,40-42,44-47,53-69
+  s_d252b4bfade5d8::t_e4cea5879724da 50
+  s_d252b4bfade5d8::t_b7e81c0132ea79 51-52
+  s_d252b4bfade5d8::t_0d75cd0e22d7fd 39,43
+  s_d252b4bfade5d8::t_de7b9a36920e45 6-7
+src/domain/types.ts
+  s_d252b4bfade5d8::t_7c7c36a596cb18 39
+entrypoints/options/components/RuleEditor.tsx
+  s_d252b4bfade5d8::t_c4a0356e18e13c 350-353,356-359,362-387
+  s_d252b4bfade5d8::t_e6855d23289d3d 56
+src/domain/challenge-templates.test.ts
+  s_d252b4bfade5d8::t_31389f92b8f3e5 2-3
+  s_d252b4bfade5d8::t_3f431909661be2 8-9,13,49,51
+  s_d252b4bfade5d8::t_07631457ab6643 7,10-12,14,21
+  s_d252b4bfade5d8::t_89278ff7d79f60 4-5,15-20,24-35,38-41,44-48,50,52-55,58-60,65,67,69-72,74,77,79,83,86-87,98-107
+  s_d252b4bfade5d8::t_90d95f393814eb 1,6,22-23,36,43,56-57,61-64,66,68,73,75-76,78,80-82,84-85,88-97,108-109
+  s_d252b4bfade5d8::t_f3c4acb42428d3 37,42
+src/domain/templates/reaction-test.html
+  s_d252b4bfade5d8::t_f1592a2e484482 6-7
+  s_d252b4bfade5d8::t_ed9682f652fd2b 39-41
+  s_d252b4bfade5d8::t_8c883db6445e87 1-5,8-30,32,34-36,42-93
+  s_d252b4bfade5d8::t_cdff5424cb9af1 31,33
+  s_d252b4bfade5d8::t_f0a770a4c80b08 37-38
+src/types/assets.d.ts
+  s_d252b4bfade5d8::t_0c7b7e5cb94f4f 1-6
+src/domain/defaults.ts
+  s_d252b4bfade5d8::t_fd0c510cd7f9a4 48-51
+  s_d252b4bfade5d8::t_e3f0860f3d1791 9
+src/domain/validation.ts
+  s_d252b4bfade5d8::t_b3544405749687 135
+  s_d252b4bfade5d8::t_23d3641668e3b3 119-121,123-124
+src/domain/challenge-templates.ts
+  s_d252b4bfade5d8::t_5060fcb9322c10 2-3
+  s_d252b4bfade5d8::t_cbc79c983330e3 1,5-11,17,23,27,29-32,39
+tests/e2e/gate.spec.ts
+  s_d252b4bfade5d8::t_7057b664792935 90-112
+src/domain/validation.test.ts
+  s_d252b4bfade5d8::t_3daa12be76d065 96
+  s_d252b4bfade5d8::t_e0bc9a65b9db1c 63,72-76,84-95,97-100
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.43-trip",
+  "base_commit_sha": "90f58fe6afccc782c61c692891544da110366912",
+  "prompts": {},
+  "sessions": {
+    "s_d252b4bfade5d8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "50dafaeb-7f8e-4b3f-b681-40da82597dfd",
+        "model": "kimi-k3"
+      },
+      "human_author": "starwingcc <707491663@qq.com>"
+    }
+  }
+}
