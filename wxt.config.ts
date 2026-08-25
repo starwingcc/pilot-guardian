@@ -20,6 +20,13 @@ export default defineConfig({
     ],
     host_permissions: ['<all_urls>'],
     incognito: 'not_allowed',
+    sandbox: {
+      pages: ['sandbox.html'],
+    },
+    content_security_policy: {
+      extension_pages: "script-src 'self'; object-src 'self'",
+      sandbox: "sandbox allow-scripts; script-src 'self' 'unsafe-inline' 'unsafe-eval'; child-src 'self' data: blob:; object-src 'none'",
+    },
     web_accessible_resources: [
       {
         resources: ['gate.html'],

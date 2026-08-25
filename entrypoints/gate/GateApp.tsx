@@ -1,5 +1,5 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import {
   ArrowRightIcon,
   CircleAlertIcon,
@@ -18,7 +18,11 @@ import { Input } from '@/src/components/ui/input'
 import { Progress } from '@/src/components/ui/progress'
 import { Skeleton } from '@/src/components/ui/skeleton'
 import { Spinner } from '@/src/components/ui/spinner'
-import type { GateContext, GateSubmitResponse } from '../../src/runtime/messages'
+import { SandboxFrame } from '@/src/components/challenge/SandboxFrame'
+import { challengeHtml } from '../../src/domain/challenge-templates'
+import type { PublicGateChallengeStep } from '../../src/domain/types'
+import { cn } from '../../src/lib/utils'
+import type { GateAdvanceResponse, GateContext } from '../../src/runtime/messages'
 import { sendRuntimeMessage } from '../../src/ui/runtime-client'
 import { formatDateTime, formatRemaining } from '../../src/ui/time'
 
@@ -64,6 +68,57 @@ function FlightPath() {
   )
 }
 
+interface InteractiveGateProps {
+  context: GateContext
+  step: Extract<PublicGateChallengeStep, { type: 'interactive' }>
+  onAdvance: () => Promise<void>
+}
+
+function InteractiveGate({ context, step, onAdvance }: InteractiveGateProps) {
+  const inFlight = useRef(false)
+  const html = challengeHtml(step) ?? ''
+  const complete = useCallback(async () => {
+    if (inFlight.current) return
+    inFlight.current = true
+    try {
+      await onAdvance()
+    } finally {
+      inFlight.current = false
+    }
+  }, [onAdvance])
+
+  return (
+    <main className="interactive-gate">
+      <div
+        className="interactive-progress"
+        role="progressbar"
+        aria-label={`挑战进度 ${context.stepIndex + 1} / ${context.totalSteps}`}
+        aria-valuemin={0}
+        aria-valuemax={context.totalSteps}
+        aria-valuenow={context.stepIndex}
+      >
+        {Array.from({ length: context.totalSteps }, (_, index) => (
+          <span
+            key={index}
+            className={cn(
+              'interactive-progress__segment',
+              index < context.stepIndex && 'is-complete',
+              index === context.stepIndex && 'is-current',
+            )}
+          />
+        ))}
+      </div>
+      <SandboxFrame
+        className="interactive-gate__frame"
+        html={html}
+        sessionId={context.sessionId}
+        title={`${context.rule.name} · 交互挑战 ${context.stepIndex + 1}`}
+        onComplete={() => void complete()}
+      />
+    </main>
+  )
+}
+
 export function GateApp() {
   const ruleId = new URLSearchParams(location.search).get('ruleId') ?? ''
   const [context, setContext] = useState<GateContext>()
@@ -103,13 +158,15 @@ export function GateApp() {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    if (!context || submitting) return
+    if (!context || context.step?.type !== 'text' || submitting) return
     setSubmitting(true)
     try {
-      const result = await sendRuntimeMessage<GateSubmitResponse>({
-        type: 'gate:submit',
+      const result = await sendRuntimeMessage<GateAdvanceResponse>({
+        type: 'gate:submit-text',
         ruleId,
+        stepId: context.step.id,
         stepIndex: context.stepIndex,
+        sessionId: context.sessionId,
         answer,
       })
       if (!result.ok) {
@@ -124,7 +181,7 @@ export function GateApp() {
         else await loadContext()
         return
       }
-      setContext((previous) => previous ? { ...previous, stepIndex: result.nextStepIndex } : previous)
+      await loadContext()
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : '口令校验失败')
       setErrorPulse((value) => value + 1)
@@ -133,13 +190,49 @@ export function GateApp() {
     }
   }
 
-  const step = context?.rule.challenges[context.stepIndex]
-  const totalSteps = context?.rule.challenges.length ?? 0
+  const completeInteractive = useCallback(async () => {
+    if (!context || context.step?.type !== 'interactive') return
+    const result = await sendRuntimeMessage<GateAdvanceResponse>({
+      type: 'gate:complete-interactive',
+      ruleId,
+      stepId: context.step.id,
+      stepIndex: context.stepIndex,
+      sessionId: context.sessionId,
+    })
+    if (!result.ok) {
+      setError(result.error)
+      return
+    }
+    if (result.complete) {
+      if (result.redirectUrl) location.replace(result.redirectUrl)
+      else await loadContext()
+      return
+    }
+    await loadContext()
+  }, [context, loadContext, ruleId])
+
+  const step = context?.step
+  const totalSteps = context?.totalSteps ?? 0
   const stepProgress = totalSteps > 0 ? ((context?.stepIndex ?? 0) / totalSteps) * 100 : 0
   const waiting = context?.evaluation.state === 'waiting'
+  const customSceneHtml = step?.type === 'text' && step.scene.kind === 'custom'
+    ? step.scene.document.html
+    : undefined
+
+  if (!loading && context?.evaluation.state === 'challenge' && step?.type === 'interactive') {
+    return <InteractiveGate context={context} step={step} onAdvance={completeInteractive} />
+  }
 
   return (
-    <main className="gate-scene">
+    <main className={cn('gate-scene', customSceneHtml && 'gate-scene--custom')}>
+      {customSceneHtml && context ? (
+        <SandboxFrame
+          className="gate-scene__custom-frame"
+          html={customSceneHtml}
+          sessionId={`${context.sessionId}:scene`}
+          title={`${context.rule.name} · 自定义挑战场景`}
+        />
+      ) : null}
       <div className="gate-noise" aria-hidden="true" />
       <FlightPath />
       <header className="gate-nav">
@@ -178,7 +271,7 @@ export function GateApp() {
             </Card>
           ) : context ? (
             <AnimatePresence mode="wait">
-              {context.evaluation.state === 'challenge' && step ? (
+              {context.evaluation.state === 'challenge' && step?.type === 'text' ? (
                 <motion.div
                   key={step.id}
                   initial={reduceMotion ? false : { opacity: 0, x: 36, filter: 'blur(8px)' }}

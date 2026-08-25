@@ -1,13 +1,20 @@
 import { activateAccess, evaluateRule, isAnswerCorrect, settleRuntime } from '../domain/policy'
-import { CONFIG_SCHEMA_VERSION, type AccessRule, type RuntimeStore, type StoredConfig } from '../domain/types'
+import {
+  CONFIG_SCHEMA_VERSION,
+  type AccessRule,
+  type ChallengeStep,
+  type RuntimeStore,
+  type StoredConfig,
+} from '../domain/types'
 import { findMatchingRule } from '../domain/url-pattern'
 import { validateStoredConfig } from '../domain/validation'
 import { replaceDynamicRules } from './dnr'
-import type { GateContext, GateSubmitResponse, RuleStatus, RuntimeRequest } from './messages'
-import { toPublicRule } from './messages'
+import type { GateAdvanceResponse, GateContext, RuleStatus, RuntimeRequest } from './messages'
+import { toPublicGateStep, toPublicRule } from './messages'
 import {
   clearChallengeProgress,
   clearPendingNavigation,
+  clearRuleChallengeProgress,
   getChallengeProgress,
   getPendingNavigation,
   loadConfig,
@@ -22,6 +29,10 @@ import {
 const POLICY_ALARM = 'pilot-guardian-policy-boundary'
 const POLICY_WATCHDOG = 'pilot-guardian-policy-watchdog'
 let syncQueue: Promise<void> = Promise.resolve()
+
+function challengeSequenceSignature(rule: AccessRule): string {
+  return JSON.stringify(rule.challenges)
+}
 
 function runtimeChanged(left: object, right: object): boolean {
   return JSON.stringify(left) !== JSON.stringify(right)
@@ -116,61 +127,78 @@ async function gateContext(ruleId: string, tabId: number): Promise<GateContext> 
   ])
   const rule = config.rules.find((candidate) => candidate.id === ruleId && candidate.enabled)
   if (!rule) throw new Error('访问规则不存在或已停用')
+  if (pending?.ruleId !== ruleId) throw new Error('当前标签页没有对应的受控导航')
 
   let evaluation = evaluateRule(rule, stateForRule(runtime, rule.id), now)
   if (evaluation.reason === 'interval-ready' && rule.mode === 'schedule') {
     await saveActivatedRule(rule, runtime, now)
     evaluation = evaluateRule(rule, stateForRule(runtime, rule.id), now)
   }
-  const stepIndex = await getChallengeProgress(tabId, ruleId)
+  const progress = await getChallengeProgress(tabId, ruleId, challengeSequenceSignature(rule))
+  const stepIndex = Math.min(progress.stepIndex, Math.max(0, rule.challenges.length - 1))
+  const step = rule.challenges[stepIndex]
   const context: GateContext = {
-    rule: toPublicRule(rule),
+    rule: { id: rule.id, name: rule.name },
     evaluation,
-    stepIndex: Math.min(stepIndex, Math.max(0, rule.challenges.length - 1)),
+    stepIndex,
+    totalSteps: rule.challenges.length,
+    ...(step ? { step: toPublicGateStep(step) } : {}),
+    sessionId: progress.sessionId,
     now,
+    originalUrl: pending.url,
   }
-  if (pending?.ruleId === ruleId) context.originalUrl = pending.url
   return context
 }
 
-async function submitChallenge(
-  request: Extract<RuntimeRequest, { type: 'gate:submit' }>,
+interface ChallengeCompletionRequest {
+  ruleId: string
+  stepId: string
+  stepIndex: number
+  sessionId: string
+}
+
+async function completeChallenge(
+  request: ChallengeCompletionRequest,
   tabId: number,
-): Promise<GateSubmitResponse> {
+  expectedType: ChallengeStep['type'],
+  answer?: string,
+): Promise<GateAdvanceResponse> {
   const [config, runtime] = await Promise.all([loadConfig(), loadRuntimeStore()])
   const rule = config.rules.find((candidate) => candidate.id === request.ruleId && candidate.enabled)
   if (!rule) return { ok: false, error: '访问规则不存在或已停用' }
+  const pending = await getPendingNavigation(tabId)
+  if (pending?.ruleId !== rule.id) return { ok: false, error: '当前标签页没有对应的受控导航' }
 
   const now = Date.now()
   if (evaluateRule(rule, stateForRule(runtime, rule.id), now).state !== 'challenge') {
-    const pending = await getPendingNavigation(tabId)
-    return pending?.ruleId === rule.id
-      ? { ok: true, complete: true, redirectUrl: pending.url }
-      : { ok: true, complete: true }
+    return { ok: true, complete: true, redirectUrl: pending.url }
   }
 
-  const expectedIndex = await getChallengeProgress(tabId, rule.id)
-  if (request.stepIndex !== expectedIndex) return { ok: false, error: '挑战进度已变化，请重试' }
-  const challenge = rule.challenges[expectedIndex]
-  if (!challenge || !isAnswerCorrect(challenge.answer, request.answer)) {
+  const signature = challengeSequenceSignature(rule)
+  const progress = await getChallengeProgress(tabId, rule.id, signature)
+  if (request.stepIndex !== progress.stepIndex || request.sessionId !== progress.sessionId) {
+    return { ok: false, error: '挑战会话已变化，请刷新后重试' }
+  }
+  const challenge = rule.challenges[progress.stepIndex]
+  if (!challenge || challenge.id !== request.stepId || challenge.type !== expectedType) {
+    return { ok: false, error: '挑战步骤不匹配' }
+  }
+  if (challenge.type === 'text' && (answer === undefined || !isAnswerCorrect(challenge.answer, answer))) {
     return { ok: false, error: '口令不正确' }
   }
 
-  const nextStepIndex = expectedIndex + 1
+  const nextStepIndex = progress.stepIndex + 1
   if (nextStepIndex < rule.challenges.length) {
-    await setChallengeProgress(tabId, rule.id, nextStepIndex)
+    await setChallengeProgress(tabId, rule.id, nextStepIndex, signature)
     return { ok: true, complete: false, nextStepIndex }
   }
 
   await saveActivatedRule(rule, runtime, now)
-  const pending = await getPendingNavigation(tabId)
   await Promise.all([
     clearChallengeProgress(tabId, rule.id),
     clearPendingNavigation(tabId),
   ])
-  return pending?.ruleId === rule.id
-    ? { ok: true, complete: true, redirectUrl: pending.url }
-    : { ok: true, complete: true }
+  return { ok: true, complete: true, redirectUrl: pending.url }
 }
 
 async function saveRules(input: unknown): Promise<{ ok: true } | { ok: false; errors: string[] }> {
@@ -180,6 +208,7 @@ async function saveRules(input: unknown): Promise<{ ok: true } | { ok: false; er
   const [previous, runtime] = await Promise.all([loadConfig(), loadRuntimeStore()])
   const now = Date.now()
   const previousById = new Map(previous.rules.map((rule) => [rule.id, rule]))
+  const changedRuleIds = new Set<string>()
   const nextRuntime: RuntimeStore = { schemaVersion: CONFIG_SCHEMA_VERSION, byRuleId: {} }
   for (const rule of parsed.value.rules) {
     const oldRule = previousById.get(rule.id)
@@ -198,6 +227,7 @@ async function saveRules(input: unknown): Promise<{ ok: true } | { ok: false; er
       accessDurationMinutes: rule.accessDurationMinutes,
     })
     if (oldRule && behaviorChanged) {
+      changedRuleIds.add(rule.id)
       const preserved = { ...settleRuntime(oldRule, oldRuntime, now) }
       if (preserved.activeUntil && oldRule.schedule?.kind === 'interval') {
         preserved.lastWindowEndedAt = now
@@ -210,7 +240,15 @@ async function saveRules(input: unknown): Promise<{ ok: true } | { ok: false; er
     }
   }
 
-  await Promise.all([saveConfig(parsed.value), saveRuntimeStore(nextRuntime)])
+  for (const oldRule of previous.rules) {
+    if (!parsed.value.rules.some((rule) => rule.id === oldRule.id)) changedRuleIds.add(oldRule.id)
+  }
+
+  await Promise.all([
+    saveConfig(parsed.value),
+    saveRuntimeStore(nextRuntime),
+    ...[...changedRuleIds].map(clearRuleChallengeProgress),
+  ])
   await requestPolicySync()
   return { ok: true }
 }
@@ -234,16 +272,32 @@ export async function handleRuntimeMessage(
   request: RuntimeRequest,
   sender: chrome.runtime.MessageSender,
 ): Promise<unknown> {
-  if (request.type === 'config:get') return loadConfig()
-  if (request.type === 'config:save') return saveRules(request.rules)
-  if (request.type === 'status:get') return getStatus(request.url, request.ruleId)
+  if (request.type === 'config:get' || request.type === 'config:save') {
+    assertExtensionPage(sender, 'options.html')
+    return request.type === 'config:get' ? loadConfig() : saveRules(request.rules)
+  }
+  if (request.type === 'status:get') {
+    assertExtensionPage(sender, 'popup.html')
+    return getStatus(request.url, request.ruleId)
+  }
 
   const tabId = sender.tab?.id
   if (tabId === undefined) throw new Error('无法识别当前标签页')
 
-  if (request.type === 'gate:get-context') return gateContext(request.ruleId, tabId)
-  if (request.type === 'gate:submit') return submitChallenge(request, tabId)
+  if (request.type === 'gate:get-context') {
+    assertGatePage(sender, request.ruleId)
+    return gateContext(request.ruleId, tabId)
+  }
+  if (request.type === 'gate:submit-text') {
+    assertGatePage(sender, request.ruleId)
+    return completeChallenge(request, tabId, 'text', request.answer)
+  }
+  if (request.type === 'gate:complete-interactive') {
+    assertGatePage(sender, request.ruleId)
+    return completeChallenge(request, tabId, 'interactive')
+  }
   if (request.type === 'navigation:spa') {
+    assertWebPage(sender, request.url)
     const blocked = await handleNavigation(tabId, request.url)
     if (blocked) {
       const config = await loadConfig()
@@ -257,6 +311,35 @@ export async function handleRuntimeMessage(
     return { blocked }
   }
   return undefined
+}
+
+function senderUrl(sender: chrome.runtime.MessageSender): URL {
+  const raw = sender.url ?? sender.tab?.url
+  if (!raw) throw new Error('无法识别消息来源')
+  return new URL(raw)
+}
+
+function assertExtensionPage(sender: chrome.runtime.MessageSender, page: string): void {
+  const actual = senderUrl(sender)
+  const expected = new URL(chrome.runtime.getURL(`/${page}`))
+  if (sender.id !== chrome.runtime.id || actual.origin !== expected.origin || actual.pathname !== expected.pathname) {
+    throw new Error('消息来源没有执行此操作的权限')
+  }
+}
+
+function assertGatePage(sender: chrome.runtime.MessageSender, ruleId: string): void {
+  assertExtensionPage(sender, 'gate.html')
+  if (senderUrl(sender).searchParams.get('ruleId') !== ruleId) {
+    throw new Error('闸门规则与消息不匹配')
+  }
+}
+
+function assertWebPage(sender: chrome.runtime.MessageSender, requestedUrl: string): void {
+  const source = senderUrl(sender)
+  const requested = new URL(requestedUrl)
+  if (sender.id !== chrome.runtime.id || !/^https?:$/.test(source.protocol) || !/^https?:$/.test(requested.protocol)) {
+    throw new Error('页面导航消息来源无效')
+  }
 }
 
 export function registerController(): void {

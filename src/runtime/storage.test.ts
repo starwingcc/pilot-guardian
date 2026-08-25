@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { CONFIG_SCHEMA_VERSION } from '../domain/types'
 import { loadConfig, loadRuntimeStore } from './storage'
 
 const get = vi.fn()
@@ -19,21 +20,21 @@ describe('配置存储版本校验', () => {
 
   afterEach(() => vi.unstubAllGlobals())
 
-  it('读取 v1 配置时回退为空配置且不回写', async () => {
+  it('读取不兼容配置时回退为空配置且不回写', async () => {
     get.mockResolvedValue({
-      pilotGuardianConfig: { schemaVersion: 1, rules: [] },
+      pilotGuardianConfig: { schemaVersion: 2, rules: [] },
     })
 
     const config = await loadConfig()
 
-    expect(config).toEqual({ schemaVersion: 2, rules: [] })
+    expect(config).toEqual({ schemaVersion: CONFIG_SCHEMA_VERSION, rules: [] })
     expect(set).not.toHaveBeenCalled()
   })
 
-  it('读取 v1 runtime 时丢弃旧状态', async () => {
+  it('读取不兼容 runtime 时丢弃旧状态', async () => {
     get.mockResolvedValue({
       pilotGuardianRuntime: {
-        schemaVersion: 1,
+        schemaVersion: 2,
         byRuleId: { 'legacy-rule': { activeUntil: 1_900_000_000_000 } },
       },
     })
@@ -41,7 +42,7 @@ describe('配置存储版本校验', () => {
     const runtime = await loadRuntimeStore()
 
     expect(runtime).toEqual({
-      schemaVersion: 2,
+      schemaVersion: CONFIG_SCHEMA_VERSION,
       byRuleId: {},
     })
   })

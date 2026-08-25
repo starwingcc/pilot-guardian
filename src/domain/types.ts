@@ -1,4 +1,6 @@
-export const CONFIG_SCHEMA_VERSION = 2 as const
+export const CONFIG_SCHEMA_VERSION = 3 as const
+export const MAX_CUSTOM_DOCUMENT_BYTES = 256 * 1024
+export const MAX_CONFIG_BYTES = 2 * 1024 * 1024
 
 export type Scheme = 'http' | 'https'
 export type RuleMode = 'password' | 'schedule' | 'combined'
@@ -10,10 +12,54 @@ export interface TargetPattern {
   path: string
 }
 
-export interface ChallengeStep {
-  id: string
-  answer: string
+export interface CustomChallengeDocument {
+  html: string
+  reviewState: 'ready' | 'required'
 }
+
+export type TextChallengeScene =
+  | { kind: 'default' }
+  | { kind: 'custom'; document: CustomChallengeDocument }
+
+export interface TextChallengeStep {
+  id: string
+  type: 'text'
+  answer: string
+  scene: TextChallengeScene
+}
+
+export interface WoodenFishTemplateSource {
+  kind: 'template'
+  templateId: 'wooden-fish'
+  parameters: {
+    requiredHits: number
+  }
+}
+
+export interface ReactionTestTemplateSource {
+  kind: 'template'
+  templateId: 'reaction-test'
+  parameters: {
+    minimumDelayMs: number
+    maximumDelayMs: number
+    successWindowMs: number
+  }
+}
+
+export type OfficialTemplateSource = WoodenFishTemplateSource | ReactionTestTemplateSource
+
+export interface CustomInteractiveSource {
+  kind: 'custom'
+  document: CustomChallengeDocument
+}
+
+export interface InteractiveChallengeStep {
+  id: string
+  type: 'interactive'
+  source: OfficialTemplateSource | CustomInteractiveSource
+}
+
+export type ChallengeStep = TextChallengeStep | InteractiveChallengeStep
 
 export interface IntervalSchedule {
   kind: 'interval'
@@ -85,7 +131,12 @@ export interface PolicyEvaluation {
 
 export interface PublicChallengeStep {
   id: string
+  type: ChallengeStep['type']
 }
+
+export type PublicGateChallengeStep =
+  | Omit<TextChallengeStep, 'answer'>
+  | InteractiveChallengeStep
 
 export type PublicAccessRule = Omit<AccessRule, 'challenges'> & {
   challenges: PublicChallengeStep[]

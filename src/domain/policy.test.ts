@@ -21,7 +21,7 @@ function baseRule(overrides: Partial<AccessRule> = {}): AccessRule {
     priority: 0,
     target: { schemes: ['https'], host: 'example.com', includeSubdomains: false, path: '/*' },
     mode: 'password',
-    challenges: [{ id: 'step', answer: 'Secret' }],
+    challenges: [{ id: 'step', type: 'text', answer: 'Secret', scene: { kind: 'default' } }],
     accessDurationMinutes: 30,
     ...overrides,
   }

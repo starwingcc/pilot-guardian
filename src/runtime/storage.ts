@@ -19,7 +19,13 @@ export interface PendingNavigation {
 }
 
 type PendingStore = Record<string, PendingNavigation>
-type ProgressStore = Record<string, number>
+export interface ChallengeProgress {
+  stepIndex: number
+  sequenceSignature: string
+  sessionId: string
+}
+
+type ProgressStore = Record<string, ChallengeProgress>
 
 export async function loadConfig(): Promise<StoredConfig> {
   const stored = await chrome.storage.local.get(CONFIG_KEY)
@@ -87,18 +93,39 @@ function progressKey(tabId: number, ruleId: string): string {
   return `${tabId}:${ruleId}`
 }
 
-export async function getChallengeProgress(tabId: number, ruleId: string): Promise<number> {
+export async function getChallengeProgress(
+  tabId: number,
+  ruleId: string,
+  sequenceSignature: string,
+): Promise<ChallengeProgress> {
   const store = await loadSessionRecord<ProgressStore>(PROGRESS_KEY)
-  return store[progressKey(tabId, ruleId)] ?? 0
+  const key = progressKey(tabId, ruleId)
+  const current = store[key]
+  if (current?.sequenceSignature === sequenceSignature && Number.isInteger(current.stepIndex)) {
+    return current
+  }
+  const next: ChallengeProgress = {
+    stepIndex: 0,
+    sequenceSignature,
+    sessionId: crypto.randomUUID(),
+  }
+  store[key] = next
+  await chrome.storage.session.set({ [PROGRESS_KEY]: store })
+  return next
 }
 
 export async function setChallengeProgress(
   tabId: number,
   ruleId: string,
   stepIndex: number,
+  sequenceSignature: string,
 ): Promise<void> {
   const store = await loadSessionRecord<ProgressStore>(PROGRESS_KEY)
-  store[progressKey(tabId, ruleId)] = stepIndex
+  store[progressKey(tabId, ruleId)] = {
+    stepIndex,
+    sequenceSignature,
+    sessionId: crypto.randomUUID(),
+  }
   await chrome.storage.session.set({ [PROGRESS_KEY]: store })
 }
 
@@ -106,6 +133,17 @@ export async function clearChallengeProgress(tabId: number, ruleId: string): Pro
   const store = await loadSessionRecord<ProgressStore>(PROGRESS_KEY)
   delete store[progressKey(tabId, ruleId)]
   await chrome.storage.session.set({ [PROGRESS_KEY]: store })
+}
+
+export async function clearRuleChallengeProgress(ruleId: string): Promise<void> {
+  const store = await loadSessionRecord<ProgressStore>(PROGRESS_KEY)
+  let changed = false
+  for (const key of Object.keys(store)) {
+    if (!key.endsWith(`:${ruleId}`)) continue
+    delete store[key]
+    changed = true
+  }
+  if (changed) await chrome.storage.session.set({ [PROGRESS_KEY]: store })
 }
 
 export function stateForRule(

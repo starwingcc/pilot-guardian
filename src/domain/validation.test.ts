@@ -15,7 +15,7 @@ const validRule = {
     path: '/*',
   },
   mode: 'password',
-  challenges: [{ id: 'step', answer: '明文答案' }],
+  challenges: [{ id: 'step', type: 'text', answer: '明文答案', scene: { kind: 'default' } }],
   accessDurationMinutes: 30,
 }
 
@@ -25,7 +25,9 @@ describe('配置校验', () => {
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.value.rules[0]?.priority).toBe(0)
-    expect(result.value.rules[0]?.challenges[0]?.answer).toBe('明文答案')
+    const challenge = result.value.rules[0]?.challenges[0]
+    expect(challenge?.type).toBe('text')
+    if (challenge?.type === 'text') expect(challenge.answer).toBe('明文答案')
   })
 
   it('拒绝没有答案的口令规则', () => {
@@ -41,20 +43,97 @@ describe('配置校验', () => {
     expect(result).toEqual({ ok: false, errors: ['不支持的导出文件版本'] })
   })
 
-  it('拒绝 v1 存储配置', () => {
+  it('拒绝不兼容的存储配置', () => {
     const result = validateStoredConfig({
-      schemaVersion: 1,
-      rules: [{ ...validRule, theme: 'aurora' }],
+      schemaVersion: 2,
+      rules: [validRule],
     })
     expect(result).toEqual({ ok: false, errors: ['不支持的配置版本'] })
   })
 
-  it('拒绝 v1 导出文件', () => {
+  it('拒绝不兼容的导出文件', () => {
     const result = validateExportBundle({
-      schemaVersion: 1,
+      schemaVersion: 2,
       exportedAt: '2025-01-01T00:00:00.000Z',
-      rules: [{ ...validRule, theme: 'cockpit' }],
+      rules: [validRule],
     })
     expect(result).toEqual({ ok: false, errors: ['不支持的导出文件版本'] })
+  })
+
+  it('接受参数受约束的官方交互模板', () => {
+    const result = validateStoredConfig({
+      schemaVersion: CONFIG_SCHEMA_VERSION,
+      rules: [{
+        ...validRule,
+        challenges: [{
+          id: 'interactive',
+          type: 'interactive',
+          source: {
+            kind: 'template',
+            templateId: 'reaction-test',
+            parameters: { minimumDelayMs: 1500, maximumDelayMs: 4000, successWindowMs: 600 },
+          },
+        }],
+      }],
+    })
+    expect(result.ok).toBe(true)
+  })
+
+  it('拒绝启用尚未预览的自定义文档', () => {
+    const result = validateStoredConfig({
+      schemaVersion: CONFIG_SCHEMA_VERSION,
+      rules: [{
+        ...validRule,
+        challenges: [{
+          id: 'custom',
+          type: 'interactive',
+          source: {
+            kind: 'custom',
+            document: { html: '<!doctype html><button>完成</button>', reviewState: 'required' },
+          },
+        }],
+      }],
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.errors.join('；')).toContain('尚未预览')
+  })
+
+  it('允许读取待审查的导入文档，以便随后自动停用规则', () => {
+    const result = validateExportBundle({
+      schemaVersion: CONFIG_SCHEMA_VERSION,
+      exportedAt: '2026-08-25T00:00:00.000Z',
+      rules: [{
+        ...validRule,
+        challenges: [{
+          id: 'custom',
+          type: 'interactive',
+          source: {
+            kind: 'custom',
+            document: { html: '<!doctype html><button>完成</button>', reviewState: 'required' },
+          },
+        }],
+      }],
+    })
+    expect(result.ok).toBe(true)
+  })
+
+  it('拒绝超过单文档限制的自定义 HTML', () => {
+    const result = validateStoredConfig({
+      schemaVersion: CONFIG_SCHEMA_VERSION,
+      rules: [{
+        ...validRule,
+        enabled: false,
+        challenges: [{
+          id: 'custom',
+          type: 'interactive',
+          source: {
+            kind: 'custom',
+            document: { html: 'a'.repeat(256 * 1024 + 1), reviewState: 'required' },
+          },
+        }],
+      }],
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.errors.join('；')).toContain('256KB')
   })
 })

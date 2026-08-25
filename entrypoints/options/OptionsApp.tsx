@@ -36,6 +36,7 @@ import { Toaster } from '@/src/components/ui/sonner'
 import { TooltipProvider } from '@/src/components/ui/tooltip'
 import { Input } from '@/src/components/ui/input'
 import { createDefaultRule } from '../../src/domain/defaults'
+import { hasUnreviewedDocuments, markCustomDocumentsForReview } from '../../src/domain/custom-documents'
 import {
   CONFIG_SCHEMA_VERSION,
   type AccessRule,
@@ -45,7 +46,7 @@ import {
 import { findMatchingRule, patternsMayOverlap } from '../../src/domain/url-pattern'
 import { validateExportBundle, validateStoredConfig } from '../../src/domain/validation'
 import { sendRuntimeMessage } from '../../src/ui/runtime-client'
-import { MissionPreview } from './components/MissionPreview'
+import { RuleDiagnostics } from './components/RuleDiagnostics'
 import { RuleEditor } from './components/RuleEditor'
 import { RuleRail } from './components/RuleRail'
 
@@ -149,8 +150,16 @@ export function OptionsApp() {
     toast('规则已从草稿移除', { description: '保存配置后才会更新浏览器拦截。' })
   }
 
-  const persistRules = async (nextRules: AccessRule[]): Promise<boolean> => {
+  const persistRules = async (
+    nextRules: AccessRule[],
+    options: { allowUnreviewed?: boolean } = {},
+  ): Promise<boolean> => {
     const normalized = nextRules.map((rule, priority) => ({ ...rule, priority }))
+    if (!options.allowUnreviewed && normalized.some(hasUnreviewedDocuments)) {
+      setErrors(['修改后的自定义 HTML 必须成功运行沙箱预览后才能保存'])
+      toast.error('请先预览自定义 HTML')
+      return false
+    }
     const localValidation = validateStoredConfig({
       schemaVersion: CONFIG_SCHEMA_VERSION,
       rules: normalized,
@@ -220,7 +229,10 @@ export function OptionsApp() {
         toast.error('导入文件无效')
         return
       }
-      setPendingImport(parsed.value)
+      setPendingImport({
+        ...parsed.value,
+        rules: parsed.value.rules.map(markCustomDocumentsForReview),
+      })
     } catch {
       setErrors(['无法解析导入文件'])
       toast.error('无法解析导入文件')
@@ -229,10 +241,10 @@ export function OptionsApp() {
 
   const importConfig = async () => {
     if (!pendingImport) return
-    if (await persistRules(pendingImport.rules)) {
+    if (await persistRules(pendingImport.rules, { allowUnreviewed: true })) {
       setSelectedId(pendingImport.rules[0]?.id)
       setPendingImport(undefined)
-      toast.success('配置已导入', { description: '旧版文件会自动升级为 v2。' })
+      toast.success('配置已导入', { description: '含自定义代码的规则已停用，预览后可手动启用。' })
     }
   }
 
@@ -317,8 +329,8 @@ export function OptionsApp() {
           </section>
 
           {selected ? (
-            <aside className="preview-deck">
-              <MissionPreview
+            <aside className="diagnostics-deck">
+              <RuleDiagnostics
                 rule={selected}
                 testUrl={testUrl}
                 onTestUrlChange={setTestUrl}
@@ -331,16 +343,16 @@ export function OptionsApp() {
         {selected ? (
           <Sheet>
             <SheetTrigger asChild>
-              <Button className="preview-trigger" variant="secondary" size="lg">
-                <MenuIcon data-icon="inline-start" />打开实时预览
+              <Button className="diagnostics-trigger" variant="secondary" size="lg">
+                <MenuIcon data-icon="inline-start" />打开规则诊断
               </Button>
             </SheetTrigger>
-            <SheetContent className="preview-sheet">
+            <SheetContent className="diagnostics-sheet">
               <SheetHeader>
-                <SheetTitle>闸门实时预览</SheetTitle>
-                <SheetDescription>检查访客看到的挑战状态和 URL 命中结果。</SheetDescription>
+                <SheetTitle>规则诊断</SheetTitle>
+                <SheetDescription>检查测试地址最终会命中哪一条访问规则。</SheetDescription>
               </SheetHeader>
-              <MissionPreview
+              <RuleDiagnostics
                 rule={selected}
                 testUrl={testUrl}
                 onTestUrlChange={setTestUrl}
@@ -386,7 +398,7 @@ export function OptionsApp() {
               <AlertDialogMedia><FileUpIcon /></AlertDialogMedia>
               <AlertDialogTitle>覆盖当前配置？</AlertDialogTitle>
               <AlertDialogDescription>
-                导入的 {pendingImport?.rules.length ?? 0} 条规则将替换当前配置，旧版配置会自动升级为 v2。
+                导入的 {pendingImport?.rules.length ?? 0} 条规则将替换当前配置。含自定义代码的规则会保持停用，直到完成预览并由你手动启用。
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

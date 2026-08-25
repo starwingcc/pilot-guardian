@@ -1,10 +1,16 @@
 import {
   CONFIG_SCHEMA_VERSION,
+  MAX_CONFIG_BYTES,
+  MAX_CUSTOM_DOCUMENT_BYTES,
   type AccessRule,
+  type ChallengeStep,
+  type CustomChallengeDocument,
   type ExportBundle,
   type MonthlySchedule,
+  type OfficialTemplateSource,
   type Schedule,
   type StoredConfig,
+  type TextChallengeScene,
   type WeeklySchedule,
 } from './types'
 import { normalizeHost, normalizePath } from './url-pattern'
@@ -19,6 +25,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isPositiveNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value) && value > 0
+}
+
+function utf8Size(value: string): number {
+  return new TextEncoder().encode(value).byteLength
 }
 
 function parseSchedule(value: unknown, errors: string[], label: string): Schedule | undefined {
@@ -56,7 +66,128 @@ function parseSchedule(value: unknown, errors: string[], label: string): Schedul
   return undefined
 }
 
-function parseRule(value: unknown, index: number, errors: string[]): AccessRule | undefined {
+function parseDocument(
+  value: unknown,
+  errors: string[],
+  label: string,
+): CustomChallengeDocument | undefined {
+  if (!isRecord(value) || typeof value.html !== 'string' || !value.html.trim()) {
+    errors.push(`${label}缺少自定义 HTML`)
+    return undefined
+  }
+  if (utf8Size(value.html) > MAX_CUSTOM_DOCUMENT_BYTES) {
+    errors.push(`${label}超过 256KB 上限`)
+  }
+  return {
+    html: value.html,
+    reviewState: value.reviewState === 'ready' ? 'ready' : 'required',
+  }
+}
+
+function parseTextScene(value: unknown, errors: string[], label: string): TextChallengeScene {
+  if (!isRecord(value) || value.kind === 'default') return { kind: 'default' }
+  if (value.kind === 'custom') {
+    const document = parseDocument(value.document, errors, `${label}的挑战场景`)
+    if (document) return { kind: 'custom', document }
+  } else {
+    errors.push(`${label}的挑战场景类型无效`)
+  }
+  return { kind: 'default' }
+}
+
+function parseTemplateSource(
+  value: Record<string, unknown>,
+  errors: string[],
+  label: string,
+): OfficialTemplateSource | undefined {
+  const parameters = isRecord(value.parameters) ? value.parameters : {}
+  if (value.templateId === 'wooden-fish') {
+    const requiredHits = parameters.requiredHits
+    if (!Number.isInteger(requiredHits) || Number(requiredHits) < 1 || Number(requiredHits) > 20) {
+      errors.push(`${label}的木鱼点击次数必须是 1 到 20 之间的整数`)
+      return undefined
+    }
+    return {
+      kind: 'template',
+      templateId: 'wooden-fish',
+      parameters: { requiredHits: Number(requiredHits) },
+    }
+  }
+  if (value.templateId === 'reaction-test') {
+    const minimumDelayMs = Number(parameters.minimumDelayMs)
+    const maximumDelayMs = Number(parameters.maximumDelayMs)
+    const successWindowMs = Number(parameters.successWindowMs)
+    if (!Number.isFinite(minimumDelayMs) || minimumDelayMs < 500 || minimumDelayMs > 10_000) {
+      errors.push(`${label}的最短等待时间必须在 500 到 10000 毫秒之间`)
+    }
+    if (!Number.isFinite(maximumDelayMs) || maximumDelayMs < minimumDelayMs || maximumDelayMs > 15_000) {
+      errors.push(`${label}的最长等待时间必须大于等于最短等待时间且不超过 15000 毫秒`)
+    }
+    if (!Number.isFinite(successWindowMs) || successWindowMs < 100 || successWindowMs > 3_000) {
+      errors.push(`${label}的成功窗口必须在 100 到 3000 毫秒之间`)
+    }
+    return {
+      kind: 'template',
+      templateId: 'reaction-test',
+      parameters: { minimumDelayMs, maximumDelayMs, successWindowMs },
+    }
+  }
+  errors.push(`${label}引用了未知官方模板`)
+  return undefined
+}
+
+function parseChallenge(value: unknown, index: number, errors: string[], ruleLabel: string): ChallengeStep | undefined {
+  const label = `${ruleLabel}的第 ${index + 1} 个挑战步骤`
+  if (!isRecord(value)) {
+    errors.push(`${label}无效`)
+    return undefined
+  }
+  const id = typeof value.id === 'string' && value.id ? value.id : crypto.randomUUID()
+  if (value.type === 'text') {
+    const answer = typeof value.answer === 'string' ? value.answer : ''
+    if (!answer) errors.push(`${label}缺少文本答案`)
+    return {
+      id,
+      type: 'text',
+      answer,
+      scene: parseTextScene(value.scene, errors, label),
+    }
+  }
+  if (value.type === 'interactive') {
+    if (!isRecord(value.source)) {
+      errors.push(`${label}缺少互动来源`)
+      return undefined
+    }
+    if (value.source.kind === 'template') {
+      const source = parseTemplateSource(value.source, errors, label)
+      return source ? { id, type: 'interactive', source } : undefined
+    }
+    if (value.source.kind === 'custom') {
+      const document = parseDocument(value.source.document, errors, `${label}的互动文档`)
+      return document ? { id, type: 'interactive', source: { kind: 'custom', document } } : undefined
+    }
+    errors.push(`${label}的互动来源类型无效`)
+    return undefined
+  }
+  errors.push(`${label}的挑战类型无效`)
+  return undefined
+}
+
+function hasPendingReview(rule: AccessRule): boolean {
+  return rule.challenges.some((challenge) => {
+    if (challenge.type === 'text') {
+      return challenge.scene.kind === 'custom' && challenge.scene.document.reviewState === 'required'
+    }
+    return challenge.source.kind === 'custom' && challenge.source.document.reviewState === 'required'
+  })
+}
+
+function parseRule(
+  value: unknown,
+  index: number,
+  errors: string[],
+  allowEnabledPendingReview: boolean,
+): AccessRule | undefined {
   const label = `第 ${index + 1} 条规则`
   if (!isRecord(value)) {
     errors.push(`${label}不是有效对象`)
@@ -71,8 +202,7 @@ function parseRule(value: unknown, index: number, errors: string[]): AccessRule 
   if (!host || !host.includes('.') || host.includes('/')) errors.push(`${label}的主机名无效`)
   const rawSchemes = Array.isArray(value.target.schemes) ? value.target.schemes : []
   const schemes = rawSchemes.filter((scheme): scheme is 'http' | 'https' =>
-    scheme === 'http' || scheme === 'https',
-  )
+    scheme === 'http' || scheme === 'https')
   if (schemes.length === 0) errors.push(`${label}至少选择一个协议`)
 
   const mode = value.mode
@@ -82,27 +212,18 @@ function parseRule(value: unknown, index: number, errors: string[]): AccessRule 
   }
 
   const challenges = Array.isArray(value.challenges)
-      ? value.challenges.flatMap((challenge, challengeIndex) => {
-        if (!isRecord(challenge)) return []
-        const answer = typeof challenge.answer === 'string' ? challenge.answer : ''
-        if (!answer) errors.push(`${label}的第 ${challengeIndex + 1} 道口令不完整`)
-        return [{
-          id: typeof challenge.id === 'string' && challenge.id ? challenge.id : crypto.randomUUID(),
-          answer,
-        }]
-      })
+    ? value.challenges.flatMap((challenge, challengeIndex) => {
+      const parsed = parseChallenge(challenge, challengeIndex, errors, label)
+      return parsed ? [parsed] : []
+    })
     : []
-  if (mode !== 'schedule' && challenges.length === 0) errors.push(`${label}至少需要一道口令`)
+  if (mode !== 'schedule' && challenges.length === 0) errors.push(`${label}至少需要一个挑战步骤`)
 
-  const schedule = mode === 'password'
-    ? undefined
-    : parseSchedule(value.schedule, errors, label)
+  const schedule = mode === 'password' ? undefined : parseSchedule(value.schedule, errors, label)
   const accessDurationMinutes = value.accessDurationMinutes
   if (!isPositiveNumber(accessDurationMinutes) || accessDurationMinutes > 10_080) {
     errors.push(`${label}的放行时长必须在 1 到 10080 分钟之间`)
   }
-
-  if (errors.length > 0 && (!host || schemes.length === 0)) return undefined
 
   const rule: AccessRule = {
     id: typeof value.id === 'string' && value.id ? value.id : crypto.randomUUID(),
@@ -125,14 +246,20 @@ function parseRule(value: unknown, index: number, errors: string[]): AccessRule 
       : 30,
   }
   if (schedule) rule.schedule = schedule
+  if (!allowEnabledPendingReview && rule.enabled && hasPendingReview(rule)) {
+    errors.push(`${label}包含尚未预览的自定义文档，预览后才能启用`)
+  }
   return rule
 }
 
-function parseRules(value: unknown): ValidationResult<AccessRule[]> {
+function parseRules(
+  value: unknown,
+  options: { allowEnabledPendingReview?: boolean } = {},
+): ValidationResult<AccessRule[]> {
   if (!Array.isArray(value)) return { ok: false, errors: ['规则列表无效'] }
   const errors: string[] = []
   const rules = value.flatMap((rule, index) => {
-    const parsed = parseRule(rule, index, errors)
+    const parsed = parseRule(rule, index, errors, options.allowEnabledPendingReview === true)
     return parsed ? [parsed] : []
   })
 
@@ -144,6 +271,8 @@ function parseRules(value: unknown): ValidationResult<AccessRule[]> {
     ids.add(rule.id)
     dnrIds.add(rule.dnrRuleId)
   }
+  const serializedSize = utf8Size(JSON.stringify({ schemaVersion: CONFIG_SCHEMA_VERSION, rules }))
+  if (serializedSize > MAX_CONFIG_BYTES) errors.push('配置总大小超过 2MB 上限')
   return errors.length > 0 ? { ok: false, errors } : { ok: true, value: rules }
 }
 
@@ -161,7 +290,7 @@ export function validateExportBundle(input: unknown): ValidationResult<ExportBun
   if (!isRecord(input) || input.schemaVersion !== CONFIG_SCHEMA_VERSION) {
     return { ok: false, errors: ['不支持的导出文件版本'] }
   }
-  const rules = parseRules(input.rules)
+  const rules = parseRules(input.rules, { allowEnabledPendingReview: true })
   if (!rules.ok) return rules
   return {
     ok: true,

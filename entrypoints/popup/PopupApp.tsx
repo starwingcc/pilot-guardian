@@ -22,7 +22,7 @@ function statusCopy(status: RuleStatus, now: number): { title: string; detail: s
     }
   }
   if (evaluation.state === 'challenge') {
-    return { title: `${status.rule.name} · 等待口令`, detail: '下次访问会显示闸门挑战。', state: 'VERIFY' }
+    return { title: `${status.rule.name} · 等待挑战`, detail: '下次访问会显示闸门挑战。', state: 'VERIFY' }
   }
   return {
     title: `${status.rule.name} · 等待开放`,
