@@ -32,6 +32,33 @@ describe('配置校验', () => {
     expect(result.ok).toBe(false)
   })
 
+  it('周期规则忽略未使用的空挑战', () => {
+    const result = validateStoredConfig({
+      schemaVersion: CONFIG_SCHEMA_VERSION,
+      rules: [{
+        ...validRule,
+        mode: 'schedule',
+        schedule: { kind: 'weekly', weekdays: [1] },
+        challenges: [{ ...validRule.challenges[0], answer: '' }],
+      }],
+    })
+    expect(result.ok).toBe(true)
+    if (result.ok) expect(result.value.rules[0]?.challenges).toEqual([])
+  })
+
+  it('间隔天数只接受正整数', () => {
+    const result = validateStoredConfig({
+      schemaVersion: CONFIG_SCHEMA_VERSION,
+      rules: [{
+        ...validRule,
+        mode: 'schedule',
+        schedule: { kind: 'interval', intervalDays: 1.5 },
+      }],
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.errors.join('；')).toContain('正整数')
+  })
+
   it('拒绝非规范、空白和重复的 URL 模式', () => {
     const invalid = validateStoredConfig({
       schemaVersion: CONFIG_SCHEMA_VERSION,

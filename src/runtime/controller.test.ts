@@ -225,6 +225,24 @@ describe('单规则配置变更', () => {
     })
   })
 
+  it('每周开放日首次导航时开启指定时长的放行窗口', async () => {
+    const now = Date.now()
+    const weeklyRule: AccessRule = {
+      ...accessRule('first', 0),
+      mode: 'schedule',
+      schedule: { kind: 'weekly', weekdays: [new Date(now).getDay()] },
+    }
+    localStore[CONFIG_KEY] = {
+      schemaVersion: CONFIG_SCHEMA_VERSION,
+      rules: [weeklyRule],
+    } satisfies StoredConfig
+
+    expect(await handleNavigation(1, 'https://first.example.com/page')).toBe(false)
+    const runtime = localStore[RUNTIME_KEY] as RuntimeStore
+    expect(runtime.byRuleId.first?.activeUntil).toBeGreaterThan(now)
+    expect(runtime.byRuleId.first?.verifiedCalendarKey).toBeDefined()
+  })
+
   it('修改间隔天数后清除旧冷却并恢复首次开放状态', async () => {
     const intervalRule: AccessRule = {
       ...accessRule('first', 0),
@@ -265,7 +283,7 @@ describe('单规则配置变更', () => {
     })
   })
 
-  it('保存后刷新对应闸门，并在自动放行时清理待处理导航', async () => {
+  it('保存后不刷新闸门，并在重新获取上下文时清理待处理导航', async () => {
     const weeklyRule: AccessRule = {
       ...accessRule('first', 0),
       mode: 'schedule',
@@ -283,7 +301,6 @@ describe('单规则配置变更', () => {
       },
     }
     const gateUrl = 'chrome-extension://extension-id/gate.html?ruleId=first'
-    queryTabs.mockResolvedValue([{ id: 1, url: gateUrl } as chrome.tabs.Tab])
 
     const saved = await handleRuntimeMessage({
       type: 'config:save-rule',
@@ -294,7 +311,8 @@ describe('单规则配置变更', () => {
     }, sender) as ConfigMutationResponse
 
     expect(saved.ok).toBe(true)
-    expect(reloadTab).toHaveBeenCalledWith(1)
+    expect(queryTabs).not.toHaveBeenCalled()
+    expect(reloadTab).not.toHaveBeenCalled()
 
     const context = await handleRuntimeMessage(
       { type: 'gate:get-context', ruleId: weeklyRule.id },

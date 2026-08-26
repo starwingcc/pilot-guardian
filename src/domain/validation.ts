@@ -37,11 +37,11 @@ function parseSchedule(value: unknown, errors: string[], label: string): Schedul
     return undefined
   }
   if (value.kind === 'interval') {
-    if (!isPositiveNumber(value.intervalDays)) {
-      errors.push(`${label}的间隔天数必须大于 0`)
+    if (!Number.isInteger(value.intervalDays) || (value.intervalDays as number) <= 0) {
+      errors.push(`${label}的间隔天数必须是正整数`)
       return undefined
     }
-    return { kind: 'interval', intervalDays: value.intervalDays }
+    return { kind: 'interval', intervalDays: value.intervalDays as number }
   }
   if (value.kind === 'weekly') {
     const weekdays = Array.isArray(value.weekdays)
@@ -176,7 +176,9 @@ function parseRule(
     return undefined
   }
 
-  const challenges = Array.isArray(value.challenges)
+  const challenges = mode === 'schedule'
+    ? []
+    : Array.isArray(value.challenges)
     ? value.challenges.flatMap((challenge, challengeIndex) => {
       const parsed = parseChallenge(challenge, challengeIndex, errors, label)
       return parsed ? [parsed] : []

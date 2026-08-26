@@ -232,7 +232,7 @@ export function OptionsApp() {
 
   const save = async () => {
     if (!selected || saving) return
-    if (hasUnreviewedDocuments(selected)) {
+    if (selected.mode !== 'schedule' && hasUnreviewedDocuments(selected)) {
       setErrors(['修改后的自定义 HTML 必须成功运行沙箱预览后才能保存'])
       toast.error('请先预览自定义 HTML')
       return

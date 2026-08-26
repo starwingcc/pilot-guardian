@@ -92,7 +92,6 @@ export type EvaluationReason =
   | 'interval-ready'
   | 'cooldown'
   | 'calendar-open'
-  | 'calendar-verified'
   | 'calendar-closed'
 
 export interface PolicyEvaluation {

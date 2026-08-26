@@ -94,33 +94,6 @@ export function requestPolicySync(): Promise<void> {
   return syncQueue
 }
 
-async function refreshGateTabs(ruleIds: Set<string>): Promise<void> {
-  if (ruleIds.size === 0) return
-  try {
-    const gateUrl = new URL(chrome.runtime.getURL('/gate.html'))
-    const tabs = await chrome.tabs.query({})
-    await Promise.all(tabs.flatMap((tab) => {
-      if (tab.id === undefined || !tab.url) return []
-      let url: URL
-      try {
-        url = new URL(tab.url)
-      } catch {
-        return []
-      }
-      if (
-        url.origin !== gateUrl.origin ||
-        url.pathname !== gateUrl.pathname ||
-        !ruleIds.has(url.searchParams.get('ruleId') ?? '')
-      ) {
-        return []
-      }
-      return [chrome.tabs.reload(tab.id)]
-    }))
-  } catch (error) {
-    console.error('Failed to refresh gate tabs', error)
-  }
-}
-
 function enqueueConfigMutation<T>(mutation: () => Promise<T>): Promise<T> {
   const result = configMutationQueue.then(mutation, mutation)
   configMutationQueue = result.then(
@@ -151,7 +124,10 @@ export async function handleNavigation(tabId: number, url: string): Promise<bool
 
   const now = Date.now()
   const evaluation = evaluateRule(rule, stateForRule(runtime, rule.id), now)
-  if (evaluation.reason === 'interval-ready' && rule.mode === 'schedule') {
+  if (
+    rule.mode === 'schedule' &&
+    (evaluation.reason === 'interval-ready' || evaluation.reason === 'calendar-open')
+  ) {
     await saveActivatedRule(rule, runtime, now)
     return false
   }
@@ -176,7 +152,10 @@ async function gateContext(ruleId: string, tabId: number): Promise<GateContext> 
   if (pending?.ruleId !== ruleId) throw new Error('当前标签页没有对应的受控导航')
 
   let evaluation = evaluateRule(rule, stateForRule(runtime, rule.id), now)
-  if (evaluation.reason === 'interval-ready' && rule.mode === 'schedule') {
+  if (
+    rule.mode === 'schedule' &&
+    (evaluation.reason === 'interval-ready' || evaluation.reason === 'calendar-open')
+  ) {
     await saveActivatedRule(rule, runtime, now)
     evaluation = evaluateRule(rule, stateForRule(runtime, rule.id), now)
   }
@@ -332,7 +311,6 @@ async function commitRules(
     ...[...changedRuleIds].map(clearRuleChallengeProgress),
   ])
   await requestPolicySync()
-  await refreshGateTabs(changedRuleIds)
   return { ok: true, config: parsed.value }
 }
 

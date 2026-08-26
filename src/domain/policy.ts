@@ -95,6 +95,10 @@ function calendarEvaluation(
   runtime: RuntimeState,
   now: number,
 ): PolicyEvaluation {
+  if (runtime.activeUntil && runtime.activeUntil > now) {
+    return { state: 'allowed', reason: 'active-window', nextChangeAt: runtime.activeUntil }
+  }
+
   const schedule = rule.schedule
   if (!schedule || schedule.kind === 'interval') {
     return { state: 'challenge', reason: 'password-required' }
@@ -108,11 +112,14 @@ function calendarEvaluation(
   }
 
   const tomorrow = nextLocalMidnight(now)
+  if (runtime.verifiedCalendarKey === localDateKey(now)) {
+    const nextChangeAt = nextOpenDay(schedule, now)
+    return nextChangeAt
+      ? { state: 'waiting', reason: 'calendar-closed', nextChangeAt }
+      : { state: 'waiting', reason: 'calendar-closed' }
+  }
   if (rule.mode === 'schedule') {
     return { state: 'allowed', reason: 'calendar-open', nextChangeAt: tomorrow }
-  }
-  if (runtime.verifiedCalendarKey === localDateKey(now)) {
-    return { state: 'allowed', reason: 'calendar-verified', nextChangeAt: tomorrow }
   }
   return { state: 'challenge', reason: 'password-required', nextChangeAt: tomorrow }
 }
@@ -143,7 +150,11 @@ export function activateAccess(
 ): RuntimeState {
   const runtime = settleRuntime(rule, runtimeInput, now)
   if (rule.schedule && rule.schedule.kind !== 'interval') {
-    return { ...runtime, verifiedCalendarKey: localDateKey(now) }
+    return {
+      ...runtime,
+      activeUntil: now + rule.accessDurationMinutes * 60 * 1000,
+      verifiedCalendarKey: localDateKey(now),
+    }
   }
   return {
     ...runtime,

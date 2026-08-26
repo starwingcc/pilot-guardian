@@ -90,7 +90,7 @@ interface RuleEditorProps {
 }
 
 export function RuleEditor({ rule, index, total, hasConflict, onUpdate, onMove, onDelete }: RuleEditorProps) {
-  const hasPendingReview = hasUnreviewedDocuments(rule)
+  const hasPendingReview = rule.mode !== 'schedule' && hasUnreviewedDocuments(rule)
   const patternCounts = new Map<string, number>()
   for (const pattern of rule.urlPatterns) {
     patternCounts.set(pattern, (patternCounts.get(pattern) ?? 0) + 1)
@@ -240,13 +240,11 @@ export function RuleEditor({ rule, index, total, hasConflict, onUpdate, onMove, 
                 <ToggleGroupItem value="combined"><ShieldCheckIcon data-icon="inline-start" />口令 + 周期</ToggleGroupItem>
               </ToggleGroup>
             </Field>
-            {(rule.mode === 'password' || rule.schedule?.kind === 'interval') ? (
-              <Field>
-                <FieldLabel htmlFor={`duration-${rule.id}`}>放行时长（分钟）</FieldLabel>
-                <Input id={`duration-${rule.id}`} type="number" min="1" max="10080" value={rule.accessDurationMinutes} onChange={(event) => onUpdate((draft) => { draft.accessDurationMinutes = Number(event.target.value) })} />
-                <FieldDescription>验证成功后，在此时长内不再重复拦截。</FieldDescription>
-              </Field>
-            ) : null}
+            <Field>
+              <FieldLabel htmlFor={`duration-${rule.id}`}>放行时长（分钟）</FieldLabel>
+              <Input id={`duration-${rule.id}`} type="number" min="1" max="10080" step="1" value={rule.accessDurationMinutes} onChange={(event) => onUpdate((draft) => { draft.accessDurationMinutes = Number(event.target.value) })} />
+              <FieldDescription>放行窗口开启后，在此时长内不再重复拦截。</FieldDescription>
+            </Field>
             {rule.mode !== 'password' && rule.schedule ? <ScheduleEditor rule={rule} onUpdate={onUpdate} /> : null}
           </FieldGroup>
         </CardContent>
@@ -280,7 +278,7 @@ function ScheduleEditor({ rule, onUpdate }: Pick<RuleEditorProps, 'rule' | 'onUp
       {schedule.kind === 'interval' ? (
         <Field>
           <FieldLabel htmlFor={`interval-${rule.id}`}>冷却天数</FieldLabel>
-          <Input id={`interval-${rule.id}`} type="number" min="0.01" step="0.25" value={schedule.intervalDays} onChange={(event) => onUpdate((draft) => {
+          <Input id={`interval-${rule.id}`} type="number" min="1" step="1" value={schedule.intervalDays} onChange={(event) => onUpdate((draft) => {
             if (draft.schedule?.kind === 'interval') draft.schedule.intervalDays = Number(event.target.value)
           })} />
           <FieldDescription>一天按连续 24 小时计算。</FieldDescription>

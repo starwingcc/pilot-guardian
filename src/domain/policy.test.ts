@@ -74,7 +74,19 @@ describe('访问策略', () => {
     expect(isCalendarOpen({ kind: 'monthly', monthDays: [31], includeLastDay: true }, februaryEnd)).toBe(true)
   })
 
-  it('组合日历只认可同一个本地自然日的验证', () => {
+  it('每周开放日只开启一次指定时长的放行窗口', () => {
+    const now = new Date(2026, 7, 24, 12).getTime()
+    const rule = baseRule({
+      mode: 'schedule',
+      schedule: { kind: 'weekly', weekdays: [new Date(now).getDay()] },
+    })
+    expect(evaluateRule(rule, {}, now).reason).toBe('calendar-open')
+    const active = activateAccess(rule, {}, now)
+    expect(evaluateRule(rule, active, now + 29 * MINUTE).state).toBe('allowed')
+    expect(evaluateRule(rule, active, now + 30 * MINUTE).state).toBe('waiting')
+  })
+
+  it('组合日历验证后只在指定放行时长内允许访问', () => {
     const now = new Date(2026, 7, 24, 12).getTime()
     const rule = baseRule({
       mode: 'combined',
@@ -84,6 +96,7 @@ describe('访问策略', () => {
     const verified = activateAccess(rule, {}, now)
     expect(verified.verifiedCalendarKey).toBe(localDateKey(now))
     expect(evaluateRule(rule, verified, now).state).toBe('allowed')
+    expect(evaluateRule(rule, verified, now + 30 * MINUTE).state).toBe('waiting')
   })
 
   it('口令去除首尾空格并规范化 Unicode，但区分大小写', () => {
