@@ -25,7 +25,7 @@ export default defineConfig({
     },
     content_security_policy: {
       extension_pages: "script-src 'self'; object-src 'self'",
-      sandbox: "sandbox allow-scripts; script-src 'self' 'unsafe-inline' 'unsafe-eval'; child-src 'self' data: blob:; object-src 'none'",
+      sandbox: "sandbox allow-scripts; script-src 'self' 'unsafe-inline' 'unsafe-eval' https: http:; style-src 'unsafe-inline' data: https: http:; img-src data: https: http:; font-src data: https: http:; media-src data: https: http:; child-src 'self' data: blob:; object-src 'none'",
     },
     web_accessible_resources: [
       {

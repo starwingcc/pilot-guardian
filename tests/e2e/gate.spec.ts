@@ -155,6 +155,108 @@ test('依次完成自定义文本场景与交互挑战后恢复原 URL', async (
   }
 })
 
+test('交互挑战可加载外部 JS、CSS 与图片', async () => {
+  let server: Server | undefined
+  const port = await new Promise<number>((resolve) => {
+    server = createServer((_request, response) => {
+      response.setHeader('content-type', 'text/html; charset=utf-8')
+      response.end('<title>目标页面</title><h1>已到达目标</h1>')
+    })
+    server.listen(0, '127.0.0.1', () => {
+      const address = server?.address()
+      resolve(typeof address === 'object' && address ? address.port : 0)
+    })
+  })
+
+  const context = await launchExtension()
+  try {
+    const id = await extensionId(context)
+    const options = await context.newPage()
+    await options.goto(`chrome-extension://${id}/options.html`)
+    const targetUrl = `http://127.0.0.1:${port}/external-assets`
+    await options.evaluate(async () => {
+      const response = await chrome.runtime.sendMessage({
+        type: 'config:replace',
+        rules: [{
+          id: 'e2e-external-assets',
+          name: '外部资源挑战',
+          enabled: true,
+          priority: 0,
+          urlPatterns: ['http://127.0.0.1/external-assets*'],
+          mode: 'password',
+          challenges: [{
+            id: 'external-step',
+            type: 'interactive',
+            source: {
+              kind: 'custom',
+              document: {
+                html: `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+</head>
+<body class="container">
+  <img
+    id="external-image"
+    alt="百度 Logo"
+    src="https://www.baidu.com/img/PCtm_d9c8750bed0b3c7d089fa7d55720d6cf.png"
+    width="120"
+    height="40"
+  >
+  <p id="css-probe" class="contrast">Pico 样式探针</p>
+  <p id="js-probe">等待 jQuery</p>
+  <button id="finish" type="button" hidden>外部资源已就绪</button>
+  <script>
+    $(function () {
+      $('#js-probe').text('jquery:' + $.fn.jquery);
+      $('#finish').prop('hidden', false).on('click', function () {
+        window.setTimeout(function () { window.PilotGuardian.complete(); }, 200);
+      });
+    });
+  </script>
+</body>
+</html>`,
+                reviewState: 'ready',
+              },
+            },
+          }],
+          accessDurationMinutes: 30,
+        }],
+      })
+      if (!response.ok) throw new Error(JSON.stringify(response))
+    })
+
+    const page = await context.newPage()
+    await page.goto(targetUrl)
+    await expect(page).toHaveURL(new RegExp(`chrome-extension://${id}/gate\\.html`))
+    const interactive = page
+      .frameLocator('iframe[title*="交互挑战"]')
+      .frameLocator('iframe[title="隔离的挑战文档"]')
+
+    await expect.poll(async () => interactive.locator('#external-image').evaluate((img: HTMLImageElement) => (
+      img.complete && img.naturalWidth > 0
+    ))).toBe(true)
+
+    await expect.poll(async () => interactive.locator('#css-probe').evaluate((el) => (
+      getComputedStyle(el).getPropertyValue('--pico-font-family').trim().length > 0
+    ))).toBe(true)
+
+    await expect(interactive.locator('#js-probe')).toHaveText(/jquery:3\./)
+    const finish = interactive.getByRole('button', { name: '外部资源已就绪' })
+    await expect(finish).toBeVisible()
+    await finish.click()
+    await expect(page).toHaveURL(targetUrl)
+    await expect(page.getByRole('heading', { name: '已到达目标' })).toBeVisible()
+  } finally {
+    await context.close()
+    await new Promise<void>((resolve, reject) => {
+      server?.close((error) => error ? reject(error) : resolve())
+    })
+  }
+})
+
 test('自定义交互文档通过沙箱预览后才能保存', async () => {
   const context = await launchExtension()
   try {
