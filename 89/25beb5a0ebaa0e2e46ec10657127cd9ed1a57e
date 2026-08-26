@@ -1,0 +1,27 @@
+tests/e2e/gate.spec.ts
+  s_0edb5280d61e47::t_cbf934f222a2ec 246
+  s_0edb5280d61e47::t_de5349551369cb 198,200,209-218
+  s_0edb5280d61e47::t_9a3fc2862296c8 158-176,178-184,186-197,199,201-208,219-228,230-245,247-259
+  s_0edb5280d61e47::t_2d5ad0c3b17763 177,185,229
+wxt.config.ts
+  s_0edb5280d61e47::t_d6efaf8d6391d3 28
+entrypoints/sandbox/main.ts
+  s_0edb5280d61e47::t_f83227dca5b1d3 93
+  s_0edb5280d61e47::t_13fb44b36850a4 89-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.43-trip",
+  "base_commit_sha": "8925beb5a0ebaa0e2e46ec10657127cd9ed1a57e",
+  "prompts": {},
+  "sessions": {
+    "s_0edb5280d61e47": {
+      "agent_id": {
+        "tool": "cursor",
+        "id": "054237d6-64eb-471b-b97a-45b0d7d60184",
+        "model": "default"
+      },
+      "human_author": "starwingcc <707491663@qq.com>"
+    }
+  }
+}
