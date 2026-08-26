@@ -17,26 +17,36 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/src/components/ui/too
 import type { AccessRule } from '../../../src/domain/types'
 
 function targetSummary(rule: AccessRule): string {
-  const schemes = rule.target.schemes.length === 2 ? 'http(s)' : rule.target.schemes[0] ?? 'https'
-  const host = rule.target.includeSubdomains ? `*.${rule.target.host}` : rule.target.host
-  return `${schemes}://${host}${rule.target.path}`
+  const first = rule.urlPatterns[0] || '尚未填写 URL'
+  const remaining = rule.urlPatterns.length - 1
+  return remaining > 0 ? `${first} +${remaining}` : first
 }
 
 interface RuleRailProps {
   rules: AccessRule[]
   selectedId: string | undefined
   conflicts: Set<string>
+  dirtyRuleIds: Set<string>
   loading: boolean
   onSelect: (id: string) => void
   onAdd: () => void
 }
 
-export function RuleRail({ rules, selectedId, conflicts, loading, onSelect, onAdd }: RuleRailProps) {
+export function RuleRail({
+  rules,
+  selectedId,
+  conflicts,
+  dirtyRuleIds,
+  loading,
+  onSelect,
+  onAdd,
+}: RuleRailProps) {
   const [query, setQuery] = useState('')
   const filteredRules = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase()
     if (!needle) return rules
-    return rules.filter((rule) => `${rule.name} ${targetSummary(rule)}`.toLocaleLowerCase().includes(needle))
+    return rules.filter((rule) =>
+      `${rule.name} ${rule.urlPatterns.join(' ')}`.toLocaleLowerCase().includes(needle))
   }, [query, rules])
 
   return (
@@ -69,16 +79,19 @@ export function RuleRail({ rules, selectedId, conflicts, loading, onSelect, onAd
                 <strong>{rule.name}</strong>
                 <small>{targetSummary(rule)}</small>
               </span>
-              {conflicts.has(rule.id) ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span className="conflict-icon" aria-label="与其他规则可能重叠"><TriangleAlertIcon /></span>
-                  </TooltipTrigger>
-                  <TooltipContent>与其他规则可能重叠</TooltipContent>
-                </Tooltip>
-              ) : (
-                <Badge variant={rule.enabled ? 'default' : 'outline'}>{rule.enabled ? '在线' : '停用'}</Badge>
-              )}
+              <span className="rule-statuses">
+                {conflicts.has(rule.id) ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="conflict-icon" aria-label="与其他规则可能重叠"><TriangleAlertIcon /></span>
+                    </TooltipTrigger>
+                    <TooltipContent>与其他规则可能重叠</TooltipContent>
+                  </Tooltip>
+                ) : null}
+                <Badge variant={dirtyRuleIds.has(rule.id) ? 'secondary' : rule.enabled ? 'default' : 'outline'}>
+                  {dirtyRuleIds.has(rule.id) ? '未保存' : rule.enabled ? '在线' : '停用'}
+                </Badge>
+              </span>
             </Button>
           ))}
           {!loading && filteredRules.length === 0 ? (

@@ -43,17 +43,20 @@ import {
   type ExportBundle,
   type StoredConfig,
 } from '../../src/domain/types'
-import { findMatchingRule, patternsMayOverlap } from '../../src/domain/url-pattern'
+import {
+  findMatchingRule,
+  parseUrlPattern,
+  patternSetsMayOverlap,
+} from '../../src/domain/url-pattern'
+import type { ConfigMutationResponse } from '../../src/runtime/messages'
 import { validateExportBundle, validateStoredConfig } from '../../src/domain/validation'
 import { sendRuntimeMessage } from '../../src/ui/runtime-client'
 import { RuleDiagnostics } from './components/RuleDiagnostics'
 import { RuleEditor } from './components/RuleEditor'
 import { RuleRail } from './components/RuleRail'
 
-type SaveResponse = { ok: true } | { ok: false; errors: string[] }
-
-function nextDnrId(rules: AccessRule[]): number {
-  return rules.reduce((maximum, rule) => Math.max(maximum, rule.dnrRuleId), 0) + 1
+function reindexRules(rules: AccessRule[]): AccessRule[] {
+  return rules.map((rule, priority) => ({ ...rule, priority }))
 }
 
 export function OptionsApp() {
@@ -62,7 +65,8 @@ export function OptionsApp() {
   const [testUrl, setTestUrl] = useState('https://www.baidu.com/')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [dirty, setDirty] = useState(false)
+  const [dirtyRuleIds, setDirtyRuleIds] = useState<Set<string>>(() => new Set())
+  const [persistedRuleIds, setPersistedRuleIds] = useState<Set<string>>(() => new Set())
   const [errors, setErrors] = useState<string[]>([])
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
@@ -73,6 +77,7 @@ export function OptionsApp() {
     void sendRuntimeMessage<StoredConfig>({ type: 'config:get' })
       .then((config) => {
         setRules(config.rules)
+        setPersistedRuleIds(new Set(config.rules.map((rule) => rule.id)))
         setSelectedId(config.rules[0]?.id)
       })
       .catch((error: unknown) => {
@@ -80,6 +85,16 @@ export function OptionsApp() {
       })
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    if (dirtyRuleIds.size === 0) return
+    const warnAboutDrafts = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+    window.addEventListener('beforeunload', warnAboutDrafts)
+    return () => window.removeEventListener('beforeunload', warnAboutDrafts)
+  }, [dirtyRuleIds.size])
 
   const selectedIndex = rules.findIndex((rule) => rule.id === selectedId)
   const selected = selectedIndex >= 0 ? rules[selectedIndex] : undefined
@@ -89,7 +104,7 @@ export function OptionsApp() {
       for (let right = left + 1; right < rules.length; right += 1) {
         const leftRule = rules[left]
         const rightRule = rules[right]
-        if (leftRule && rightRule && patternsMayOverlap(leftRule.target, rightRule.target)) {
+        if (leftRule && rightRule && patternSetsMayOverlap(leftRule.urlPatterns, rightRule.urlPatterns)) {
           ids.add(leftRule.id)
           ids.add(rightRule.id)
         }
@@ -98,9 +113,15 @@ export function OptionsApp() {
     return ids
   }, [rules])
   const testMatch = findMatchingRule(rules, testUrl)
+  const selectedUrlPatternsValid = Boolean(
+    selected &&
+    selected.urlPatterns.length > 0 &&
+    selected.urlPatterns.every((pattern) => parseUrlPattern(pattern).ok) &&
+    new Set(selected.urlPatterns).size === selected.urlPatterns.length,
+  )
 
-  const markChanged = () => {
-    setDirty(true)
+  const markChanged = (ruleId: string) => {
+    setDirtyRuleIds((current) => new Set(current).add(ruleId))
     setErrors([])
   }
 
@@ -112,110 +133,180 @@ export function OptionsApp() {
       mutate(draft)
       return draft
     }))
-    markChanged()
+    if (selectedId) markChanged(selectedId)
   }
 
   const addRule = () => {
-    const rule = createDefaultRule(nextDnrId(rules))
+    const rule = createDefaultRule()
     rule.priority = rules.length
     setRules((current) => [...current, rule])
     setSelectedId(rule.id)
-    markChanged()
+    markChanged(rule.id)
   }
 
-  const moveRule = (direction: -1 | 1) => {
+  const moveRule = async (direction: -1 | 1) => {
+    if (saving) return
     const target = selectedIndex + direction
     if (selectedIndex < 0 || target < 0 || target >= rules.length) return
-    setRules((current) => {
-      const next = [...current]
-      const currentRule = next[selectedIndex]
-      const targetRule = next[target]
-      if (!currentRule || !targetRule) return current
-      next[selectedIndex] = targetRule
-      next[target] = currentRule
-      return next.map((rule, priority) => ({ ...rule, priority }))
-    })
-    markChanged()
-  }
-
-  const removeRule = () => {
-    if (!selected) return
-    const next = rules
-      .filter((rule) => rule.id !== selected.id)
-      .map((rule, priority) => ({ ...rule, priority }))
-    setRules(next)
-    setSelectedId(next[Math.min(selectedIndex, next.length - 1)]?.id)
-    setDeleteOpen(false)
-    markChanged()
-    toast('规则已从草稿移除', { description: '保存配置后才会更新浏览器拦截。' })
-  }
-
-  const persistRules = async (
-    nextRules: AccessRule[],
-    options: { allowUnreviewed?: boolean } = {},
-  ): Promise<boolean> => {
-    const normalized = nextRules.map((rule, priority) => ({ ...rule, priority }))
-    if (!options.allowUnreviewed && normalized.some(hasUnreviewedDocuments)) {
-      setErrors(['修改后的自定义 HTML 必须成功运行沙箱预览后才能保存'])
-      toast.error('请先预览自定义 HTML')
-      return false
-    }
-    const localValidation = validateStoredConfig({
-      schemaVersion: CONFIG_SCHEMA_VERSION,
-      rules: normalized,
-    })
-    if (!localValidation.ok) {
-      setErrors(localValidation.errors)
-      toast.error('配置校验失败')
-      return false
+    const next = [...rules]
+    const currentRule = next[selectedIndex]
+    const targetRule = next[target]
+    if (!currentRule || !targetRule) return
+    next[selectedIndex] = targetRule
+    next[target] = currentRule
+    const reindexed = reindexRules(next)
+    const previousPersistedOrder = rules
+      .filter((rule) => persistedRuleIds.has(rule.id))
+      .map((rule) => rule.id)
+    const nextPersistedOrder = reindexed
+      .filter((rule) => persistedRuleIds.has(rule.id))
+      .map((rule) => rule.id)
+    if (previousPersistedOrder.every((id, index) => id === nextPersistedOrder[index])) {
+      setRules(reindexed)
+      return
     }
 
     setSaving(true)
     try {
-      const response = await sendRuntimeMessage<SaveResponse>({
-        type: 'config:save',
-        rules: normalized,
+      const response = await sendRuntimeMessage<ConfigMutationResponse>({
+        type: 'config:reorder-rules',
+        ruleIds: nextPersistedOrder,
       })
       if (!response.ok) {
         setErrors(response.errors)
-        toast.error('配置保存失败')
-        return false
+        toast.error('规则排序失败')
+        return
       }
-      setRules(normalized)
+      setRules(reindexed)
       setErrors([])
-      setDirty(false)
-      return true
     } catch (error) {
-      setErrors([error instanceof Error ? error.message : '配置保存失败'])
-      toast.error('配置保存失败')
-      return false
+      setErrors([error instanceof Error ? error.message : '规则排序失败'])
+      toast.error('规则排序失败')
     } finally {
       setSaving(false)
     }
   }
 
+  const removeRule = async () => {
+    if (!selected || saving) return
+    const removing = selected
+    const next = reindexRules(rules
+      .filter((rule) => rule.id !== selected.id)
+    )
+    if (persistedRuleIds.has(removing.id)) {
+      setSaving(true)
+      try {
+        const response = await sendRuntimeMessage<ConfigMutationResponse>({
+          type: 'config:delete-rule',
+          ruleId: removing.id,
+        })
+        if (!response.ok) {
+          setErrors(response.errors)
+          toast.error('规则删除失败')
+          return
+        }
+      } catch (error) {
+        setErrors([error instanceof Error ? error.message : '规则删除失败'])
+        toast.error('规则删除失败')
+        return
+      } finally {
+        setSaving(false)
+      }
+    }
+    setRules(next)
+    setSelectedId(next[Math.min(selectedIndex, next.length - 1)]?.id)
+    setPersistedRuleIds((current) => {
+      const updated = new Set(current)
+      updated.delete(removing.id)
+      return updated
+    })
+    setDirtyRuleIds((current) => {
+      const updated = new Set(current)
+      updated.delete(removing.id)
+      return updated
+    })
+    setErrors([])
+    setDeleteOpen(false)
+    toast.success(persistedRuleIds.has(removing.id) ? '规则已删除' : '未保存的规则草稿已移除')
+  }
+
   const save = async () => {
-    if (await persistRules(rules)) {
-      toast.success('配置已保存', { description: '浏览器拦截规则已经同步。' })
+    if (!selected || saving) return
+    if (hasUnreviewedDocuments(selected)) {
+      setErrors(['修改后的自定义 HTML 必须成功运行沙箱预览后才能保存'])
+      toast.error('请先预览自定义 HTML')
+      return
+    }
+    const localValidation = validateStoredConfig({
+      schemaVersion: CONFIG_SCHEMA_VERSION,
+      rules: [selected],
+    })
+    if (!localValidation.ok) {
+      setErrors(localValidation.errors)
+      toast.error('当前规则校验失败')
+      return
+    }
+
+    const isNewRule = !persistedRuleIds.has(selected.id)
+    const insertBeforeRuleId = isNewRule
+      ? rules.slice(selectedIndex + 1).find((rule) => persistedRuleIds.has(rule.id))?.id
+      : undefined
+    setSaving(true)
+    try {
+      const response = await sendRuntimeMessage<ConfigMutationResponse>({
+        type: 'config:save-rule',
+        rule: selected,
+        ...(insertBeforeRuleId ? { insertBeforeRuleId } : {}),
+      })
+      if (!response.ok) {
+        setErrors(response.errors)
+        toast.error('当前规则保存失败')
+        return
+      }
+      const savedRule = response.config.rules.find((rule) => rule.id === selected.id)
+      if (!savedRule) throw new Error('保存结果缺少当前规则')
+      setRules((current) => reindexRules(current.map((rule) =>
+        rule.id === savedRule.id ? savedRule : rule)))
+      setPersistedRuleIds((current) => new Set(current).add(savedRule.id))
+      setDirtyRuleIds((current) => {
+        const updated = new Set(current)
+        updated.delete(savedRule.id)
+        return updated
+      })
+      setErrors([])
+      toast.success('当前规则已保存', { description: '浏览器拦截规则已经同步。' })
+    } catch (error) {
+      setErrors([error instanceof Error ? error.message : '当前规则保存失败'])
+      toast.error('当前规则保存失败')
+    } finally {
+      setSaving(false)
     }
   }
 
-  const exportConfig = () => {
-    const bundle: ExportBundle = {
-      schemaVersion: CONFIG_SCHEMA_VERSION,
-      exportedAt: new Date().toISOString(),
-      rules,
+  const exportConfig = async () => {
+    try {
+      const config = await sendRuntimeMessage<StoredConfig>({ type: 'config:get' })
+      const bundle: ExportBundle = {
+        schemaVersion: CONFIG_SCHEMA_VERSION,
+        exportedAt: new Date().toISOString(),
+        rules: config.rules,
+      }
+      const url = URL.createObjectURL(new Blob([JSON.stringify(bundle, null, 2)], {
+        type: 'application/json',
+      }))
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `pilot-guardian-${new Date().toISOString().slice(0, 10)}.json`
+      anchor.click()
+      URL.revokeObjectURL(url)
+      setExportOpen(false)
+      toast.success('已保存配置已导出', {
+        description: dirtyRuleIds.size > 0 ? '未保存的规则草稿未包含在导出文件中。' : undefined,
+      })
+    } catch (error) {
+      setErrors([error instanceof Error ? error.message : '配置导出失败'])
+      toast.error('配置导出失败')
     }
-    const url = URL.createObjectURL(new Blob([JSON.stringify(bundle, null, 2)], {
-      type: 'application/json',
-    }))
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = `pilot-guardian-${new Date().toISOString().slice(0, 10)}.json`
-    anchor.click()
-    URL.revokeObjectURL(url)
-    setExportOpen(false)
-    toast.success('配置已导出')
   }
 
   const prepareImport = async (event: ChangeEvent<HTMLInputElement>) => {
@@ -240,11 +331,30 @@ export function OptionsApp() {
   }
 
   const importConfig = async () => {
-    if (!pendingImport) return
-    if (await persistRules(pendingImport.rules, { allowUnreviewed: true })) {
-      setSelectedId(pendingImport.rules[0]?.id)
+    if (!pendingImport || saving) return
+    setSaving(true)
+    try {
+      const response = await sendRuntimeMessage<ConfigMutationResponse>({
+        type: 'config:replace',
+        rules: pendingImport.rules,
+      })
+      if (!response.ok) {
+        setErrors(response.errors)
+        toast.error('配置导入失败')
+        return
+      }
+      setRules(response.config.rules)
+      setPersistedRuleIds(new Set(response.config.rules.map((rule) => rule.id)))
+      setDirtyRuleIds(new Set())
+      setSelectedId(response.config.rules[0]?.id)
       setPendingImport(undefined)
+      setErrors([])
       toast.success('配置已导入', { description: '含自定义代码的规则已停用，预览后可手动启用。' })
+    } catch (error) {
+      setErrors([error instanceof Error ? error.message : '配置导入失败'])
+      toast.error('配置导入失败')
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -261,7 +371,9 @@ export function OptionsApp() {
             </div>
           </div>
           <div className="mission-actions">
-            <Badge variant={dirty ? 'secondary' : 'outline'}>{dirty ? '存在未保存更改' : '配置已同步'}</Badge>
+            <Badge variant={dirtyRuleIds.size > 0 ? 'secondary' : 'outline'}>
+              {dirtyRuleIds.size > 0 ? `${dirtyRuleIds.size} 条规则未保存` : '配置已同步'}
+            </Badge>
             <Input
               ref={importInput}
               className="sr-only"
@@ -272,12 +384,20 @@ export function OptionsApp() {
             <Button variant="outline" onClick={() => importInput.current?.click()}>
               <FileUpIcon data-icon="inline-start" />导入
             </Button>
-            <Button variant="outline" onClick={() => setExportOpen(true)} disabled={rules.length === 0}>
+            <Button variant="outline" onClick={() => setExportOpen(true)} disabled={persistedRuleIds.size === 0}>
               <DownloadIcon data-icon="inline-start" />导出
             </Button>
-            <Button onClick={() => void save()} disabled={saving || !dirty}>
+            <Button
+              onClick={() => void save()}
+              disabled={
+                saving ||
+                !selected ||
+                !dirtyRuleIds.has(selected.id) ||
+                !selectedUrlPatternsValid
+              }
+            >
               {saving ? <Spinner data-icon="inline-start" /> : <SaveIcon data-icon="inline-start" />}
-              {saving ? '正在同步' : '保存配置'}
+              {saving ? '正在同步' : '保存当前规则'}
             </Button>
           </div>
         </header>
@@ -295,6 +415,7 @@ export function OptionsApp() {
             rules={rules}
             selectedId={selectedId}
             conflicts={conflicts}
+            dirtyRuleIds={dirtyRuleIds}
             loading={loading}
             onSelect={setSelectedId}
             onAdd={addRule}
@@ -314,7 +435,7 @@ export function OptionsApp() {
                 total={rules.length}
                 hasConflict={conflicts.has(selected.id)}
                 onUpdate={updateRule}
-                onMove={moveRule}
+                onMove={(direction) => void moveRule(direction)}
                 onDelete={() => setDeleteOpen(true)}
               />
             ) : (
@@ -368,12 +489,12 @@ export function OptionsApp() {
               <AlertDialogMedia><ShieldAlertIcon /></AlertDialogMedia>
               <AlertDialogTitle>移除这条航线？</AlertDialogTitle>
               <AlertDialogDescription>
-                “{selected?.name}”会从当前草稿删除，保存配置后正式生效。
+                “{selected?.name}”将立即从已保存配置和浏览器拦截规则中删除；未保存的新规则只会移除草稿。
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>取消</AlertDialogCancel>
-              <AlertDialogAction variant="destructive" onClick={removeRule}>移除规则</AlertDialogAction>
+              <AlertDialogAction variant="destructive" onClick={() => void removeRule()}>移除规则</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -387,7 +508,7 @@ export function OptionsApp() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>取消</AlertDialogCancel>
-              <AlertDialogAction onClick={exportConfig}>继续导出</AlertDialogAction>
+              <AlertDialogAction onClick={() => void exportConfig()}>继续导出</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -398,7 +519,7 @@ export function OptionsApp() {
               <AlertDialogMedia><FileUpIcon /></AlertDialogMedia>
               <AlertDialogTitle>覆盖当前配置？</AlertDialogTitle>
               <AlertDialogDescription>
-                导入的 {pendingImport?.rules.length ?? 0} 条规则将替换当前配置。含自定义代码的规则会保持停用，直到完成预览并由你手动启用。
+                导入的 {pendingImport?.rules.length ?? 0} 条规则将替换已保存配置并清除所有未保存草稿。含自定义代码的规则会保持停用，直到完成预览并由你手动启用。
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

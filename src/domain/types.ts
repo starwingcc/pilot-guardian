@@ -1,16 +1,9 @@
-export const CONFIG_SCHEMA_VERSION = 3 as const
+export const CONFIG_SCHEMA_VERSION = 4 as const
 export const MAX_CUSTOM_DOCUMENT_BYTES = 256 * 1024
 export const MAX_CONFIG_BYTES = 2 * 1024 * 1024
+export const MAX_DYNAMIC_URL_PATTERNS = 5_000
 
-export type Scheme = 'http' | 'https'
 export type RuleMode = 'password' | 'schedule' | 'combined'
-
-export interface TargetPattern {
-  schemes: Scheme[]
-  host: string
-  includeSubdomains: boolean
-  path: string
-}
 
 export interface CustomChallengeDocument {
   html: string
@@ -61,11 +54,10 @@ export type Schedule = IntervalSchedule | WeeklySchedule | MonthlySchedule
 
 export interface AccessRule {
   id: string
-  dnrRuleId: number
   name: string
   enabled: boolean
   priority: number
-  target: TargetPattern
+  urlPatterns: string[]
   mode: RuleMode
   challenges: ChallengeStep[]
   schedule?: Schedule

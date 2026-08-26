@@ -22,7 +22,7 @@ describe('配置存储版本校验', () => {
 
   it('读取不兼容配置时回退为空配置且不回写', async () => {
     get.mockResolvedValue({
-      pilotGuardianConfig: { schemaVersion: 2, rules: [] },
+      pilotGuardianConfig: { schemaVersion: 3, rules: [] },
     })
 
     const config = await loadConfig()
@@ -34,7 +34,7 @@ describe('配置存储版本校验', () => {
   it('读取不兼容 runtime 时丢弃旧状态', async () => {
     get.mockResolvedValue({
       pilotGuardianRuntime: {
-        schemaVersion: 2,
+        schemaVersion: 3,
         byRuleId: { 'legacy-rule': { activeUntil: 1_900_000_000_000 } },
       },
     })

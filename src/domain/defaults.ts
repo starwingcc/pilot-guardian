@@ -56,19 +56,13 @@ export function createChallenge(type: ChallengeStep['type']): ChallengeStep {
   return type === 'text' ? createTextChallenge() : createInteractiveChallenge()
 }
 
-export function createDefaultRule(dnrRuleId: number): AccessRule {
+export function createDefaultRule(): AccessRule {
   return {
     id: crypto.randomUUID(),
-    dnrRuleId,
     name: '新的访问规则',
     enabled: true,
     priority: 0,
-    target: {
-      schemes: ['https'],
-      host: 'www.baidu.com',
-      includeSubdomains: false,
-      path: '/*',
-    },
+    urlPatterns: [''],
     mode: 'password',
     challenges: [createTextChallenge()],
     accessDurationMinutes: 30,

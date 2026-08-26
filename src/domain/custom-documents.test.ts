@@ -4,11 +4,10 @@ import { hasUnreviewedDocuments, markCustomDocumentsForReview } from './custom-d
 
 const rule: AccessRule = {
   id: 'custom-rule',
-  dnrRuleId: 1,
   name: '自定义挑战',
   enabled: true,
   priority: 0,
-  target: { schemes: ['https'], host: 'example.com', includeSubdomains: false, path: '/*' },
+  urlPatterns: ['https://example.com/*'],
   mode: 'password',
   challenges: [{
     id: 'step',

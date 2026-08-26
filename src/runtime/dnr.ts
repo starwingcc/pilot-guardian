@@ -1,6 +1,6 @@
 import { evaluateRule } from '../domain/policy'
 import type { RuntimeStore, StoredConfig } from '../domain/types'
-import { targetToDnrRegex } from '../domain/url-pattern'
+import { urlPatternToDnrRegex } from '../domain/url-pattern'
 import { stateForRule } from './storage'
 
 export function buildDynamicRules(
@@ -10,6 +10,7 @@ export function buildDynamicRules(
   gateUrl: string,
 ): chrome.declarativeNetRequest.Rule[] {
   const rules: chrome.declarativeNetRequest.Rule[] = []
+  let nextDnrRuleId = 1
 
   for (const rule of config.rules) {
     if (!rule.enabled) continue
@@ -22,15 +23,19 @@ export function buildDynamicRules(
           redirect: { url: `${gateUrl}?ruleId=${encodeURIComponent(rule.id)}` },
         }
 
-    rules.push({
-      id: rule.dnrRuleId,
-      priority,
-      action,
-      condition: {
-        regexFilter: targetToDnrRegex(rule.target),
-        resourceTypes: [chrome.declarativeNetRequest.ResourceType.MAIN_FRAME],
-      },
-    })
+    for (const urlPattern of rule.urlPatterns) {
+      rules.push({
+        id: nextDnrRuleId,
+        priority,
+        action,
+        condition: {
+          regexFilter: urlPatternToDnrRegex(urlPattern),
+          isUrlFilterCaseSensitive: true,
+          resourceTypes: [chrome.declarativeNetRequest.ResourceType.MAIN_FRAME],
+        },
+      })
+      nextDnrRuleId += 1
+    }
   }
   return rules
 }

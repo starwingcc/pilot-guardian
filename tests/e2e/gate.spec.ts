@@ -29,7 +29,7 @@ function launchExtension(): Promise<BrowserContext> {
   })
 }
 
-test('依次完成自定义文本场景与官方交互模板后恢复原 URL', async () => {
+test('依次完成自定义文本场景与交互挑战后恢复原 URL', async () => {
   let server: Server | undefined
   let targetRequests = 0
   let blockedSubresourceRequests = 0
@@ -56,19 +56,13 @@ test('依次完成自定义文本场景与官方交互模板后恢复原 URL', a
     const targetUrl = `http://127.0.0.1:${port}/focus?q=1#kept`
     await options.evaluate(async (testPort) => {
       const response = await chrome.runtime.sendMessage({
-        type: 'config:save',
+        type: 'config:replace',
         rules: [{
           id: 'e2e-rule',
-          dnrRuleId: 91,
           name: '端到端目标',
           enabled: true,
           priority: 0,
-          target: {
-            schemes: ['http'],
-            host: '127.0.0.1',
-            includeSubdomains: false,
-            path: '/focus*',
-          },
+          urlPatterns: ['http://127.0.0.1/focus*'],
           mode: 'password',
           challenges: [
             {
@@ -146,10 +140,10 @@ test('依次完成自定义文本场景与官方交互模板后恢复原 URL', a
     const interactive = page
       .frameLocator('iframe[title*="交互挑战"]')
       .frameLocator('iframe[title="隔离的挑战文档"]')
-    const woodenFish = interactive.getByRole('button', { name: '敲击木鱼' })
-    await woodenFish.click()
-    await woodenFish.click()
-    await woodenFish.click()
+    const interactiveButton = interactive.getByRole('button', { name: /^敲击/ })
+    await interactiveButton.click()
+    await interactiveButton.click()
+    await interactiveButton.click()
     await expect(page).toHaveURL(targetUrl)
     await expect(page.getByRole('heading', { name: '已到达目标' })).toBeVisible()
     expect(targetRequests).toBe(1)
@@ -168,19 +162,22 @@ test('自定义交互文档通过沙箱预览后才能保存', async () => {
     const options = await context.newPage()
     await options.goto(`chrome-extension://${id}/options.html`)
     await options.getByLabel('规则编辑器').getByRole('button', { name: '新建规则' }).click()
+    await options.getByLabel('匹配 URL 1').fill('https://example.com/*')
     await options.getByText('交互挑战', { exact: true }).click()
     await expect(options.getByRole('alertdialog')).toContainText('当前步骤中不兼容的答案')
     await options.getByRole('button', { name: '确认切换' }).click()
-    await options.getByRole('button', { name: '复制为自定义代码' }).click()
+    await options.getByLabel('交互挑战 HTML代码编辑器').fill(
+      '<!doctype html><html><body><button>预览测试</button></body></html>',
+    )
     await expect(options.getByText('需要预览', { exact: true })).toBeVisible()
 
-    await options.getByRole('button', { name: '保存配置' }).click()
+    await options.getByRole('button', { name: '保存当前规则' }).click()
     await expect(options.locator('.mission-alert')).toContainText('必须成功运行沙箱预览')
 
     await options.getByRole('button', { name: '运行沙箱预览' }).click()
     await expect(options.getByText('已通过预览', { exact: true })).toBeVisible()
-    await options.getByRole('button', { name: '保存配置' }).click()
-    await expect(options.getByText('配置已保存', { exact: true })).toBeVisible()
+    await options.getByRole('button', { name: '保存当前规则' }).click()
+    await expect(options.getByText('当前规则已保存', { exact: true })).toBeVisible()
   } finally {
     await context.close()
   }

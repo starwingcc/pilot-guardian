@@ -2,6 +2,7 @@ import {
   CONFIG_SCHEMA_VERSION,
   MAX_CONFIG_BYTES,
   MAX_CUSTOM_DOCUMENT_BYTES,
+  MAX_DYNAMIC_URL_PATTERNS,
   type AccessRule,
   type ChallengeStep,
   type CustomChallengeDocument,
@@ -12,7 +13,7 @@ import {
   type TextChallengeScene,
   type WeeklySchedule,
 } from './types'
-import { normalizeHost, normalizePath } from './url-pattern'
+import { parseUrlPattern } from './url-pattern'
 
 export type ValidationResult<T> =
   | { ok: true; value: T }
@@ -147,17 +148,27 @@ function parseRule(
     errors.push(`${label}不是有效对象`)
     return undefined
   }
-  if (!isRecord(value.target)) {
+  if (!Array.isArray(value.urlPatterns)) {
     errors.push(`${label}缺少受控目标`)
     return undefined
   }
 
-  const host = typeof value.target.host === 'string' ? normalizeHost(value.target.host) : ''
-  if (!host || !host.includes('.') || host.includes('/')) errors.push(`${label}的主机名无效`)
-  const rawSchemes = Array.isArray(value.target.schemes) ? value.target.schemes : []
-  const schemes = rawSchemes.filter((scheme): scheme is 'http' | 'https' =>
-    scheme === 'http' || scheme === 'https')
-  if (schemes.length === 0) errors.push(`${label}至少选择一个协议`)
+  const urlPatterns = value.urlPatterns.flatMap((pattern, patternIndex) => {
+    const patternLabel = `${label}的第 ${patternIndex + 1} 条 URL 模式`
+    if (typeof pattern !== 'string') {
+      errors.push(`${patternLabel}无效`)
+      return []
+    }
+    const parsed = parseUrlPattern(pattern)
+    if (!parsed.ok) errors.push(`${patternLabel}：${parsed.error}`)
+    return [pattern]
+  })
+  if (urlPatterns.length === 0) errors.push(`${label}至少需要一条 URL 模式`)
+  const seenPatterns = new Set<string>()
+  for (const pattern of urlPatterns) {
+    if (seenPatterns.has(pattern)) errors.push(`${label}包含重复的 URL 模式：${pattern}`)
+    seenPatterns.add(pattern)
+  }
 
   const mode = value.mode
   if (mode !== 'password' && mode !== 'schedule' && mode !== 'combined') {
@@ -181,18 +192,10 @@ function parseRule(
 
   const rule: AccessRule = {
     id: typeof value.id === 'string' && value.id ? value.id : crypto.randomUUID(),
-    dnrRuleId: Number.isInteger(value.dnrRuleId) && Number(value.dnrRuleId) > 0
-      ? Number(value.dnrRuleId)
-      : index + 1,
     name: typeof value.name === 'string' && value.name.trim() ? value.name.trim() : `规则 ${index + 1}`,
     enabled: value.enabled !== false,
     priority: index,
-    target: {
-      schemes: [...new Set(schemes)],
-      host,
-      includeSubdomains: value.target.includeSubdomains === true,
-      path: normalizePath(typeof value.target.path === 'string' ? value.target.path : '/*'),
-    },
+    urlPatterns,
     mode,
     challenges,
     accessDurationMinutes: isPositiveNumber(accessDurationMinutes)
@@ -218,12 +221,13 @@ function parseRules(
   })
 
   const ids = new Set<string>()
-  const dnrIds = new Set<number>()
   for (const rule of rules) {
     if (ids.has(rule.id)) errors.push(`规则 ID 重复：${rule.id}`)
-    if (dnrIds.has(rule.dnrRuleId)) errors.push(`DNR 规则 ID 重复：${rule.dnrRuleId}`)
     ids.add(rule.id)
-    dnrIds.add(rule.dnrRuleId)
+  }
+  const urlPatternCount = rules.reduce((total, rule) => total + rule.urlPatterns.length, 0)
+  if (urlPatternCount > MAX_DYNAMIC_URL_PATTERNS) {
+    errors.push(`URL 模式总数不能超过 ${MAX_DYNAMIC_URL_PATTERNS} 条`)
   }
   const serializedSize = utf8Size(JSON.stringify({ schemaVersion: CONFIG_SCHEMA_VERSION, rules }))
   if (serializedSize > MAX_CONFIG_BYTES) errors.push('配置总大小超过 2MB 上限')

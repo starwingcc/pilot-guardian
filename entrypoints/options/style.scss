@@ -198,6 +198,13 @@ body {
   font-size: 9px;
 }
 
+.rule-statuses {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 6px;
+}
+
 .conflict-icon {
   display: inline-grid;
   place-items: center;
@@ -272,19 +279,27 @@ body {
   border-radius: 10px;
 }
 
-.form-columns,
-.target-columns {
+.form-columns {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 20px;
 }
 
-.target-columns {
-  grid-template-columns: 0.75fr 1.35fr 1fr;
+.target-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.span-full {
-  grid-column: 1 / -1;
+.url-pattern-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.url-pattern-row [data-slot="input"] {
+  min-width: 0;
+  flex: 1;
 }
 
 .schedule-console {
@@ -520,7 +535,6 @@ body {
     overflow: visible;
   }
 
-  .target-columns,
   .form-columns {
     grid-template-columns: 1fr;
   }

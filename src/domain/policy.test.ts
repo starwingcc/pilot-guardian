@@ -15,11 +15,10 @@ const DAY = 24 * 60 * MINUTE
 function baseRule(overrides: Partial<AccessRule> = {}): AccessRule {
   return {
     id: 'rule',
-    dnrRuleId: 1,
     name: '测试规则',
     enabled: true,
     priority: 0,
-    target: { schemes: ['https'], host: 'example.com', includeSubdomains: false, path: '/*' },
+    urlPatterns: ['https://example.com/*'],
     mode: 'password',
     challenges: [{ id: 'step', type: 'text', answer: 'Secret', scene: { kind: 'default' } }],
     accessDurationMinutes: 30,

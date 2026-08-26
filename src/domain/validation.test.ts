@@ -4,16 +4,10 @@ import { validateExportBundle, validateStoredConfig } from './validation'
 
 const validRule = {
   id: 'one',
-  dnrRuleId: 1,
   name: '百度',
   enabled: true,
   priority: 9,
-  target: {
-    schemes: ['https'],
-    host: 'www.baidu.com',
-    includeSubdomains: false,
-    path: '/*',
-  },
+  urlPatterns: ['https://www.baidu.com/*'],
   mode: 'password',
   challenges: [{ id: 'step', type: 'text', answer: '明文答案', scene: { kind: 'default' } }],
   accessDurationMinutes: 30,
@@ -38,6 +32,39 @@ describe('配置校验', () => {
     expect(result.ok).toBe(false)
   })
 
+  it('拒绝非规范、空白和重复的 URL 模式', () => {
+    const invalid = validateStoredConfig({
+      schemaVersion: CONFIG_SCHEMA_VERSION,
+      rules: [{ ...validRule, urlPatterns: ['HTTPS://example.com/*'] }],
+    })
+    expect(invalid.ok).toBe(false)
+
+    const duplicate = validateStoredConfig({
+      schemaVersion: CONFIG_SCHEMA_VERSION,
+      rules: [{
+        ...validRule,
+        urlPatterns: ['https://example.com/*', 'https://example.com/*'],
+      }],
+    })
+    expect(duplicate.ok).toBe(false)
+    if (!duplicate.ok) expect(duplicate.errors.join('；')).toContain('重复')
+  })
+
+  it('拒绝超过 DNR 上限的 URL 模式总数', () => {
+    const result = validateStoredConfig({
+      schemaVersion: CONFIG_SCHEMA_VERSION,
+      rules: [{
+        ...validRule,
+        urlPatterns: Array.from(
+          { length: 5_001 },
+          (_, index) => `https://example.com/${index}/*`,
+        ),
+      }],
+    })
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.errors.join('；')).toContain('5000')
+  })
+
   it('拒绝不支持的导出版本', () => {
     const result = validateExportBundle({ schemaVersion: 99, exportedAt: '', rules: [] })
     expect(result).toEqual({ ok: false, errors: ['不支持的导出文件版本'] })
@@ -45,7 +72,7 @@ describe('配置校验', () => {
 
   it('拒绝不兼容的存储配置', () => {
     const result = validateStoredConfig({
-      schemaVersion: 2,
+      schemaVersion: 3,
       rules: [validRule],
     })
     expect(result).toEqual({ ok: false, errors: ['不支持的配置版本'] })
@@ -53,7 +80,7 @@ describe('配置校验', () => {
 
   it('拒绝不兼容的导出文件', () => {
     const result = validateExportBundle({
-      schemaVersion: 2,
+      schemaVersion: 3,
       exportedAt: '2025-01-01T00:00:00.000Z',
       rules: [validRule],
     })

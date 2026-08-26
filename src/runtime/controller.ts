@@ -6,10 +6,16 @@ import {
   type RuntimeStore,
   type StoredConfig,
 } from '../domain/types'
-import { findMatchingRule } from '../domain/url-pattern'
+import { findMatchingRule, urlPatternToDnrRegex } from '../domain/url-pattern'
 import { validateStoredConfig } from '../domain/validation'
 import { replaceDynamicRules } from './dnr'
-import type { GateAdvanceResponse, GateContext, RuleStatus, RuntimeRequest } from './messages'
+import type {
+  ConfigMutationResponse,
+  GateAdvanceResponse,
+  GateContext,
+  RuleStatus,
+  RuntimeRequest,
+} from './messages'
 import { toPublicGateStep, toPublicRule } from './messages'
 import {
   clearChallengeProgress,
@@ -29,6 +35,7 @@ import {
 const POLICY_ALARM = 'pilot-guardian-policy-boundary'
 const POLICY_WATCHDOG = 'pilot-guardian-policy-watchdog'
 let syncQueue: Promise<void> = Promise.resolve()
+let configMutationQueue: Promise<void> = Promise.resolve()
 
 function challengeSequenceSignature(rule: AccessRule): string {
   return JSON.stringify(rule.challenges)
@@ -87,6 +94,42 @@ export function requestPolicySync(): Promise<void> {
   return syncQueue
 }
 
+async function refreshGateTabs(ruleIds: Set<string>): Promise<void> {
+  if (ruleIds.size === 0) return
+  try {
+    const gateUrl = new URL(chrome.runtime.getURL('/gate.html'))
+    const tabs = await chrome.tabs.query({})
+    await Promise.all(tabs.flatMap((tab) => {
+      if (tab.id === undefined || !tab.url) return []
+      let url: URL
+      try {
+        url = new URL(tab.url)
+      } catch {
+        return []
+      }
+      if (
+        url.origin !== gateUrl.origin ||
+        url.pathname !== gateUrl.pathname ||
+        !ruleIds.has(url.searchParams.get('ruleId') ?? '')
+      ) {
+        return []
+      }
+      return [chrome.tabs.reload(tab.id)]
+    }))
+  } catch (error) {
+    console.error('Failed to refresh gate tabs', error)
+  }
+}
+
+function enqueueConfigMutation<T>(mutation: () => Promise<T>): Promise<T> {
+  const result = configMutationQueue.then(mutation, mutation)
+  configMutationQueue = result.then(
+    () => undefined,
+    () => undefined,
+  )
+  return result
+}
+
 async function saveActivatedRule(
   rule: AccessRule,
   runtimeStore: RuntimeStore,
@@ -126,7 +169,10 @@ async function gateContext(ruleId: string, tabId: number): Promise<GateContext> 
     getPendingNavigation(tabId),
   ])
   const rule = config.rules.find((candidate) => candidate.id === ruleId && candidate.enabled)
-  if (!rule) throw new Error('访问规则不存在或已停用')
+  if (!rule) {
+    if (pending?.ruleId === ruleId) await clearPendingNavigation(tabId)
+    throw new Error('访问规则不存在或已停用')
+  }
   if (pending?.ruleId !== ruleId) throw new Error('当前标签页没有对应的受控导航')
 
   let evaluation = evaluateRule(rule, stateForRule(runtime, rule.id), now)
@@ -146,6 +192,12 @@ async function gateContext(ruleId: string, tabId: number): Promise<GateContext> 
     sessionId: progress.sessionId,
     now,
     originalUrl: pending.url,
+  }
+  if (evaluation.state === 'allowed') {
+    await Promise.all([
+      clearPendingNavigation(tabId),
+      clearChallengeProgress(tabId, rule.id),
+    ])
   }
   return context
 }
@@ -201,40 +253,70 @@ async function completeChallenge(
   return { ok: true, complete: true, redirectUrl: pending.url }
 }
 
-async function saveRules(input: unknown): Promise<{ ok: true } | { ok: false; errors: string[] }> {
+async function validateDnrPatterns(patterns: string[]): Promise<string[]> {
+  const uniquePatterns = [...new Set(patterns)]
+  const results = await Promise.all(uniquePatterns.map(async (pattern) => {
+    const result = await chrome.declarativeNetRequest.isRegexSupported({
+      regex: urlPatternToDnrRegex(pattern),
+      isCaseSensitive: true,
+    })
+    return result.isSupported
+      ? undefined
+      : `URL 模式无法用于浏览器拦截：${pattern}${result.reason ? `（${result.reason}）` : ''}`
+  }))
+  return results.filter((error): error is string => Boolean(error))
+}
+
+async function commitRules(
+  input: unknown,
+  preflightRuleIds: 'all' | string[] = [],
+  resetRuleIds: string[] = [],
+): Promise<ConfigMutationResponse> {
   const parsed = validateStoredConfig({ schemaVersion: CONFIG_SCHEMA_VERSION, rules: input })
   if (!parsed.ok) return { ok: false, errors: parsed.errors }
+
+  const preflightIds = new Set(preflightRuleIds === 'all'
+    ? parsed.value.rules.map((rule) => rule.id)
+    : preflightRuleIds)
+  const dnrErrors = await validateDnrPatterns(parsed.value.rules
+    .filter((rule) => preflightIds.has(rule.id))
+    .flatMap((rule) => rule.urlPatterns))
+  if (dnrErrors.length > 0) return { ok: false, errors: dnrErrors }
 
   const [previous, runtime] = await Promise.all([loadConfig(), loadRuntimeStore()])
   const now = Date.now()
   const previousById = new Map(previous.rules.map((rule) => [rule.id, rule]))
   const changedRuleIds = new Set<string>()
+  const forcedResetIds = new Set(resetRuleIds)
   const nextRuntime: RuntimeStore = { schemaVersion: CONFIG_SCHEMA_VERSION, byRuleId: {} }
   for (const rule of parsed.value.rules) {
     const oldRule = previousById.get(rule.id)
     const oldRuntime = stateForRule(runtime, rule.id)
+    const forcedReset = oldRule && forcedResetIds.has(rule.id)
     const behaviorChanged = oldRule && JSON.stringify({
-      target: oldRule.target,
+      urlPatterns: oldRule.urlPatterns,
       mode: oldRule.mode,
       challenges: oldRule.challenges,
       schedule: oldRule.schedule,
       accessDurationMinutes: oldRule.accessDurationMinutes,
     }) !== JSON.stringify({
-      target: rule.target,
+      urlPatterns: rule.urlPatterns,
       mode: rule.mode,
       challenges: rule.challenges,
       schedule: rule.schedule,
       accessDurationMinutes: rule.accessDurationMinutes,
     })
-    if (oldRule && behaviorChanged) {
+    if (oldRule && (forcedReset || behaviorChanged)) {
       changedRuleIds.add(rule.id)
-      const preserved = { ...settleRuntime(oldRule, oldRuntime, now) }
-      if (preserved.activeUntil && oldRule.schedule?.kind === 'interval') {
-        preserved.lastWindowEndedAt = now
+      if (!forcedReset) {
+        const preserved = { ...settleRuntime(oldRule, oldRuntime, now) }
+        if (preserved.activeUntil && oldRule.schedule?.kind === 'interval') {
+          preserved.lastWindowEndedAt = now
+        }
+        delete preserved.activeUntil
+        delete preserved.verifiedCalendarKey
+        if (Object.keys(preserved).length > 0) nextRuntime.byRuleId[rule.id] = preserved
       }
-      delete preserved.activeUntil
-      delete preserved.verifiedCalendarKey
-      if (Object.keys(preserved).length > 0) nextRuntime.byRuleId[rule.id] = preserved
     } else if (Object.keys(oldRuntime).length > 0) {
       nextRuntime.byRuleId[rule.id] = oldRuntime
     }
@@ -250,7 +332,60 @@ async function saveRules(input: unknown): Promise<{ ok: true } | { ok: false; er
     ...[...changedRuleIds].map(clearRuleChallengeProgress),
   ])
   await requestPolicySync()
-  return { ok: true }
+  await refreshGateTabs(changedRuleIds)
+  return { ok: true, config: parsed.value }
+}
+
+function inputRuleId(input: unknown): string | undefined {
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) return undefined
+  const id = (input as { id?: unknown }).id
+  return typeof id === 'string' && id ? id : undefined
+}
+
+async function saveRule(
+  input: unknown,
+  insertBeforeRuleId?: string,
+): Promise<ConfigMutationResponse> {
+  const ruleId = inputRuleId(input)
+  if (!ruleId) return { ok: false, errors: ['当前规则缺少有效 ID'] }
+
+  const config = await loadConfig()
+  const existingIndex = config.rules.findIndex((rule) => rule.id === ruleId)
+  const rules = [...config.rules]
+  if (existingIndex >= 0) {
+    rules[existingIndex] = input as AccessRule
+  } else {
+    const insertIndex = insertBeforeRuleId
+      ? rules.findIndex((rule) => rule.id === insertBeforeRuleId)
+      : -1
+    rules.splice(insertIndex >= 0 ? insertIndex : rules.length, 0, input as AccessRule)
+  }
+  return commitRules(rules, [ruleId], [ruleId])
+}
+
+async function deleteRule(ruleId: string): Promise<ConfigMutationResponse> {
+  const config = await loadConfig()
+  return commitRules(config.rules.filter((rule) => rule.id !== ruleId))
+}
+
+async function reorderRules(input: unknown): Promise<ConfigMutationResponse> {
+  if (!Array.isArray(input) || input.some((id) => typeof id !== 'string')) {
+    return { ok: false, errors: ['规则顺序无效'] }
+  }
+  const ruleIds = input as string[]
+  const config = await loadConfig()
+  if (
+    new Set(ruleIds).size !== ruleIds.length ||
+    ruleIds.length !== config.rules.length ||
+    ruleIds.some((id) => !config.rules.some((rule) => rule.id === id))
+  ) {
+    return { ok: false, errors: ['规则列表已发生变化，请刷新后重试排序'] }
+  }
+  const byId = new Map(config.rules.map((rule) => [rule.id, rule]))
+  return commitRules(ruleIds.flatMap((id) => {
+    const rule = byId.get(id)
+    return rule ? [rule] : []
+  }))
 }
 
 async function getStatus(url: string, ruleId?: string): Promise<RuleStatus> {
@@ -272,9 +407,25 @@ export async function handleRuntimeMessage(
   request: RuntimeRequest,
   sender: chrome.runtime.MessageSender,
 ): Promise<unknown> {
-  if (request.type === 'config:get' || request.type === 'config:save') {
+  if (request.type === 'config:get') {
     assertExtensionPage(sender, 'options.html')
-    return request.type === 'config:get' ? loadConfig() : saveRules(request.rules)
+    return loadConfig()
+  }
+  if (
+    request.type === 'config:save-rule' ||
+    request.type === 'config:delete-rule' ||
+    request.type === 'config:reorder-rules' ||
+    request.type === 'config:replace'
+  ) {
+    assertExtensionPage(sender, 'options.html')
+    return enqueueConfigMutation(() => {
+      if (request.type === 'config:save-rule') {
+        return saveRule(request.rule, request.insertBeforeRuleId)
+      }
+      if (request.type === 'config:delete-rule') return deleteRule(request.ruleId)
+      if (request.type === 'config:reorder-rules') return reorderRules(request.ruleIds)
+      return commitRules(request.rules, 'all')
+    })
   }
   if (request.type === 'status:get') {
     assertExtensionPage(sender, 'popup.html')

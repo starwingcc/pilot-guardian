@@ -4,11 +4,10 @@ import { toPublicGateStep, toPublicRule } from './messages'
 
 const rule: AccessRule = {
   id: 'rule',
-  dnrRuleId: 1,
   name: '测试规则',
   enabled: true,
   priority: 0,
-  target: { schemes: ['https'], host: 'example.com', includeSubdomains: false, path: '/*' },
+  urlPatterns: ['https://example.com/*'],
   mode: 'password',
   challenges: [{ id: 'text', type: 'text', answer: '不会泄露', scene: { kind: 'default' } }],
   accessDurationMinutes: 30,

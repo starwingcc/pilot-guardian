@@ -4,16 +4,24 @@ import type {
   PublicAccessRule,
   PublicGateChallengeStep,
   RuntimeState,
+  StoredConfig,
 } from '../domain/types'
 
 export type RuntimeRequest =
   | { type: 'config:get' }
-  | { type: 'config:save'; rules: unknown }
+  | { type: 'config:save-rule'; rule: unknown; insertBeforeRuleId?: string }
+  | { type: 'config:delete-rule'; ruleId: string }
+  | { type: 'config:reorder-rules'; ruleIds: unknown }
+  | { type: 'config:replace'; rules: unknown }
   | { type: 'gate:get-context'; ruleId: string }
   | { type: 'gate:submit-text'; ruleId: string; stepId: string; stepIndex: number; sessionId: string; answer: string }
   | { type: 'gate:complete-interactive'; ruleId: string; stepId: string; stepIndex: number; sessionId: string }
   | { type: 'navigation:spa'; url: string }
   | { type: 'status:get'; url: string; ruleId?: string }
+
+export type ConfigMutationResponse =
+  | { ok: true; config: StoredConfig }
+  | { ok: false; errors: string[] }
 
 export interface GateContext {
   rule: Pick<AccessRule, 'id' | 'name'>

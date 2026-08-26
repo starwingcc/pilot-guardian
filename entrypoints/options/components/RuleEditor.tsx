@@ -34,6 +34,7 @@ import { Checkbox } from '@/src/components/ui/checkbox'
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldLegend,
@@ -66,9 +67,9 @@ import type {
   InteractiveChallengeStep,
   RuleMode,
   Schedule,
-  Scheme,
   TextChallengeStep,
 } from '../../../src/domain/types'
+import { parseUrlPattern, patternsMayOverlap } from '../../../src/domain/url-pattern'
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
 
@@ -90,6 +91,18 @@ interface RuleEditorProps {
 
 export function RuleEditor({ rule, index, total, hasConflict, onUpdate, onMove, onDelete }: RuleEditorProps) {
   const hasPendingReview = hasUnreviewedDocuments(rule)
+  const patternCounts = new Map<string, number>()
+  for (const pattern of rule.urlPatterns) {
+    patternCounts.set(pattern, (patternCounts.get(pattern) ?? 0) + 1)
+  }
+  const patternErrors = rule.urlPatterns.map((pattern) => {
+    const parsed = parseUrlPattern(pattern)
+    if (!parsed.ok) return parsed.error
+    return (patternCounts.get(pattern) ?? 0) > 1 ? '这条 URL 模式与同一规则中的另一条完全重复' : undefined
+  })
+  const hasRedundantPattern = rule.urlPatterns.some((pattern, patternIndex) =>
+    rule.urlPatterns.slice(patternIndex + 1).some((other) =>
+      pattern !== other && patternsMayOverlap(pattern, other)))
   const setMode = (mode: string) => {
     if (!mode) return
     onUpdate((draft) => {
@@ -155,37 +168,61 @@ export function RuleEditor({ rule, index, total, hasConflict, onUpdate, onMove, 
       <Card>
         <CardHeader>
           <div className="card-heading-icon"><RouteIcon aria-hidden="true" /></div>
-          <div><CardTitle>受控目标</CardTitle><CardDescription>指定需要被闸门接管的网址范围。</CardDescription></div>
+          <div>
+            <CardTitle>受控目标</CardTitle>
+            <CardDescription>支持 http、https 或 * 协议与 *.example.com 子域写法；路径可使用 *，多条模式按“或”生效。</CardDescription>
+          </div>
+          <Badge variant="outline">{rule.urlPatterns.length} URL</Badge>
         </CardHeader>
-        <CardContent>
-          <FieldGroup className="target-columns">
-            <FieldSet>
-              <FieldLegend variant="label">协议</FieldLegend>
-              <ToggleGroup
-                type="multiple"
-                value={rule.target.schemes}
-                onValueChange={(value) => onUpdate((draft) => { draft.target.schemes = value as Scheme[] })}
-                variant="outline"
-                spacing={2}
-              >
-                <ToggleGroupItem value="https">HTTPS</ToggleGroupItem>
-                <ToggleGroupItem value="http">HTTP</ToggleGroupItem>
-              </ToggleGroup>
-            </FieldSet>
-            <Field data-invalid={!rule.target.host.trim()}>
-              <FieldLabel htmlFor={`host-${rule.id}`}>主机名</FieldLabel>
-              <Input id={`host-${rule.id}`} value={rule.target.host} placeholder="www.example.com" aria-invalid={!rule.target.host.trim()} onChange={(event) => onUpdate((draft) => { draft.target.host = event.target.value })} />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor={`path-${rule.id}`}>路径</FieldLabel>
-              <Input id={`path-${rule.id}`} value={rule.target.path} placeholder="/*" onChange={(event) => onUpdate((draft) => { draft.target.path = event.target.value })} />
-            </Field>
-            <Field orientation="horizontal" className="span-full">
-              <div><FieldTitle>包含所有子域名</FieldTitle><FieldDescription>例如 news.example.com 也会命中。</FieldDescription></div>
-              <Switch checked={rule.target.includeSubdomains} onCheckedChange={(checked) => onUpdate((draft) => { draft.target.includeSubdomains = checked })} aria-label="包含所有子域名" />
-            </Field>
+        <CardContent className="target-card-content">
+          <FieldGroup>
+            {rule.urlPatterns.map((pattern, patternIndex) => {
+              const error = patternErrors[patternIndex]
+              const inputId = `url-pattern-${rule.id}-${patternIndex}`
+              return (
+                <Field key={patternIndex} data-invalid={Boolean(error)}>
+                  <FieldLabel htmlFor={inputId}>匹配 URL {patternIndex + 1}</FieldLabel>
+                  <div className="url-pattern-row">
+                    <Input
+                      id={inputId}
+                      value={pattern}
+                      placeholder="https://linux.do/*"
+                      aria-invalid={Boolean(error)}
+                      spellCheck={false}
+                      onChange={(event) => onUpdate((draft) => {
+                        draft.urlPatterns[patternIndex] = event.target.value
+                      })}
+                    />
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      disabled={rule.urlPatterns.length === 1}
+                      aria-label={`删除第 ${patternIndex + 1} 条 URL 模式`}
+                      onClick={() => onUpdate((draft) => {
+                        draft.urlPatterns.splice(patternIndex, 1)
+                      })}
+                    >
+                      <Trash2Icon />
+                    </Button>
+                  </div>
+                  {error ? <FieldError>{error}</FieldError> : null}
+                </Field>
+              )
+            })}
           </FieldGroup>
+          {hasRedundantPattern ? (
+            <Alert>
+              <TriangleAlertIcon />
+              <AlertTitle>存在范围重叠的 URL 模式</AlertTitle>
+              <AlertDescription>这些模式可以同时保留，但较窄范围可能已被同一规则中的较宽范围覆盖。</AlertDescription>
+            </Alert>
+          ) : null}
         </CardContent>
+        <CardFooter>
+          <Button variant="outline" onClick={() => onUpdate((draft) => { draft.urlPatterns.push('') })}>
+            <PlusIcon data-icon="inline-start" />添加 URL
+          </Button>
+        </CardFooter>
       </Card>
 
       <Card>
