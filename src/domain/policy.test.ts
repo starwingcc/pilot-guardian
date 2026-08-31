@@ -86,6 +86,72 @@ describe('访问策略', () => {
     expect(evaluateRule(rule, active, now + 30 * MINUTE).state).toBe('waiting')
   })
 
+  it('允许时段外的访问进入等待并指向下一个开放时刻', () => {
+    const morning = new Date(2026, 7, 24, 9).getTime()
+    const evening = new Date(2026, 7, 24, 20).getTime()
+    const rule = baseRule({ dailyWindow: { startMinutes: 12 * 60, endMinutes: 14 * 60 } })
+    const before = evaluateRule(rule, {}, morning)
+    expect(before.state).toBe('waiting')
+    expect(before.reason).toBe('hours-closed')
+    expect(before.nextChangeAt).toBe(new Date(2026, 7, 24, 12).getTime())
+    const after = evaluateRule(rule, {}, evening)
+    expect(after.reason).toBe('hours-closed')
+    expect(after.nextChangeAt).toBe(new Date(2026, 7, 25, 12).getTime())
+  })
+
+  it('允许时段内正常发起挑战', () => {
+    const noon = new Date(2026, 7, 24, 12).getTime()
+    const rule = baseRule({ dailyWindow: { startMinutes: 12 * 60, endMinutes: 14 * 60 } })
+    expect(evaluateRule(rule, {}, noon).state).toBe('challenge')
+  })
+
+  it('已开启的放行窗口不受时段结束影响', () => {
+    const noon = new Date(2026, 7, 24, 12).getTime()
+    const rule = baseRule({
+      dailyWindow: { startMinutes: 12 * 60, endMinutes: 12 * 60 + 15 },
+    })
+    const active = activateAccess(rule, {}, noon)
+    const pastClose = new Date(2026, 7, 24, 12, 20).getTime()
+    expect(evaluateRule(rule, active, pastClose).state).toBe('allowed')
+  })
+
+  it('跨午夜时段在深夜与清晨都开放', () => {
+    const rule = baseRule({ dailyWindow: { startMinutes: 22 * 60, endMinutes: 2 * 60 } })
+    const lateNight = new Date(2026, 7, 24, 23).getTime()
+    const earlyMorning = new Date(2026, 7, 25, 1).getTime()
+    expect(evaluateRule(rule, {}, lateNight).state).toBe('challenge')
+    expect(evaluateRule(rule, {}, earlyMorning).state).toBe('challenge')
+    const afternoon = new Date(2026, 7, 24, 15).getTime()
+    const waiting = evaluateRule(rule, {}, afternoon)
+    expect(waiting.reason).toBe('hours-closed')
+    expect(waiting.nextChangeAt).toBe(new Date(2026, 7, 24, 22).getTime())
+  })
+
+  it('开放日与允许时段共同决定闸门开启', () => {
+    const morning = new Date(2026, 7, 24, 10).getTime()
+    const rule = baseRule({
+      mode: 'schedule',
+      schedule: { kind: 'weekly', weekdays: [new Date(morning).getDay()] },
+      dailyWindow: { startMinutes: 20 * 60, endMinutes: 23 * 60 },
+    })
+    expect(evaluateRule(rule, {}, morning).reason).toBe('hours-closed')
+    const evening = new Date(2026, 7, 24, 21).getTime()
+    expect(evaluateRule(rule, {}, evening).reason).toBe('calendar-open')
+  })
+
+  it('冷却结束后仍需等待开放时段', () => {
+    const morning = new Date(2026, 7, 24, 9).getTime()
+    const rule = baseRule({
+      mode: 'schedule',
+      schedule: { kind: 'interval', intervalDays: 1 },
+      dailyWindow: { startMinutes: 20 * 60, endMinutes: 23 * 60 },
+    })
+    const runtime: RuntimeState = { lastWindowEndedAt: morning - 2 * DAY }
+    expect(evaluateRule(rule, runtime, morning).reason).toBe('hours-closed')
+    const evening = new Date(2026, 7, 24, 20, 30).getTime()
+    expect(evaluateRule(rule, runtime, evening).reason).toBe('interval-ready')
+  })
+
   it('组合日历验证后只在指定放行时长内允许访问', () => {
     const now = new Date(2026, 7, 24, 12).getTime()
     const rule = baseRule({

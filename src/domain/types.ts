@@ -52,6 +52,11 @@ export interface MonthlySchedule {
 
 export type Schedule = IntervalSchedule | WeeklySchedule | MonthlySchedule
 
+export interface DailyWindow {
+  startMinutes: number
+  endMinutes: number
+}
+
 export interface AccessRule {
   id: string
   name: string
@@ -61,6 +66,7 @@ export interface AccessRule {
   mode: RuleMode
   challenges: ChallengeStep[]
   schedule?: Schedule
+  dailyWindow?: DailyWindow
   accessDurationMinutes: number
 }
 
@@ -93,6 +99,7 @@ export type EvaluationReason =
   | 'cooldown'
   | 'calendar-open'
   | 'calendar-closed'
+  | 'hours-closed'
 
 export interface PolicyEvaluation {
   state: 'allowed' | 'challenge' | 'waiting'

@@ -1,6 +1,7 @@
 import type {
   AccessRule,
   ChallengeStep,
+  DailyWindow,
   InteractiveChallengeStep,
   StoredConfig,
   TextChallengeStep,
@@ -55,6 +56,8 @@ export function createInteractiveChallenge(): InteractiveChallengeStep {
 export function createChallenge(type: ChallengeStep['type']): ChallengeStep {
   return type === 'text' ? createTextChallenge() : createInteractiveChallenge()
 }
+
+export const DEFAULT_DAILY_WINDOW: DailyWindow = { startMinutes: 20 * 60, endMinutes: 23 * 60 }
 
 export function createDefaultRule(): AccessRule {
   return {

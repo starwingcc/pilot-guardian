@@ -43,6 +43,9 @@ function reasonText(context: GateContext, now: number): string {
   if (evaluation.reason === 'calendar-closed' && evaluation.nextChangeAt) {
     return `下一次开放：${formatDateTime(evaluation.nextChangeAt)}`
   }
+  if (evaluation.reason === 'hours-closed' && evaluation.nextChangeAt) {
+    return `下一个开放时段：${formatDateTime(evaluation.nextChangeAt)}`
+  }
   if (evaluation.state === 'allowed') return '航线已放行，正在继续访问。'
   return '完成挑战后，本次航线才会放行。'
 }

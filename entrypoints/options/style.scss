@@ -302,6 +302,27 @@ body {
   flex: 1;
 }
 
+.daily-window-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.daily-window-row [data-slot="input"] {
+  min-width: 0;
+  flex: 1;
+}
+
+.daily-window-row input[type="time"]::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+.daily-window-separator {
+  flex: none;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+}
+
 .schedule-console {
   display: flex;
   flex-direction: column;

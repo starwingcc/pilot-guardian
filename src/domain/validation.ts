@@ -6,6 +6,7 @@ import {
   type AccessRule,
   type ChallengeStep,
   type CustomChallengeDocument,
+  type DailyWindow,
   type ExportBundle,
   type MonthlySchedule,
   type Schedule,
@@ -63,6 +64,23 @@ function parseSchedule(value: unknown, errors: string[], label: string): Schedul
     } satisfies MonthlySchedule
   }
   errors.push(`${label}的周期类型无效`)
+  return undefined
+}
+
+function isValidWindowMinutes(value: unknown): value is number {
+  if (typeof value !== 'number' || !Number.isInteger(value)) return false
+  return value >= 0 && value <= 1439
+}
+
+function parseDailyWindow(value: unknown, errors: string[], label: string): DailyWindow | undefined {
+  if (isRecord(value) && isValidWindowMinutes(value.startMinutes) && isValidWindowMinutes(value.endMinutes)) {
+    if (value.startMinutes === value.endMinutes) {
+      errors.push(`${label}的允许时段起止不能相同`)
+      return undefined
+    }
+    return { startMinutes: value.startMinutes, endMinutes: value.endMinutes }
+  }
+  errors.push(`${label}的允许时段无效`)
   return undefined
 }
 
@@ -187,6 +205,9 @@ function parseRule(
   if (mode !== 'schedule' && challenges.length === 0) errors.push(`${label}至少需要一个挑战步骤`)
 
   const schedule = mode === 'password' ? undefined : parseSchedule(value.schedule, errors, label)
+  const dailyWindow = value.dailyWindow === undefined
+    ? undefined
+    : parseDailyWindow(value.dailyWindow, errors, label)
   const accessDurationMinutes = value.accessDurationMinutes
   if (!isPositiveNumber(accessDurationMinutes) || accessDurationMinutes > 10_080) {
     errors.push(`${label}的放行时长必须在 1 到 10080 分钟之间`)
@@ -205,6 +226,7 @@ function parseRule(
       : 30,
   }
   if (schedule) rule.schedule = schedule
+  if (dailyWindow) rule.dailyWindow = dailyWindow
   if (!allowEnabledPendingReview && rule.enabled && hasPendingReview(rule)) {
     errors.push(`${label}包含尚未预览的自定义文档，预览后才能启用`)
   }

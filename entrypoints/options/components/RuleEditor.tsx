@@ -58,12 +58,14 @@ import { OFFICIAL_TEMPLATES, officialTemplate } from '../../../src/domain/challe
 import { hasUnreviewedDocuments } from '../../../src/domain/custom-documents'
 import {
   DEFAULT_CUSTOM_DOCUMENT,
+  DEFAULT_DAILY_WINDOW,
   createChallenge,
   createTextChallenge,
 } from '../../../src/domain/defaults'
 import type {
   AccessRule,
   ChallengeStep,
+  DailyWindow,
   InteractiveChallengeStep,
   RuleMode,
   Schedule,
@@ -72,6 +74,21 @@ import type {
 import { parseUrlPattern, patternsMayOverlap } from '../../../src/domain/url-pattern'
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六']
+
+function minutesToTime(minutes: number): string {
+  const hour = String(Math.floor(minutes / 60)).padStart(2, '0')
+  const minute = String(minutes % 60).padStart(2, '0')
+  return `${hour}:${minute}`
+}
+
+function timeToMinutes(value: string): number | undefined {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(value)
+  if (!match) return undefined
+  const hour = Number(match[1])
+  const minute = Number(match[2])
+  if (hour > 23 || minute > 59) return undefined
+  return hour * 60 + minute
+}
 
 function defaultSchedule(kind: Schedule['kind']): Schedule {
   if (kind === 'interval') return { kind, intervalDays: 3 }
@@ -90,6 +107,7 @@ interface RuleEditorProps {
 }
 
 export function RuleEditor({ rule, index, total, hasConflict, onUpdate, onMove, onDelete }: RuleEditorProps) {
+  const [lastDailyWindow, setLastDailyWindow] = useState<DailyWindow>()
   const hasPendingReview = rule.mode !== 'schedule' && hasUnreviewedDocuments(rule)
   const patternCounts = new Map<string, number>()
   for (const pattern of rule.urlPatterns) {
@@ -244,6 +262,54 @@ export function RuleEditor({ rule, index, total, hasConflict, onUpdate, onMove, 
               <FieldLabel htmlFor={`duration-${rule.id}`}>放行时长（分钟）</FieldLabel>
               <Input id={`duration-${rule.id}`} type="number" min="1" max="10080" step="1" value={rule.accessDurationMinutes} onChange={(event) => onUpdate((draft) => { draft.accessDurationMinutes = Number(event.target.value) })} />
               <FieldDescription>放行窗口开启后，在此时长内不再重复拦截。</FieldDescription>
+            </Field>
+            <Field>
+              <Field orientation="horizontal">
+                <div>
+                  <FieldTitle>允许时段</FieldTitle>
+                  <FieldDescription>{rule.dailyWindow ? '只在开放时段内放行或接受挑战，开放日与冷却期仍独立生效。' : '开启后限制每天可访问的时间段。'}</FieldDescription>
+                </div>
+                <Switch
+                  checked={Boolean(rule.dailyWindow)}
+                  onCheckedChange={(checked) => {
+                    if (!checked && rule.dailyWindow) setLastDailyWindow({ ...rule.dailyWindow })
+                    onUpdate((draft) => {
+                      if (checked) {
+                        draft.dailyWindow = lastDailyWindow ? { ...lastDailyWindow } : { ...DEFAULT_DAILY_WINDOW }
+                      } else {
+                        delete draft.dailyWindow
+                      }
+                    })
+                  }}
+                  aria-label="限制每天可访问的时间段"
+                />
+              </Field>
+              {rule.dailyWindow ? (
+                <div className="daily-window-row">
+                  <Input
+                    id={`window-start-${rule.id}`}
+                    type="time"
+                    aria-label="允许时段开始时间"
+                    value={minutesToTime(rule.dailyWindow.startMinutes)}
+                    onChange={(event) => onUpdate((draft) => {
+                      const minutes = timeToMinutes(event.target.value)
+                      if (draft.dailyWindow && minutes !== undefined) draft.dailyWindow.startMinutes = minutes
+                    })}
+                  />
+                  <span className="daily-window-separator" aria-hidden="true">至</span>
+                  <Input
+                    id={`window-end-${rule.id}`}
+                    type="time"
+                    aria-label="允许时段结束时间"
+                    value={minutesToTime(rule.dailyWindow.endMinutes)}
+                    onChange={(event) => onUpdate((draft) => {
+                      const minutes = timeToMinutes(event.target.value)
+                      if (draft.dailyWindow && minutes !== undefined) draft.dailyWindow.endMinutes = minutes
+                    })}
+                  />
+                </div>
+              ) : null}
+              {rule.dailyWindow ? <FieldDescription>开始晚于结束表示跨午夜时段（如 22:00 至 06:00）；放行窗口开启后不受时段结束影响。</FieldDescription> : null}
             </Field>
             {rule.mode !== 'password' && rule.schedule ? <ScheduleEditor rule={rule} onUpdate={onUpdate} /> : null}
           </FieldGroup>

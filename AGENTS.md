@@ -18,6 +18,7 @@ Pilot Guardian 是一个基于 Chrome Manifest V3 的网页访问控制扩展。
 - shadcn/ui 作为通用组件基础，Radix 提供交互原语，Lucide 是唯一图标来源。
 - Tailwind CSS v4 提供设计令牌和工具类，SCSS 承载全局语义样式、复用能力与页面级复杂视觉效果。
 - 配置和运行状态保持本地优先，不依赖远程服务。
+- 包管理使用 pnpm（版本由 `package.json` 的 `packageManager` 字段锁定）；本机未全局安装 pnpm 命令，统一通过 `corepack pnpm ...` 调用（如 `corepack pnpm test`、`corepack pnpm compile`）。
 
 ## 项目架构
 

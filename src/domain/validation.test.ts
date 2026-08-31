@@ -59,6 +59,32 @@ describe('配置校验', () => {
     if (!result.ok) expect(result.errors.join('；')).toContain('正整数')
   })
 
+  it('解析可选的允许时段', () => {
+    const result = validateStoredConfig({
+      schemaVersion: CONFIG_SCHEMA_VERSION,
+      rules: [{ ...validRule, dailyWindow: { startMinutes: 20 * 60, endMinutes: 23 * 60 } }],
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.rules[0]?.dailyWindow).toEqual({ startMinutes: 1200, endMinutes: 1380 })
+  })
+
+  it('拒绝非法或起止相同的允许时段', () => {
+    const invalid = validateStoredConfig({
+      schemaVersion: CONFIG_SCHEMA_VERSION,
+      rules: [{ ...validRule, dailyWindow: { startMinutes: 1500, endMinutes: 120 } }],
+    })
+    expect(invalid.ok).toBe(false)
+    if (!invalid.ok) expect(invalid.errors.join('；')).toContain('允许时段')
+
+    const same = validateStoredConfig({
+      schemaVersion: CONFIG_SCHEMA_VERSION,
+      rules: [{ ...validRule, dailyWindow: { startMinutes: 600, endMinutes: 600 } }],
+    })
+    expect(same.ok).toBe(false)
+    if (!same.ok) expect(same.errors.join('；')).toContain('起止')
+  })
+
   it('拒绝非规范、空白和重复的 URL 模式', () => {
     const invalid = validateStoredConfig({
       schemaVersion: CONFIG_SCHEMA_VERSION,

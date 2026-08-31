@@ -1,4 +1,4 @@
-import type { AccessRule, PolicyEvaluation, RuntimeState, Schedule } from './types'
+import type { AccessRule, DailyWindow, PolicyEvaluation, RuntimeState, Schedule } from './types'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -53,6 +53,38 @@ function nextOpenDay(schedule: Schedule, now: number): number | undefined {
   return undefined
 }
 
+export function isDailyWindowOpen(window: DailyWindow, now: number): boolean {
+  const date = new Date(now)
+  const minutes = date.getHours() * 60 + date.getMinutes()
+  if (window.startMinutes <= window.endMinutes) {
+    return minutes >= window.startMinutes && minutes < window.endMinutes
+  }
+  return minutes >= window.startMinutes || minutes < window.endMinutes
+}
+
+function nextDailyWindowOpen(window: DailyWindow, now: number): number {
+  const current = new Date(now)
+  const minutes = current.getHours() * 60 + current.getMinutes()
+  const nextDay =
+    window.startMinutes <= window.endMinutes && minutes >= window.endMinutes ? 1 : 0
+  return new Date(
+    current.getFullYear(),
+    current.getMonth(),
+    current.getDate() + nextDay,
+    Math.floor(window.startMinutes / 60),
+    window.startMinutes % 60,
+  ).getTime()
+}
+
+function hoursClosedEvaluation(rule: AccessRule, now: number): PolicyEvaluation | undefined {
+  if (!rule.dailyWindow || isDailyWindowOpen(rule.dailyWindow, now)) return undefined
+  return {
+    state: 'waiting',
+    reason: 'hours-closed',
+    nextChangeAt: nextDailyWindowOpen(rule.dailyWindow, now),
+  }
+}
+
 export function settleRuntime(
   rule: AccessRule,
   runtime: RuntimeState,
@@ -73,10 +105,6 @@ function intervalEvaluation(
   runtime: RuntimeState,
   now: number,
 ): PolicyEvaluation {
-  if (runtime.activeUntil && runtime.activeUntil > now) {
-    return { state: 'allowed', reason: 'active-window', nextChangeAt: runtime.activeUntil }
-  }
-
   const schedule = rule.schedule
   if (!schedule || schedule.kind !== 'interval') {
     return { state: 'challenge', reason: 'password-required' }
@@ -95,10 +123,6 @@ function calendarEvaluation(
   runtime: RuntimeState,
   now: number,
 ): PolicyEvaluation {
-  if (runtime.activeUntil && runtime.activeUntil > now) {
-    return { state: 'allowed', reason: 'active-window', nextChangeAt: runtime.activeUntil }
-  }
-
   const schedule = rule.schedule
   if (!schedule || schedule.kind === 'interval') {
     return { state: 'challenge', reason: 'password-required' }
@@ -130,10 +154,12 @@ export function evaluateRule(
   now: number,
 ): PolicyEvaluation {
   const runtime = settleRuntime(rule, runtimeInput, now)
+  if (runtime.activeUntil && runtime.activeUntil > now) {
+    return { state: 'allowed', reason: 'active-window', nextChangeAt: runtime.activeUntil }
+  }
+  const hoursClosed = hoursClosedEvaluation(rule, now)
+  if (hoursClosed) return hoursClosed
   if (rule.mode === 'password') {
-    if (runtime.activeUntil && runtime.activeUntil > now) {
-      return { state: 'allowed', reason: 'active-window', nextChangeAt: runtime.activeUntil }
-    }
     return { state: 'challenge', reason: 'password-required' }
   }
 
