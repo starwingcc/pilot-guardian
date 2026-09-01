@@ -15,4 +15,3 @@ export function formatDateTime(timestamp: number): string {
     timeStyle: 'short',
   }).format(timestamp)
 }
-

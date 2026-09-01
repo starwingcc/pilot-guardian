@@ -13,7 +13,12 @@ interface RuleDiagnosticsProps {
   testMatch: AccessRule | undefined
 }
 
-export function RuleDiagnostics({ rule, testUrl, onTestUrlChange, testMatch }: RuleDiagnosticsProps) {
+export function RuleDiagnostics({
+  rule,
+  testUrl,
+  onTestUrlChange,
+  testMatch,
+}: RuleDiagnosticsProps) {
   const selectedRuleMatches = testMatch?.id === rule.id
   const result = selectedRuleMatches
     ? {
@@ -45,7 +50,10 @@ export function RuleDiagnostics({ rule, testUrl, onTestUrlChange, testMatch }: R
             <CardDescription>ROUTE DIAGNOSTICS</CardDescription>
             <CardTitle>规则诊断</CardTitle>
           </div>
-          <Badge variant="outline"><ScanSearchIcon data-icon="inline-start" />实时计算</Badge>
+          <Badge variant="outline">
+            <ScanSearchIcon data-icon="inline-start" />
+            实时计算
+          </Badge>
         </CardHeader>
         <CardContent>
           <FieldGroup>
@@ -64,7 +72,9 @@ export function RuleDiagnostics({ rule, testUrl, onTestUrlChange, testMatch }: R
           <Separator />
 
           <section className="diagnostics-result" aria-live="polite">
-            <div className="diagnostics-result__icon"><ResultIcon aria-hidden="true" /></div>
+            <div className="diagnostics-result__icon">
+              <ResultIcon aria-hidden="true" />
+            </div>
             <div className="diagnostics-result__copy">
               <Badge variant={selectedRuleMatches ? 'default' : 'secondary'}>{result.badge}</Badge>
               <strong>{result.label}</strong>

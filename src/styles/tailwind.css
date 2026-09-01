@@ -1,7 +1,7 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "@fontsource-variable/space-grotesk";
-@import "@fontsource-variable/jetbrains-mono";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '@fontsource-variable/space-grotesk';
+@import '@fontsource-variable/jetbrains-mono';
 
 @custom-variant dark (&:is(.dark *));
 @custom-variant data-open (&:is([data-state="open"]));
@@ -14,8 +14,8 @@
 @custom-variant data-vertical (&:is([data-orientation="vertical"]));
 
 @theme inline {
-  --font-sans: "Space Grotesk Variable", "Microsoft YaHei UI", "PingFang SC", sans-serif;
-  --font-mono: "JetBrains Mono Variable", "SFMono-Regular", Consolas, monospace;
+  --font-sans: 'Space Grotesk Variable', 'Microsoft YaHei UI', 'PingFang SC', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'SFMono-Regular', Consolas, monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);

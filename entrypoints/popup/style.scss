@@ -1,4 +1,4 @@
-@use "../../src/styles/mixins" as *;
+@use '../../src/styles/mixins' as *;
 
 body {
   width: 370px;
@@ -13,7 +13,11 @@ body {
   gap: 16px;
   padding: 20px;
   background:
-    radial-gradient(circle at 94% 0, color-mix(in oklch, var(--primary), transparent 76%), transparent 210px),
+    radial-gradient(
+      circle at 94% 0,
+      color-mix(in oklch, var(--primary), transparent 76%),
+      transparent 210px
+    ),
     var(--background);
 }
 
@@ -71,7 +75,7 @@ body {
   border: 1px solid color-mix(in oklch, var(--primary), transparent 82%);
   border-radius: 50%;
   box-shadow: 0 0 0 28px color-mix(in oklch, var(--primary), transparent 94%);
-  content: "";
+  content: '';
 }
 
 .status-orb {
@@ -111,14 +115,14 @@ body {
   box-shadow: 0 10px 26px color-mix(in oklch, var(--destructive), transparent 82%);
 }
 
-.status-card [data-slot="card-title"] {
+.status-card [data-slot='card-title'] {
   max-width: 270px;
   font-size: 25px;
   line-height: 1.05;
   letter-spacing: -0.045em;
 }
 
-.status-card [data-slot="card-content"] {
+.status-card [data-slot='card-content'] {
   display: flex;
   height: 100%;
   flex-direction: column;

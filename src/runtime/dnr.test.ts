@@ -12,7 +12,11 @@ beforeAll(() => {
   })
 })
 
-function accessRule(id: string, priority: number, urlPatterns = ['https://example.com/*']): AccessRule {
+function accessRule(
+  id: string,
+  priority: number,
+  urlPatterns = ['https://example.com/*'],
+): AccessRule {
   return {
     id,
     name: id,

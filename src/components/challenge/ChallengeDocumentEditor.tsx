@@ -1,10 +1,5 @@
 import { useRef, useState, type ChangeEvent } from 'react'
-import {
-  CircleAlertIcon,
-  FileCode2Icon,
-  PlayIcon,
-  RotateCcwIcon,
-} from 'lucide-react'
+import { CircleAlertIcon, FileCode2Icon, PlayIcon, RotateCcwIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Alert, AlertDescription, AlertTitle } from '@/src/components/ui/alert'
 import { Badge } from '@/src/components/ui/badge'
@@ -73,7 +68,9 @@ export function ChallengeDocumentEditor({
           <div className="document-heading">
             <div>
               <FieldLabel>{title}</FieldLabel>
-              <FieldDescription>粘贴代码或选择本地 HTML；文件会嵌入配置，不保留路径关联。</FieldDescription>
+              <FieldDescription>
+                粘贴代码或选择本地 HTML；文件会嵌入配置，不保留路径关联。
+              </FieldDescription>
             </div>
             <Badge variant={document.reviewState === 'ready' ? 'default' : 'secondary'}>
               {document.reviewState === 'ready' ? '已通过预览' : '需要预览'}
@@ -88,10 +85,15 @@ export function ChallengeDocumentEditor({
           />
           <div className="document-toolbar">
             <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-              <FileCode2Icon data-icon="inline-start" />导入本地 HTML
+              <FileCode2Icon data-icon="inline-start" />
+              导入本地 HTML
             </Button>
             <Button type="button" onClick={runPreview}>
-              {preview ? <RotateCcwIcon data-icon="inline-start" /> : <PlayIcon data-icon="inline-start" />}
+              {preview ? (
+                <RotateCcwIcon data-icon="inline-start" />
+              ) : (
+                <PlayIcon data-icon="inline-start" />
+              )}
               {preview ? '重新运行预览' : '运行沙箱预览'}
             </Button>
           </div>

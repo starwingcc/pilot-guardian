@@ -9,14 +9,16 @@ const rule: AccessRule = {
   priority: 0,
   urlPatterns: ['https://example.com/*'],
   mode: 'password',
-  challenges: [{
-    id: 'step',
-    type: 'interactive',
-    source: {
-      kind: 'custom',
-      document: { html: '<!doctype html><button>完成</button>', reviewState: 'ready' },
+  challenges: [
+    {
+      id: 'step',
+      type: 'interactive',
+      source: {
+        kind: 'custom',
+        document: { html: '<!doctype html><button>完成</button>', reviewState: 'ready' },
+      },
     },
-  }],
+  ],
   accessDurationMinutes: 30,
 }
 

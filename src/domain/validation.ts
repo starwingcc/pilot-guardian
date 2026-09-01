@@ -16,9 +16,7 @@ import {
 } from './types'
 import { parseUrlPattern } from './url-pattern'
 
-export type ValidationResult<T> =
-  | { ok: true; value: T }
-  | { ok: false; errors: string[] }
+export type ValidationResult<T> = { ok: true; value: T } | { ok: false; errors: string[] }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -53,7 +51,9 @@ function parseSchedule(value: unknown, errors: string[], label: string): Schedul
   }
   if (value.kind === 'monthly') {
     const monthDays = Array.isArray(value.monthDays)
-      ? value.monthDays.filter((day): day is number => Number.isInteger(day) && day >= 1 && day <= 31)
+      ? value.monthDays.filter(
+          (day): day is number => Number.isInteger(day) && day >= 1 && day <= 31,
+        )
       : []
     const includeLastDay = value.includeLastDay === true
     if (monthDays.length === 0 && !includeLastDay) errors.push(`${label}至少选择一个月份日`)
@@ -72,8 +72,16 @@ function isValidWindowMinutes(value: unknown): value is number {
   return value >= 0 && value <= 1439
 }
 
-function parseDailyWindow(value: unknown, errors: string[], label: string): DailyWindow | undefined {
-  if (isRecord(value) && isValidWindowMinutes(value.startMinutes) && isValidWindowMinutes(value.endMinutes)) {
+function parseDailyWindow(
+  value: unknown,
+  errors: string[],
+  label: string,
+): DailyWindow | undefined {
+  if (
+    isRecord(value) &&
+    isValidWindowMinutes(value.startMinutes) &&
+    isValidWindowMinutes(value.endMinutes)
+  ) {
     if (value.startMinutes === value.endMinutes) {
       errors.push(`${label}的允许时段起止不能相同`)
       return undefined
@@ -113,7 +121,12 @@ function parseTextScene(value: unknown, errors: string[], label: string): TextCh
   return { kind: 'default' }
 }
 
-function parseChallenge(value: unknown, index: number, errors: string[], ruleLabel: string): ChallengeStep | undefined {
+function parseChallenge(
+  value: unknown,
+  index: number,
+  errors: string[],
+  ruleLabel: string,
+): ChallengeStep | undefined {
   const label = `${ruleLabel}的第 ${index + 1} 个挑战步骤`
   if (!isRecord(value)) {
     errors.push(`${label}无效`)
@@ -149,7 +162,9 @@ function parseChallenge(value: unknown, index: number, errors: string[], ruleLab
 function hasPendingReview(rule: AccessRule): boolean {
   return rule.challenges.some((challenge) => {
     if (challenge.type === 'text') {
-      return challenge.scene.kind === 'custom' && challenge.scene.document.reviewState === 'required'
+      return (
+        challenge.scene.kind === 'custom' && challenge.scene.document.reviewState === 'required'
+      )
     }
     return challenge.source.document.reviewState === 'required'
   })
@@ -194,20 +209,20 @@ function parseRule(
     return undefined
   }
 
-  const challenges = mode === 'schedule'
-    ? []
-    : Array.isArray(value.challenges)
-    ? value.challenges.flatMap((challenge, challengeIndex) => {
-      const parsed = parseChallenge(challenge, challengeIndex, errors, label)
-      return parsed ? [parsed] : []
-    })
-    : []
+  const challenges =
+    mode === 'schedule'
+      ? []
+      : Array.isArray(value.challenges)
+        ? value.challenges.flatMap((challenge, challengeIndex) => {
+            const parsed = parseChallenge(challenge, challengeIndex, errors, label)
+            return parsed ? [parsed] : []
+          })
+        : []
   if (mode !== 'schedule' && challenges.length === 0) errors.push(`${label}至少需要一个挑战步骤`)
 
   const schedule = mode === 'password' ? undefined : parseSchedule(value.schedule, errors, label)
-  const dailyWindow = value.dailyWindow === undefined
-    ? undefined
-    : parseDailyWindow(value.dailyWindow, errors, label)
+  const dailyWindow =
+    value.dailyWindow === undefined ? undefined : parseDailyWindow(value.dailyWindow, errors, label)
   const accessDurationMinutes = value.accessDurationMinutes
   if (!isPositiveNumber(accessDurationMinutes) || accessDurationMinutes > 10_080) {
     errors.push(`${label}的放行时长必须在 1 到 10080 分钟之间`)
@@ -215,7 +230,8 @@ function parseRule(
 
   const rule: AccessRule = {
     id: typeof value.id === 'string' && value.id ? value.id : crypto.randomUUID(),
-    name: typeof value.name === 'string' && value.name.trim() ? value.name.trim() : `规则 ${index + 1}`,
+    name:
+      typeof value.name === 'string' && value.name.trim() ? value.name.trim() : `规则 ${index + 1}`,
     enabled: value.enabled !== false,
     priority: index,
     urlPatterns,
@@ -278,7 +294,8 @@ export function validateExportBundle(input: unknown): ValidationResult<ExportBun
     ok: true,
     value: {
       schemaVersion: CONFIG_SCHEMA_VERSION,
-      exportedAt: typeof input.exportedAt === 'string' ? input.exportedAt : new Date().toISOString(),
+      exportedAt:
+        typeof input.exportedAt === 'string' ? input.exportedAt : new Date().toISOString(),
       rules: rules.value,
     },
   }

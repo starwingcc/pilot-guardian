@@ -1,0 +1,12 @@
+node_modules
+.output
+.wxt
+coverage
+playwright-report
+test-results
+docs
+.agents
+.claude
+mockups
+src/domain/templates
+pnpm-lock.yaml

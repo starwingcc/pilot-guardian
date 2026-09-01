@@ -143,7 +143,8 @@ export function GateApp() {
       const next = await sendRuntimeMessage<GateContext>({ type: 'gate:get-context', ruleId })
       setContext(next)
       setError('')
-      if (next.evaluation.state === 'allowed' && next.originalUrl) location.replace(next.originalUrl)
+      if (next.evaluation.state === 'allowed' && next.originalUrl)
+        location.replace(next.originalUrl)
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : '无法读取访问规则')
     } finally {
@@ -151,7 +152,9 @@ export function GateApp() {
     }
   }, [ruleId])
 
-  useEffect(() => { void loadContext() }, [loadContext])
+  useEffect(() => {
+    void loadContext()
+  }, [loadContext])
 
   useEffect(() => {
     const boundary = context?.evaluation.nextChangeAt
@@ -218,9 +221,8 @@ export function GateApp() {
   const totalSteps = context?.totalSteps ?? 0
   const stepProgress = totalSteps > 0 ? ((context?.stepIndex ?? 0) / totalSteps) * 100 : 0
   const waiting = context?.evaluation.state === 'waiting'
-  const customSceneHtml = step?.type === 'text' && step.scene.kind === 'custom'
-    ? step.scene.document.html
-    : undefined
+  const customSceneHtml =
+    step?.type === 'text' && step.scene.kind === 'custom' ? step.scene.document.html : undefined
 
   if (!loading && context?.evaluation.state === 'challenge' && step?.type === 'interactive') {
     return <InteractiveGate context={context} step={step} onAdvance={completeInteractive} />
@@ -239,8 +241,14 @@ export function GateApp() {
       <div className="gate-noise" aria-hidden="true" />
       <FlightPath />
       <header className="gate-nav">
-        <div className="gate-brand"><ShieldCheckIcon aria-hidden="true" /><span>PILOT GUARDIAN</span></div>
-        <div className="gate-coordinates"><span>SECURE ROUTE</span><span>NODE / 01</span></div>
+        <div className="gate-brand">
+          <ShieldCheckIcon aria-hidden="true" />
+          <span>PILOT GUARDIAN</span>
+        </div>
+        <div className="gate-coordinates">
+          <span>SECURE ROUTE</span>
+          <span>NODE / 01</span>
+        </div>
       </header>
 
       <motion.div
@@ -250,27 +258,52 @@ export function GateApp() {
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
       >
         <section className="gate-editorial">
-          <Badge variant="outline"><RadioTowerIcon data-icon="inline-start" />访问已受控</Badge>
+          <Badge variant="outline">
+            <RadioTowerIcon data-icon="inline-start" />
+            访问已受控
+          </Badge>
           <p className="gate-kicker">INTERCEPTED NAVIGATION</p>
           {loading ? (
-            <div className="gate-title-skeleton"><Skeleton /><Skeleton /></div>
+            <div className="gate-title-skeleton">
+              <Skeleton />
+              <Skeleton />
+            </div>
           ) : (
             <h1>{context?.rule.name ?? '航线不可用'}</h1>
           )}
-          <p className="gate-lead">{context ? reasonText(context, now) : '正在建立安全链路并读取访问策略。'}</p>
+          <p className="gate-lead">
+            {context ? reasonText(context, now) : '正在建立安全链路并读取访问策略。'}
+          </p>
           <div className="gate-metrics">
-            <div><small>PROTOCOL</small><strong>LOCAL</strong></div>
-            <div><small>SEQUENCE</small><strong>{String(totalSteps).padStart(2, '0')}</strong></div>
-            <div><small>STATUS</small><strong>{waiting ? 'HOLD' : 'VERIFY'}</strong></div>
+            <div>
+              <small>PROTOCOL</small>
+              <strong>LOCAL</strong>
+            </div>
+            <div>
+              <small>SEQUENCE</small>
+              <strong>{String(totalSteps).padStart(2, '0')}</strong>
+            </div>
+            <div>
+              <small>STATUS</small>
+              <strong>{waiting ? 'HOLD' : 'VERIFY'}</strong>
+            </div>
           </div>
         </section>
 
         <section className="gate-terminal" aria-label="访问验证">
-          <div className="terminal-beacon" aria-hidden="true"><span /></div>
+          <div className="terminal-beacon" aria-hidden="true">
+            <span />
+          </div>
           {loading ? (
             <Card>
-              <CardHeader><Skeleton className="h-4 w-24" /><Skeleton className="h-7 w-3/4" /></CardHeader>
-              <CardContent><Skeleton className="h-10 w-full" /><Skeleton className="mt-4 h-9 w-32" /></CardContent>
+              <CardHeader>
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-7 w-3/4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="mt-4 h-9 w-32" />
+              </CardContent>
             </Card>
           ) : context ? (
             <AnimatePresence mode="wait">
@@ -284,11 +317,14 @@ export function GateApp() {
                 >
                   <Card className="challenge-card">
                     <CardHeader>
-                      <CardDescription>CHALLENGE {String(context.stepIndex + 1).padStart(2, '0')} / {String(totalSteps).padStart(2, '0')}</CardDescription>
+                      <CardDescription>
+                        CHALLENGE {String(context.stepIndex + 1).padStart(2, '0')} /{' '}
+                        {String(totalSteps).padStart(2, '0')}
+                      </CardDescription>
                       <CardTitle>请输入口令</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <form onSubmit={submit}>
+                      <form onSubmit={(event) => void submit(event)}>
                         <FieldGroup>
                           <Field data-invalid={Boolean(error)}>
                             <FieldLabel htmlFor="answer">口令</FieldLabel>
@@ -306,7 +342,11 @@ export function GateApp() {
                             <FieldDescription>口令只在当前设备中校验。</FieldDescription>
                           </Field>
                           <Button type="submit" size="lg" disabled={!answer || submitting}>
-                            {submitting ? <Spinner data-icon="inline-start" /> : <KeyRoundIcon data-icon="inline-start" />}
+                            {submitting ? (
+                              <Spinner data-icon="inline-start" />
+                            ) : (
+                              <KeyRoundIcon data-icon="inline-start" />
+                            )}
                             {submitting ? '正在校验' : '确认口令'}
                             {!submitting ? <ArrowRightIcon data-icon="inline-end" /> : null}
                           </Button>
@@ -315,7 +355,8 @@ export function GateApp() {
                     </CardContent>
                   </Card>
                   <div className="terminal-progress">
-                    <span>SEQUENCE PROGRESS</span><span>{Math.round(stepProgress)}%</span>
+                    <span>SEQUENCE PROGRESS</span>
+                    <span>{Math.round(stepProgress)}%</span>
                     <Progress value={stepProgress} />
                   </div>
                 </motion.div>
@@ -323,17 +364,29 @@ export function GateApp() {
                 <motion.div key="waiting" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                   <Card className="waiting-card">
                     <CardHeader>
-                      <div className="radar-core" aria-hidden="true"><Clock3Icon /><span /></div>
+                      <div className="radar-core" aria-hidden="true">
+                        <Clock3Icon />
+                        <span />
+                      </div>
                       <CardDescription>CALENDAR HOLD</CardDescription>
                       <CardTitle>保持航向，等待开放</CardTitle>
                     </CardHeader>
-                    <CardContent><p>{reasonText(context, now)}</p></CardContent>
+                    <CardContent>
+                      <p>{reasonText(context, now)}</p>
+                    </CardContent>
                   </Card>
                 </motion.div>
               )}
             </AnimatePresence>
           ) : (
-            <Card><CardHeader><CardTitle>无法建立闸门</CardTitle></CardHeader><CardContent><p>请返回扩展配置页检查规则。</p></CardContent></Card>
+            <Card>
+              <CardHeader>
+                <CardTitle>无法建立闸门</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p>请返回扩展配置页检查规则。</p>
+              </CardContent>
+            </Card>
           )}
 
           <AnimatePresence mode="wait">
@@ -357,7 +410,12 @@ export function GateApp() {
 
       <footer className="gate-footer">
         <span>LOCAL ACCESS CONTROL</span>
-        <span><i className="signal-rotor"><LoaderCircleIcon aria-hidden="true" /></i> SIGNAL LOCKED</span>
+        <span>
+          <i className="signal-rotor">
+            <LoaderCircleIcon aria-hidden="true" />
+          </i>{' '}
+          SIGNAL LOCKED
+        </span>
       </footer>
     </main>
   )

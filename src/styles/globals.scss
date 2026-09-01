@@ -1,4 +1,4 @@
-@use "./mixins" as *;
+@use './mixins' as *;
 
 $minimum-viewport: 320px;
 
@@ -60,12 +60,12 @@ body {
 }
 
 button,
-[role="button"] {
+[role='button'] {
   cursor: pointer;
 }
 
 button:disabled,
-[role="button"][aria-disabled="true"] {
+[role='button'][aria-disabled='true'] {
   cursor: not-allowed;
 }
 

@@ -70,8 +70,12 @@ describe('访问策略', () => {
 
   it('每月 31 日在二月跳过，最后一天选项独立生效', () => {
     const februaryEnd = new Date(2025, 1, 28, 12).getTime()
-    expect(isCalendarOpen({ kind: 'monthly', monthDays: [31], includeLastDay: false }, februaryEnd)).toBe(false)
-    expect(isCalendarOpen({ kind: 'monthly', monthDays: [31], includeLastDay: true }, februaryEnd)).toBe(true)
+    expect(
+      isCalendarOpen({ kind: 'monthly', monthDays: [31], includeLastDay: false }, februaryEnd),
+    ).toBe(false)
+    expect(
+      isCalendarOpen({ kind: 'monthly', monthDays: [31], includeLastDay: true }, februaryEnd),
+    ).toBe(true)
   })
 
   it('每周开放日只开启一次指定时长的放行窗口', () => {

@@ -11,8 +11,7 @@ export interface CustomChallengeDocument {
 }
 
 export type TextChallengeScene =
-  | { kind: 'default' }
-  | { kind: 'custom'; document: CustomChallengeDocument }
+  { kind: 'default' } | { kind: 'custom'; document: CustomChallengeDocument }
 
 export interface TextChallengeStep {
   id: string
@@ -112,9 +111,7 @@ export interface PublicChallengeStep {
   type: ChallengeStep['type']
 }
 
-export type PublicGateChallengeStep =
-  | Omit<TextChallengeStep, 'answer'>
-  | InteractiveChallengeStep
+export type PublicGateChallengeStep = Omit<TextChallengeStep, 'answer'> | InteractiveChallengeStep
 
 export type PublicAccessRule = Omit<AccessRule, 'challenges'> & {
   challenges: PublicChallengeStep[]

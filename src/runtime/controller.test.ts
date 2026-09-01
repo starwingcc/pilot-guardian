@@ -15,7 +15,11 @@ const isRegexSupported = vi.fn<() => Promise<{ isSupported: boolean; reason?: st
 const queryTabs = vi.fn<() => Promise<chrome.tabs.Tab[]>>()
 const reloadTab = vi.fn<() => Promise<void>>()
 
-function accessRule(id: string, priority: number, urlPatterns = [`https://${id}.example.com/*`]): AccessRule {
+function accessRule(
+  id: string,
+  priority: number,
+  urlPatterns = [`https://${id}.example.com/*`],
+): AccessRule {
   return {
     id,
     name: id,
@@ -91,10 +95,13 @@ describe('单规则配置变更', () => {
       rules: [first, second],
     } satisfies StoredConfig
 
-    const response = await handleRuntimeMessage({
-      type: 'config:save-rule',
-      rule: { ...first, name: '已修改' },
-    }, sender) as ConfigMutationResponse
+    const response = (await handleRuntimeMessage(
+      {
+        type: 'config:save-rule',
+        rule: { ...first, name: '已修改' },
+      },
+      sender,
+    )) as ConfigMutationResponse
 
     expect(response.ok).toBe(true)
     expect(storedRules().map((rule) => [rule.id, rule.name])).toEqual([
@@ -114,10 +121,13 @@ describe('单规则配置变更', () => {
       reason: 'memoryLimitExceeded',
     })
 
-    const response = await handleRuntimeMessage({
-      type: 'config:save-rule',
-      rule: { ...first, urlPatterns: ['https://changed.example.com/*'] },
-    }, sender) as ConfigMutationResponse
+    const response = (await handleRuntimeMessage(
+      {
+        type: 'config:save-rule',
+        rule: { ...first, urlPatterns: ['https://changed.example.com/*'] },
+      },
+      sender,
+    )) as ConfigMutationResponse
 
     expect(response.ok).toBe(false)
     expect(storedRules()[0]?.urlPatterns).toEqual(first.urlPatterns)
@@ -129,20 +139,26 @@ describe('单规则配置变更', () => {
       rules: [accessRule('first', 0), accessRule('second', 1)],
     } satisfies StoredConfig
 
-    const reordered = await handleRuntimeMessage({
-      type: 'config:reorder-rules',
-      ruleIds: ['second', 'first'],
-    }, sender) as ConfigMutationResponse
+    const reordered = (await handleRuntimeMessage(
+      {
+        type: 'config:reorder-rules',
+        ruleIds: ['second', 'first'],
+      },
+      sender,
+    )) as ConfigMutationResponse
     expect(reordered.ok).toBe(true)
     expect(storedRules().map((rule) => [rule.id, rule.priority])).toEqual([
       ['second', 0],
       ['first', 1],
     ])
 
-    const removed = await handleRuntimeMessage({
-      type: 'config:delete-rule',
-      ruleId: 'first',
-    }, sender) as ConfigMutationResponse
+    const removed = (await handleRuntimeMessage(
+      {
+        type: 'config:delete-rule',
+        ruleId: 'first',
+      },
+      sender,
+    )) as ConfigMutationResponse
     expect(removed.ok).toBe(true)
     expect(storedRules().map((rule) => rule.id)).toEqual(['second'])
   })
@@ -167,10 +183,13 @@ describe('单规则配置变更', () => {
       '1:second': { stepIndex: 0, sequenceSignature: 'second', sessionId: 'second-session' },
     }
 
-    const response = await handleRuntimeMessage({
-      type: 'config:save-rule',
-      rule: first,
-    }, sender) as ConfigMutationResponse
+    const response = (await handleRuntimeMessage(
+      {
+        type: 'config:save-rule',
+        rule: first,
+      },
+      sender,
+    )) as ConfigMutationResponse
 
     expect(response.ok).toBe(true)
     const runtime = localStore[RUNTIME_KEY] as RuntimeStore
@@ -194,13 +213,16 @@ describe('单规则配置变更', () => {
     } satisfies StoredConfig
     expect(evaluateRule(weeklyRule, {}, now).state).toBe('allowed')
 
-    const response = await handleRuntimeMessage({
-      type: 'config:save-rule',
-      rule: {
-        ...weeklyRule,
-        schedule: { kind: 'interval', intervalDays: 3 },
+    const response = (await handleRuntimeMessage(
+      {
+        type: 'config:save-rule',
+        rule: {
+          ...weeklyRule,
+          schedule: { kind: 'interval', intervalDays: 3 },
+        },
       },
-    }, sender) as ConfigMutationResponse
+      sender,
+    )) as ConfigMutationResponse
 
     expect(response.ok).toBe(true)
     const savedRule = storedRules()[0]
@@ -218,8 +240,12 @@ describe('单规则配置变更', () => {
     const activeUntil = activatedRuntime.byRuleId.first?.activeUntil
     expect(activeUntil).toBeTypeOf('number')
     if (!activeUntil) return
-    expect(evaluateRule(savedRule, activatedRuntime.byRuleId.first ?? {}, activeUntil - 1).state).toBe('allowed')
-    expect(evaluateRule(savedRule, activatedRuntime.byRuleId.first ?? {}, activeUntil + 1)).toMatchObject({
+    expect(
+      evaluateRule(savedRule, activatedRuntime.byRuleId.first ?? {}, activeUntil - 1).state,
+    ).toBe('allowed')
+    expect(
+      evaluateRule(savedRule, activatedRuntime.byRuleId.first ?? {}, activeUntil + 1),
+    ).toMatchObject({
       state: 'waiting',
       reason: 'cooldown',
     })
@@ -257,19 +283,24 @@ describe('单规则配置变更', () => {
       schemaVersion: CONFIG_SCHEMA_VERSION,
       byRuleId: { first: { lastWindowEndedAt: Date.now() } },
     } satisfies RuntimeStore
-    expect(evaluateRule(
-      intervalRule,
-      (localStore[RUNTIME_KEY] as RuntimeStore).byRuleId.first ?? {},
-      Date.now(),
-    ).state).toBe('waiting')
+    expect(
+      evaluateRule(
+        intervalRule,
+        (localStore[RUNTIME_KEY] as RuntimeStore).byRuleId.first ?? {},
+        Date.now(),
+      ).state,
+    ).toBe('waiting')
 
-    const response = await handleRuntimeMessage({
-      type: 'config:save-rule',
-      rule: {
-        ...intervalRule,
-        schedule: { kind: 'interval', intervalDays: 1 },
+    const response = (await handleRuntimeMessage(
+      {
+        type: 'config:save-rule',
+        rule: {
+          ...intervalRule,
+          schedule: { kind: 'interval', intervalDays: 1 },
+        },
       },
-    }, sender) as ConfigMutationResponse
+      sender,
+    )) as ConfigMutationResponse
 
     expect(response.ok).toBe(true)
     const runtime = localStore[RUNTIME_KEY] as RuntimeStore
@@ -302,26 +333,29 @@ describe('单规则配置变更', () => {
     }
     const gateUrl = 'chrome-extension://extension-id/gate.html?ruleId=first'
 
-    const saved = await handleRuntimeMessage({
-      type: 'config:save-rule',
-      rule: {
-        ...weeklyRule,
-        schedule: { kind: 'interval', intervalDays: 3 },
+    const saved = (await handleRuntimeMessage(
+      {
+        type: 'config:save-rule',
+        rule: {
+          ...weeklyRule,
+          schedule: { kind: 'interval', intervalDays: 3 },
+        },
       },
-    }, sender) as ConfigMutationResponse
+      sender,
+    )) as ConfigMutationResponse
 
     expect(saved.ok).toBe(true)
     expect(queryTabs).not.toHaveBeenCalled()
     expect(reloadTab).not.toHaveBeenCalled()
 
-    const context = await handleRuntimeMessage(
+    const context = (await handleRuntimeMessage(
       { type: 'gate:get-context', ruleId: weeklyRule.id },
       {
         id: 'extension-id',
         url: gateUrl,
         tab: { id: 1, url: gateUrl },
       } as chrome.runtime.MessageSender,
-    ) as GateContext
+    )) as GateContext
     expect(context.evaluation.state).toBe('allowed')
     expect(sessionStore[PENDING_KEY]).toEqual({})
   })

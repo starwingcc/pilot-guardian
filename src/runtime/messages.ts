@@ -14,14 +14,26 @@ export type RuntimeRequest =
   | { type: 'config:reorder-rules'; ruleIds: unknown }
   | { type: 'config:replace'; rules: unknown }
   | { type: 'gate:get-context'; ruleId: string }
-  | { type: 'gate:submit-text'; ruleId: string; stepId: string; stepIndex: number; sessionId: string; answer: string }
-  | { type: 'gate:complete-interactive'; ruleId: string; stepId: string; stepIndex: number; sessionId: string }
+  | {
+      type: 'gate:submit-text'
+      ruleId: string
+      stepId: string
+      stepIndex: number
+      sessionId: string
+      answer: string
+    }
+  | {
+      type: 'gate:complete-interactive'
+      ruleId: string
+      stepId: string
+      stepIndex: number
+      sessionId: string
+    }
   | { type: 'navigation:spa'; url: string }
   | { type: 'status:get'; url: string; ruleId?: string }
 
 export type ConfigMutationResponse =
-  | { ok: true; config: StoredConfig }
-  | { ok: false; errors: string[] }
+  { ok: true; config: StoredConfig } | { ok: false; errors: string[] }
 
 export interface GateContext {
   rule: Pick<AccessRule, 'id' | 'name'>
@@ -53,9 +65,7 @@ export function toPublicRule(rule: AccessRule): PublicAccessRule {
   }
 }
 
-export function toPublicGateStep(
-  step: AccessRule['challenges'][number],
-): PublicGateChallengeStep {
+export function toPublicGateStep(step: AccessRule['challenges'][number]): PublicGateChallengeStep {
   if (step.type === 'text') {
     return { id: step.id, type: step.type, scene: step.scene }
   }

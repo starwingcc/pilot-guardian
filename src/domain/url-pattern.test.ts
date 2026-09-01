@@ -36,7 +36,9 @@ describe('URL 规则', () => {
   })
 
   it('匹配协议、子域和路径，并忽略 query 与 hash', () => {
-    expect(matchesUrlPattern(target, 'https://news.example.com/focus/today?from=home#top')).toBe(true)
+    expect(matchesUrlPattern(target, 'https://news.example.com/focus/today?from=home#top')).toBe(
+      true,
+    )
     expect(matchesUrlPattern(target, 'https://example.com:8443/focus/today')).toBe(true)
     expect(matchesUrlPattern(target, 'http://news.example.com/focus/today')).toBe(false)
     expect(matchesUrlPattern(target, 'https://example.com/other')).toBe(false)

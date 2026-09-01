@@ -29,7 +29,14 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/src/components/ui/alert'
 import { Badge } from '@/src/components/ui/badge'
 import { Button } from '@/src/components/ui/button'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/src/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/src/components/ui/card'
 import { Checkbox } from '@/src/components/ui/checkbox'
 import {
   Field,
@@ -106,7 +113,15 @@ interface RuleEditorProps {
   onDelete: () => void
 }
 
-export function RuleEditor({ rule, index, total, hasConflict, onUpdate, onMove, onDelete }: RuleEditorProps) {
+export function RuleEditor({
+  rule,
+  index,
+  total,
+  hasConflict,
+  onUpdate,
+  onMove,
+  onDelete,
+}: RuleEditorProps) {
   const [lastDailyWindow, setLastDailyWindow] = useState<DailyWindow>()
   const hasPendingReview = rule.mode !== 'schedule' && hasUnreviewedDocuments(rule)
   const patternCounts = new Map<string, number>()
@@ -116,11 +131,15 @@ export function RuleEditor({ rule, index, total, hasConflict, onUpdate, onMove, 
   const patternErrors = rule.urlPatterns.map((pattern) => {
     const parsed = parseUrlPattern(pattern)
     if (!parsed.ok) return parsed.error
-    return (patternCounts.get(pattern) ?? 0) > 1 ? '这条 URL 模式与同一规则中的另一条完全重复' : undefined
+    return (patternCounts.get(pattern) ?? 0) > 1
+      ? '这条 URL 模式与同一规则中的另一条完全重复'
+      : undefined
   })
   const hasRedundantPattern = rule.urlPatterns.some((pattern, patternIndex) =>
-    rule.urlPatterns.slice(patternIndex + 1).some((other) =>
-      pattern !== other && patternsMayOverlap(pattern, other)))
+    rule.urlPatterns
+      .slice(patternIndex + 1)
+      .some((other) => pattern !== other && patternsMayOverlap(pattern, other)),
+  )
   const setMode = (mode: string) => {
     if (!mode) return
     onUpdate((draft) => {
@@ -140,9 +159,27 @@ export function RuleEditor({ rule, index, total, hasConflict, onUpdate, onMove, 
           <h2>{rule.name || '未命名规则'}</h2>
         </div>
         <div className="editor-actions">
-          <Button variant="outline" size="icon" onClick={() => onMove(-1)} disabled={index === 0} aria-label="上移规则"><ArrowUpIcon /></Button>
-          <Button variant="outline" size="icon" onClick={() => onMove(1)} disabled={index === total - 1} aria-label="下移规则"><ArrowDownIcon /></Button>
-          <Button variant="destructive" size="icon" onClick={onDelete} aria-label="删除规则"><Trash2Icon /></Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => onMove(-1)}
+            disabled={index === 0}
+            aria-label="上移规则"
+          >
+            <ArrowUpIcon />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => onMove(1)}
+            disabled={index === total - 1}
+            aria-label="下移规则"
+          >
+            <ArrowDownIcon />
+          </Button>
+          <Button variant="destructive" size="icon" onClick={onDelete} aria-label="删除规则">
+            <Trash2Icon />
+          </Button>
         </div>
       </div>
 
@@ -150,32 +187,58 @@ export function RuleEditor({ rule, index, total, hasConflict, onUpdate, onMove, 
         <Alert>
           <TriangleAlertIcon />
           <AlertTitle>检测到航线重叠</AlertTitle>
-          <AlertDescription>多个规则可能命中相同地址，系统将采用优先级最高的一条。</AlertDescription>
+          <AlertDescription>
+            多个规则可能命中相同地址，系统将采用优先级最高的一条。
+          </AlertDescription>
         </Alert>
       ) : null}
 
       <Card>
         <CardHeader>
-          <div className="card-heading-icon"><Settings2Icon aria-hidden="true" /></div>
-          <div><CardTitle>基本信息</CardTitle><CardDescription>定义航线名称及部署状态。</CardDescription></div>
-          <Badge variant={rule.enabled ? 'default' : 'outline'}>{rule.enabled ? '正在执行' : '已停用'}</Badge>
+          <div className="card-heading-icon">
+            <Settings2Icon aria-hidden="true" />
+          </div>
+          <div>
+            <CardTitle>基本信息</CardTitle>
+            <CardDescription>定义航线名称及部署状态。</CardDescription>
+          </div>
+          <Badge variant={rule.enabled ? 'default' : 'outline'}>
+            {rule.enabled ? '正在执行' : '已停用'}
+          </Badge>
         </CardHeader>
         <CardContent>
           <FieldGroup className="form-columns">
             <Field data-invalid={!rule.name.trim()}>
               <FieldLabel htmlFor={`rule-name-${rule.id}`}>规则名称</FieldLabel>
-              <Input id={`rule-name-${rule.id}`} value={rule.name} aria-invalid={!rule.name.trim()} onChange={(event) => onUpdate((draft) => { draft.name = event.target.value })} />
+              <Input
+                id={`rule-name-${rule.id}`}
+                value={rule.name}
+                aria-invalid={!rule.name.trim()}
+                onChange={(event) =>
+                  onUpdate((draft) => {
+                    draft.name = event.target.value
+                  })
+                }
+              />
               <FieldDescription>这个名称将显示在拦截闸门中。</FieldDescription>
             </Field>
             <Field orientation="horizontal">
               <div>
                 <FieldTitle>启用此规则</FieldTitle>
-                <FieldDescription>{hasPendingReview ? '先成功预览全部自定义文档，再启用规则。' : '立即参与浏览器导航匹配。'}</FieldDescription>
+                <FieldDescription>
+                  {hasPendingReview
+                    ? '先成功预览全部自定义文档，再启用规则。'
+                    : '立即参与浏览器导航匹配。'}
+                </FieldDescription>
               </div>
               <Switch
                 checked={rule.enabled}
                 disabled={!rule.enabled && hasPendingReview}
-                onCheckedChange={(checked) => onUpdate((draft) => { draft.enabled = checked })}
+                onCheckedChange={(checked) =>
+                  onUpdate((draft) => {
+                    draft.enabled = checked
+                  })
+                }
                 aria-label="启用此规则"
               />
             </Field>
@@ -185,10 +248,15 @@ export function RuleEditor({ rule, index, total, hasConflict, onUpdate, onMove, 
 
       <Card>
         <CardHeader>
-          <div className="card-heading-icon"><RouteIcon aria-hidden="true" /></div>
+          <div className="card-heading-icon">
+            <RouteIcon aria-hidden="true" />
+          </div>
           <div>
             <CardTitle>受控目标</CardTitle>
-            <CardDescription>支持 http、https 或 * 协议与 *.example.com 子域写法；路径可使用 *，多条模式按“或”生效。</CardDescription>
+            <CardDescription>
+              支持 http、https 或 * 协议与 *.example.com 子域写法；路径可使用
+              *，多条模式按“或”生效。
+            </CardDescription>
           </div>
           <Badge variant="outline">{rule.urlPatterns.length} URL</Badge>
         </CardHeader>
@@ -207,18 +275,22 @@ export function RuleEditor({ rule, index, total, hasConflict, onUpdate, onMove, 
                       placeholder="https://linux.do/*"
                       aria-invalid={Boolean(error)}
                       spellCheck={false}
-                      onChange={(event) => onUpdate((draft) => {
-                        draft.urlPatterns[patternIndex] = event.target.value
-                      })}
+                      onChange={(event) =>
+                        onUpdate((draft) => {
+                          draft.urlPatterns[patternIndex] = event.target.value
+                        })
+                      }
                     />
                     <Button
                       variant="outline"
                       size="icon"
                       disabled={rule.urlPatterns.length === 1}
                       aria-label={`删除第 ${patternIndex + 1} 条 URL 模式`}
-                      onClick={() => onUpdate((draft) => {
-                        draft.urlPatterns.splice(patternIndex, 1)
-                      })}
+                      onClick={() =>
+                        onUpdate((draft) => {
+                          draft.urlPatterns.splice(patternIndex, 1)
+                        })
+                      }
                     >
                       <Trash2Icon />
                     </Button>
@@ -232,42 +304,89 @@ export function RuleEditor({ rule, index, total, hasConflict, onUpdate, onMove, 
             <Alert>
               <TriangleAlertIcon />
               <AlertTitle>存在范围重叠的 URL 模式</AlertTitle>
-              <AlertDescription>这些模式可以同时保留，但较窄范围可能已被同一规则中的较宽范围覆盖。</AlertDescription>
+              <AlertDescription>
+                这些模式可以同时保留，但较窄范围可能已被同一规则中的较宽范围覆盖。
+              </AlertDescription>
             </Alert>
           ) : null}
         </CardContent>
         <CardFooter>
-          <Button variant="outline" onClick={() => onUpdate((draft) => { draft.urlPatterns.push('') })}>
-            <PlusIcon data-icon="inline-start" />添加 URL
+          <Button
+            variant="outline"
+            onClick={() =>
+              onUpdate((draft) => {
+                draft.urlPatterns.push('')
+              })
+            }
+          >
+            <PlusIcon data-icon="inline-start" />
+            添加 URL
           </Button>
         </CardFooter>
       </Card>
 
       <Card>
         <CardHeader>
-          <div className="card-heading-icon"><RadarIcon aria-hidden="true" /></div>
-          <div><CardTitle>访问策略</CardTitle><CardDescription>组合身份挑战与时间窗口。</CardDescription></div>
+          <div className="card-heading-icon">
+            <RadarIcon aria-hidden="true" />
+          </div>
+          <div>
+            <CardTitle>访问策略</CardTitle>
+            <CardDescription>组合身份挑战与时间窗口。</CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           <FieldGroup>
             <Field>
               <FieldTitle id={`mode-${rule.id}`}>策略模式</FieldTitle>
-              <ToggleGroup type="single" value={rule.mode} onValueChange={setMode} variant="outline" spacing={2} aria-labelledby={`mode-${rule.id}`}>
-                <ToggleGroupItem value="password"><KeyRoundIcon data-icon="inline-start" />口令</ToggleGroupItem>
-                <ToggleGroupItem value="schedule"><Clock3Icon data-icon="inline-start" />周期</ToggleGroupItem>
-                <ToggleGroupItem value="combined"><ShieldCheckIcon data-icon="inline-start" />口令 + 周期</ToggleGroupItem>
+              <ToggleGroup
+                type="single"
+                value={rule.mode}
+                onValueChange={setMode}
+                variant="outline"
+                spacing={2}
+                aria-labelledby={`mode-${rule.id}`}
+              >
+                <ToggleGroupItem value="password">
+                  <KeyRoundIcon data-icon="inline-start" />
+                  口令
+                </ToggleGroupItem>
+                <ToggleGroupItem value="schedule">
+                  <Clock3Icon data-icon="inline-start" />
+                  周期
+                </ToggleGroupItem>
+                <ToggleGroupItem value="combined">
+                  <ShieldCheckIcon data-icon="inline-start" />
+                  口令 + 周期
+                </ToggleGroupItem>
               </ToggleGroup>
             </Field>
             <Field>
               <FieldLabel htmlFor={`duration-${rule.id}`}>放行时长（分钟）</FieldLabel>
-              <Input id={`duration-${rule.id}`} type="number" min="1" max="10080" step="1" value={rule.accessDurationMinutes} onChange={(event) => onUpdate((draft) => { draft.accessDurationMinutes = Number(event.target.value) })} />
+              <Input
+                id={`duration-${rule.id}`}
+                type="number"
+                min="1"
+                max="10080"
+                step="1"
+                value={rule.accessDurationMinutes}
+                onChange={(event) =>
+                  onUpdate((draft) => {
+                    draft.accessDurationMinutes = Number(event.target.value)
+                  })
+                }
+              />
               <FieldDescription>放行窗口开启后，在此时长内不再重复拦截。</FieldDescription>
             </Field>
             <Field>
               <Field orientation="horizontal">
                 <div>
                   <FieldTitle>允许时段</FieldTitle>
-                  <FieldDescription>{rule.dailyWindow ? '只在开放时段内放行或接受挑战，开放日与冷却期仍独立生效。' : '开启后限制每天可访问的时间段。'}</FieldDescription>
+                  <FieldDescription>
+                    {rule.dailyWindow
+                      ? '只在开放时段内放行或接受挑战，开放日与冷却期仍独立生效。'
+                      : '开启后限制每天可访问的时间段。'}
+                  </FieldDescription>
                 </div>
                 <Switch
                   checked={Boolean(rule.dailyWindow)}
@@ -275,7 +394,9 @@ export function RuleEditor({ rule, index, total, hasConflict, onUpdate, onMove, 
                     if (!checked && rule.dailyWindow) setLastDailyWindow({ ...rule.dailyWindow })
                     onUpdate((draft) => {
                       if (checked) {
-                        draft.dailyWindow = lastDailyWindow ? { ...lastDailyWindow } : { ...DEFAULT_DAILY_WINDOW }
+                        draft.dailyWindow = lastDailyWindow
+                          ? { ...lastDailyWindow }
+                          : { ...DEFAULT_DAILY_WINDOW }
                       } else {
                         delete draft.dailyWindow
                       }
@@ -291,27 +412,41 @@ export function RuleEditor({ rule, index, total, hasConflict, onUpdate, onMove, 
                     type="time"
                     aria-label="允许时段开始时间"
                     value={minutesToTime(rule.dailyWindow.startMinutes)}
-                    onChange={(event) => onUpdate((draft) => {
-                      const minutes = timeToMinutes(event.target.value)
-                      if (draft.dailyWindow && minutes !== undefined) draft.dailyWindow.startMinutes = minutes
-                    })}
+                    onChange={(event) =>
+                      onUpdate((draft) => {
+                        const minutes = timeToMinutes(event.target.value)
+                        if (draft.dailyWindow && minutes !== undefined)
+                          draft.dailyWindow.startMinutes = minutes
+                      })
+                    }
                   />
-                  <span className="daily-window-separator" aria-hidden="true">至</span>
+                  <span className="daily-window-separator" aria-hidden="true">
+                    至
+                  </span>
                   <Input
                     id={`window-end-${rule.id}`}
                     type="time"
                     aria-label="允许时段结束时间"
                     value={minutesToTime(rule.dailyWindow.endMinutes)}
-                    onChange={(event) => onUpdate((draft) => {
-                      const minutes = timeToMinutes(event.target.value)
-                      if (draft.dailyWindow && minutes !== undefined) draft.dailyWindow.endMinutes = minutes
-                    })}
+                    onChange={(event) =>
+                      onUpdate((draft) => {
+                        const minutes = timeToMinutes(event.target.value)
+                        if (draft.dailyWindow && minutes !== undefined)
+                          draft.dailyWindow.endMinutes = minutes
+                      })
+                    }
                   />
                 </div>
               ) : null}
-              {rule.dailyWindow ? <FieldDescription>开始晚于结束表示跨午夜时段（如 22:00 至 06:00）；放行窗口开启后不受时段结束影响。</FieldDescription> : null}
+              {rule.dailyWindow ? (
+                <FieldDescription>
+                  开始晚于结束表示跨午夜时段（如 22:00 至 06:00）；放行窗口开启后不受时段结束影响。
+                </FieldDescription>
+              ) : null}
             </Field>
-            {rule.mode !== 'password' && rule.schedule ? <ScheduleEditor rule={rule} onUpdate={onUpdate} /> : null}
+            {rule.mode !== 'password' && rule.schedule ? (
+              <ScheduleEditor rule={rule} onUpdate={onUpdate} />
+            ) : null}
           </FieldGroup>
         </CardContent>
       </Card>
@@ -331,7 +466,12 @@ function ScheduleEditor({ rule, onUpdate }: Pick<RuleEditorProps, 'rule' | 'onUp
         <ToggleGroup
           type="single"
           value={schedule.kind}
-          onValueChange={(kind) => { if (kind) onUpdate((draft) => { draft.schedule = defaultSchedule(kind as Schedule['kind']) }) }}
+          onValueChange={(kind) => {
+            if (kind)
+              onUpdate((draft) => {
+                draft.schedule = defaultSchedule(kind as Schedule['kind'])
+              })
+          }}
           variant="outline"
           spacing={2}
           aria-labelledby={`schedule-${rule.id}`}
@@ -344,34 +484,78 @@ function ScheduleEditor({ rule, onUpdate }: Pick<RuleEditorProps, 'rule' | 'onUp
       {schedule.kind === 'interval' ? (
         <Field>
           <FieldLabel htmlFor={`interval-${rule.id}`}>冷却天数</FieldLabel>
-          <Input id={`interval-${rule.id}`} type="number" min="1" step="1" value={schedule.intervalDays} onChange={(event) => onUpdate((draft) => {
-            if (draft.schedule?.kind === 'interval') draft.schedule.intervalDays = Number(event.target.value)
-          })} />
+          <Input
+            id={`interval-${rule.id}`}
+            type="number"
+            min="1"
+            step="1"
+            value={schedule.intervalDays}
+            onChange={(event) =>
+              onUpdate((draft) => {
+                if (draft.schedule?.kind === 'interval')
+                  draft.schedule.intervalDays = Number(event.target.value)
+              })
+            }
+          />
           <FieldDescription>一天按连续 24 小时计算。</FieldDescription>
         </Field>
       ) : null}
       {schedule.kind === 'weekly' ? (
         <FieldSet>
           <FieldLegend variant="label">选择星期</FieldLegend>
-          <ToggleGroup type="multiple" value={schedule.weekdays.map(String)} onValueChange={(values) => onUpdate((draft) => {
-            if (draft.schedule?.kind === 'weekly') draft.schedule.weekdays = values.map(Number).sort((a, b) => a - b)
-          })} variant="outline" spacing={2}>
-            {WEEKDAYS.map((day, index) => <ToggleGroupItem key={day} value={String(index)}>周{day}</ToggleGroupItem>)}
+          <ToggleGroup
+            type="multiple"
+            value={schedule.weekdays.map(String)}
+            onValueChange={(values) =>
+              onUpdate((draft) => {
+                if (draft.schedule?.kind === 'weekly')
+                  draft.schedule.weekdays = values.map(Number).sort((a, b) => a - b)
+              })
+            }
+            variant="outline"
+            spacing={2}
+          >
+            {WEEKDAYS.map((day, index) => (
+              <ToggleGroupItem key={day} value={String(index)}>
+                周{day}
+              </ToggleGroupItem>
+            ))}
           </ToggleGroup>
         </FieldSet>
       ) : null}
       {schedule.kind === 'monthly' ? (
         <FieldSet>
           <FieldLegend variant="label">选择日期</FieldLegend>
-          <ToggleGroup className="month-toggle-grid" type="multiple" value={schedule.monthDays.map(String)} onValueChange={(values) => onUpdate((draft) => {
-            if (draft.schedule?.kind === 'monthly') draft.schedule.monthDays = values.map(Number).sort((a, b) => a - b)
-          })} variant="outline" spacing={2}>
-            {Array.from({ length: 31 }, (_, index) => index + 1).map((day) => <ToggleGroupItem key={day} value={String(day)}>{day}</ToggleGroupItem>)}
+          <ToggleGroup
+            className="month-toggle-grid"
+            type="multiple"
+            value={schedule.monthDays.map(String)}
+            onValueChange={(values) =>
+              onUpdate((draft) => {
+                if (draft.schedule?.kind === 'monthly')
+                  draft.schedule.monthDays = values.map(Number).sort((a, b) => a - b)
+              })
+            }
+            variant="outline"
+            spacing={2}
+          >
+            {Array.from({ length: 31 }, (_, index) => index + 1).map((day) => (
+              <ToggleGroupItem key={day} value={String(day)}>
+                {day}
+              </ToggleGroupItem>
+            ))}
           </ToggleGroup>
           <Field orientation="horizontal">
-            <Checkbox id={`last-day-${rule.id}`} checked={schedule.includeLastDay} onCheckedChange={(checked) => onUpdate((draft) => {
-              if (draft.schedule?.kind === 'monthly') draft.schedule.includeLastDay = checked === true
-            })} />
+            <Checkbox
+              id={`last-day-${rule.id}`}
+              checked={schedule.includeLastDay}
+              onCheckedChange={(checked) =>
+                onUpdate((draft) => {
+                  if (draft.schedule?.kind === 'monthly')
+                    draft.schedule.includeLastDay = checked === true
+                })
+              }
+            />
             <FieldLabel htmlFor={`last-day-${rule.id}`}>同时包含每月最后一天</FieldLabel>
           </Field>
         </FieldSet>
@@ -399,7 +583,11 @@ function TextStepEditor({
           aria-invalid={!step.answer}
           autoComplete="off"
           spellCheck={false}
-          onChange={(event) => onChange((draft) => { draft.answer = event.target.value })}
+          onChange={(event) =>
+            onChange((draft) => {
+              draft.answer = event.target.value
+            })
+          }
         />
         <FieldDescription>支持中文，并以明文形式保存在当前设备。</FieldDescription>
       </Field>
@@ -409,29 +597,38 @@ function TextStepEditor({
           type="single"
           value={step.scene.kind}
           onValueChange={(kind) => {
-            if (kind === 'default') onChange((draft) => { draft.scene = { kind: 'default' } })
-            if (kind === 'custom') onChange((draft) => {
-              draft.scene = {
-                kind: 'custom',
-                document: { html: DEFAULT_CUSTOM_DOCUMENT, reviewState: 'required' },
-              }
-            })
+            if (kind === 'default')
+              onChange((draft) => {
+                draft.scene = { kind: 'default' }
+              })
+            if (kind === 'custom')
+              onChange((draft) => {
+                draft.scene = {
+                  kind: 'custom',
+                  document: { html: DEFAULT_CUSTOM_DOCUMENT, reviewState: 'required' },
+                }
+              })
           }}
           variant="outline"
           spacing={2}
           aria-labelledby={`scene-${step.id}`}
         >
           <ToggleGroupItem value="default">默认闸门</ToggleGroupItem>
-          <ToggleGroupItem value="custom"><BracesIcon data-icon="inline-start" />自定义 HTML</ToggleGroupItem>
+          <ToggleGroupItem value="custom">
+            <BracesIcon data-icon="inline-start" />
+            自定义 HTML
+          </ToggleGroupItem>
         </ToggleGroup>
       </Field>
       {step.scene.kind === 'custom' ? (
         <ChallengeDocumentEditor
           document={step.scene.document}
           title="文本挑战场景 HTML"
-          onChange={(document) => onChange((draft) => {
-            if (draft.scene.kind === 'custom') draft.scene.document = document
-          })}
+          onChange={(document) =>
+            onChange((draft) => {
+              if (draft.scene.kind === 'custom') draft.scene.document = document
+            })
+          }
         />
       ) : null}
     </FieldGroup>
@@ -451,15 +648,17 @@ function InteractiveStepEditor({
         <FieldLabel htmlFor={`preset-${step.id}`}>从官方预设加载</FieldLabel>
         <Select
           value=""
-          onValueChange={(templateId) => onChange((draft) => {
-            draft.source = {
-              kind: 'custom',
-              document: {
-                html: officialTemplate(templateId as Parameters<typeof officialTemplate>[0]).html,
-                reviewState: 'ready',
-              },
-            }
-          })}
+          onValueChange={(templateId) =>
+            onChange((draft) => {
+              draft.source = {
+                kind: 'custom',
+                document: {
+                  html: officialTemplate(templateId as Parameters<typeof officialTemplate>[0]).html,
+                  reviewState: 'ready',
+                },
+              }
+            })
+          }
         >
           <SelectTrigger id={`preset-${step.id}`}>
             <SelectValue placeholder="选择官方预设,载入后可继续编辑" />
@@ -467,7 +666,9 @@ function InteractiveStepEditor({
           <SelectContent>
             <SelectGroup>
               {OFFICIAL_TEMPLATES.map((template) => (
-                <SelectItem key={template.id} value={template.id}>{template.name}</SelectItem>
+                <SelectItem key={template.id} value={template.id}>
+                  {template.name}
+                </SelectItem>
               ))}
             </SelectGroup>
           </SelectContent>
@@ -479,12 +680,18 @@ function InteractiveStepEditor({
       <Alert>
         <BracesIcon />
         <AlertTitle>完成接口</AlertTitle>
-        <AlertDescription>在交互达成时调用 <code>window.PilotGuardian.complete()</code>，重复调用只会生效一次。</AlertDescription>
+        <AlertDescription>
+          在交互达成时调用 <code>window.PilotGuardian.complete()</code>，重复调用只会生效一次。
+        </AlertDescription>
       </Alert>
       <ChallengeDocumentEditor
         document={step.source.document}
         title="交互挑战 HTML"
-        onChange={(document) => onChange((draft) => { draft.source.document = document })}
+        onChange={(document) =>
+          onChange((draft) => {
+            draft.source.document = document
+          })
+        }
       />
     </FieldGroup>
   )
@@ -528,19 +735,53 @@ function ChallengeUnit({
           <CardTitle>{challenge.type === 'text' ? '文本挑战' : '交互挑战'}</CardTitle>
         </div>
         <div className="challenge-actions">
-          <Button variant="ghost" size="icon" onClick={() => onUpdate((draft) => {
-            if (index < 1) return
-            const previous = draft.challenges[index - 1]
-            const current = draft.challenges[index]
-            if (previous && current) [draft.challenges[index - 1], draft.challenges[index]] = [current, previous]
-          })} disabled={index === 0} aria-label={`上移第 ${index + 1} 个挑战步骤`}><ArrowUpIcon /></Button>
-          <Button variant="ghost" size="icon" onClick={() => onUpdate((draft) => {
-            if (index >= draft.challenges.length - 1) return
-            const next = draft.challenges[index + 1]
-            const current = draft.challenges[index]
-            if (next && current) [draft.challenges[index], draft.challenges[index + 1]] = [next, current]
-          })} disabled={index === total - 1} aria-label={`下移第 ${index + 1} 个挑战步骤`}><ArrowDownIcon /></Button>
-          <Button variant="destructive" size="icon" disabled={total === 1} onClick={() => onUpdate((draft) => { draft.challenges.splice(index, 1) })} aria-label={`删除第 ${index + 1} 个挑战步骤`}><Trash2Icon /></Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() =>
+              onUpdate((draft) => {
+                if (index < 1) return
+                const previous = draft.challenges[index - 1]
+                const current = draft.challenges[index]
+                if (previous && current)
+                  [draft.challenges[index - 1], draft.challenges[index]] = [current, previous]
+              })
+            }
+            disabled={index === 0}
+            aria-label={`上移第 ${index + 1} 个挑战步骤`}
+          >
+            <ArrowUpIcon />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() =>
+              onUpdate((draft) => {
+                if (index >= draft.challenges.length - 1) return
+                const next = draft.challenges[index + 1]
+                const current = draft.challenges[index]
+                if (next && current)
+                  [draft.challenges[index], draft.challenges[index + 1]] = [next, current]
+              })
+            }
+            disabled={index === total - 1}
+            aria-label={`下移第 ${index + 1} 个挑战步骤`}
+          >
+            <ArrowDownIcon />
+          </Button>
+          <Button
+            variant="destructive"
+            size="icon"
+            disabled={total === 1}
+            onClick={() =>
+              onUpdate((draft) => {
+                draft.challenges.splice(index, 1)
+              })
+            }
+            aria-label={`删除第 ${index + 1} 个挑战步骤`}
+          >
+            <Trash2Icon />
+          </Button>
         </div>
       </CardHeader>
       <CardContent>
@@ -557,28 +798,49 @@ function ChallengeUnit({
               spacing={2}
               aria-labelledby={`challenge-type-${challenge.id}`}
             >
-              <ToggleGroupItem value="text"><TypeIcon data-icon="inline-start" />文本挑战</ToggleGroupItem>
-              <ToggleGroupItem value="interactive"><MousePointerClickIcon data-icon="inline-start" />交互挑战</ToggleGroupItem>
+              <ToggleGroupItem value="text">
+                <TypeIcon data-icon="inline-start" />
+                文本挑战
+              </ToggleGroupItem>
+              <ToggleGroupItem value="interactive">
+                <MousePointerClickIcon data-icon="inline-start" />
+                交互挑战
+              </ToggleGroupItem>
             </ToggleGroup>
           </Field>
           {challenge.type === 'text' ? (
             <TextStepEditor step={challenge} onChange={(mutate) => updateStep('text', mutate)} />
           ) : (
-            <InteractiveStepEditor step={challenge} onChange={(mutate) => updateStep('interactive', mutate)} />
+            <InteractiveStepEditor
+              step={challenge}
+              onChange={(mutate) => updateStep('interactive', mutate)}
+            />
           )}
         </FieldGroup>
       </CardContent>
 
-      <AlertDialog open={Boolean(pendingType)} onOpenChange={(open) => { if (!open) setPendingType(undefined) }}>
+      <AlertDialog
+        open={Boolean(pendingType)}
+        onOpenChange={(open) => {
+          if (!open) setPendingType(undefined)
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogMedia><TriangleAlertIcon /></AlertDialogMedia>
+            <AlertDialogMedia>
+              <TriangleAlertIcon />
+            </AlertDialogMedia>
             <AlertDialogTitle>切换挑战类型？</AlertDialogTitle>
-            <AlertDialogDescription>当前步骤中不兼容的答案、模板和自定义 HTML 将被删除，此操作在保存前仍可通过刷新页面撤销。</AlertDialogDescription>
+            <AlertDialogDescription>
+              当前步骤中不兼容的答案、模板和自定义 HTML
+              将被删除，此操作在保存前仍可通过刷新页面撤销。
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction variant="destructive" onClick={confirmTypeChange}>确认切换</AlertDialogAction>
+            <AlertDialogAction variant="destructive" onClick={confirmTypeChange}>
+              确认切换
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -590,8 +852,13 @@ function ChallengeEditor({ rule, onUpdate }: Pick<RuleEditorProps, 'rule' | 'onU
   return (
     <Card>
       <CardHeader>
-        <div className="card-heading-icon"><KeyRoundIcon aria-hidden="true" /></div>
-        <div><CardTitle>挑战序列</CardTitle><CardDescription>文本答案与完整互动体验可以自由组合。</CardDescription></div>
+        <div className="card-heading-icon">
+          <KeyRoundIcon aria-hidden="true" />
+        </div>
+        <div>
+          <CardTitle>挑战序列</CardTitle>
+          <CardDescription>文本答案与完整互动体验可以自由组合。</CardDescription>
+        </div>
         <Badge variant="outline">{rule.challenges.length} STEPS</Badge>
       </CardHeader>
       <CardContent>
@@ -608,8 +875,16 @@ function ChallengeEditor({ rule, onUpdate }: Pick<RuleEditorProps, 'rule' | 'onU
         </div>
       </CardContent>
       <CardFooter>
-        <Button variant="outline" onClick={() => onUpdate((draft) => { draft.challenges.push(createTextChallenge()) })}>
-          <PlusIcon data-icon="inline-start" />添加挑战步骤
+        <Button
+          variant="outline"
+          onClick={() =>
+            onUpdate((draft) => {
+              draft.challenges.push(createTextChallenge())
+            })
+          }
+        >
+          <PlusIcon data-icon="inline-start" />
+          添加挑战步骤
         </Button>
       </CardFooter>
       <Separator />

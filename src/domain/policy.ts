@@ -12,11 +12,7 @@ export function localDateKey(now: number): string {
 
 export function nextLocalMidnight(now: number): number {
   const date = new Date(now)
-  return new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate() + 1,
-  ).getTime()
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1).getTime()
 }
 
 function isLastDayOfMonth(date: Date): boolean {
@@ -27,8 +23,10 @@ export function isCalendarOpen(schedule: Schedule, now: number): boolean {
   const date = new Date(now)
   if (schedule.kind === 'weekly') return schedule.weekdays.includes(date.getDay())
   if (schedule.kind === 'monthly') {
-    return schedule.monthDays.includes(date.getDate()) ||
+    return (
+      schedule.monthDays.includes(date.getDate()) ||
       (schedule.includeLastDay && isLastDayOfMonth(date))
+    )
   }
   return false
 }
@@ -36,11 +34,7 @@ export function isCalendarOpen(schedule: Schedule, now: number): boolean {
 function nextOpenDay(schedule: Schedule, now: number): number | undefined {
   if (schedule.kind === 'interval') return undefined
   const current = new Date(now)
-  const midnight = new Date(
-    current.getFullYear(),
-    current.getMonth(),
-    current.getDate(),
-  )
+  const midnight = new Date(current.getFullYear(), current.getMonth(), current.getDate())
 
   for (let offset = 1; offset <= 370; offset += 1) {
     const candidate = new Date(
@@ -65,8 +59,7 @@ export function isDailyWindowOpen(window: DailyWindow, now: number): boolean {
 function nextDailyWindowOpen(window: DailyWindow, now: number): number {
   const current = new Date(now)
   const minutes = current.getHours() * 60 + current.getMinutes()
-  const nextDay =
-    window.startMinutes <= window.endMinutes && minutes >= window.endMinutes ? 1 : 0
+  const nextDay = window.startMinutes <= window.endMinutes && minutes >= window.endMinutes ? 1 : 0
   return new Date(
     current.getFullYear(),
     current.getMonth(),
@@ -85,11 +78,7 @@ function hoursClosedEvaluation(rule: AccessRule, now: number): PolicyEvaluation 
   }
 }
 
-export function settleRuntime(
-  rule: AccessRule,
-  runtime: RuntimeState,
-  now: number,
-): RuntimeState {
+export function settleRuntime(rule: AccessRule, runtime: RuntimeState, now: number): RuntimeState {
   if (!runtime.activeUntil || runtime.activeUntil > now) return runtime
 
   const settled: RuntimeState = { ...runtime }
@@ -195,4 +184,3 @@ export function normalizeAnswer(value: string): string {
 export function isAnswerCorrect(expected: string, actual: string): boolean {
   return normalizeAnswer(expected) === normalizeAnswer(actual)
 }
-

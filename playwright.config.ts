@@ -8,4 +8,3 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
 })
-

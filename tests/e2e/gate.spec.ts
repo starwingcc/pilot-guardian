@@ -22,10 +22,7 @@ function launchExtension(): Promise<BrowserContext> {
   return chromium.launchPersistentContext('', {
     executablePath: chromeExecutable(),
     headless: true,
-    args: [
-      `--disable-extensions-except=${extensionPath}`,
-      `--load-extension=${extensionPath}`,
-    ],
+    args: [`--disable-extensions-except=${extensionPath}`, `--load-extension=${extensionPath}`],
   })
 }
 
@@ -57,33 +54,34 @@ test('依次完成自定义文本场景与交互挑战后恢复原 URL', async (
     await options.evaluate(async (testPort) => {
       const response = await chrome.runtime.sendMessage({
         type: 'config:replace',
-        rules: [{
-          id: 'e2e-rule',
-          name: '端到端目标',
-          enabled: true,
-          priority: 0,
-          urlPatterns: ['http://127.0.0.1/focus*'],
-          mode: 'password',
-          challenges: [
-            {
-              id: 'text-step',
-              type: 'text',
-              answer: '起飞许可',
-              scene: {
-                kind: 'custom',
-                document: {
-                  html: `<!doctype html><html><body><h1>自定义背景已加载</h1><script>fetch('http://127.0.0.1:${testPort}/leak')</script></body></html>`,
-                  reviewState: 'ready',
+        rules: [
+          {
+            id: 'e2e-rule',
+            name: '端到端目标',
+            enabled: true,
+            priority: 0,
+            urlPatterns: ['http://127.0.0.1/focus*'],
+            mode: 'password',
+            challenges: [
+              {
+                id: 'text-step',
+                type: 'text',
+                answer: '起飞许可',
+                scene: {
+                  kind: 'custom',
+                  document: {
+                    html: `<!doctype html><html><body><h1>自定义背景已加载</h1><script>fetch('http://127.0.0.1:${testPort}/leak')</script></body></html>`,
+                    reviewState: 'ready',
+                  },
                 },
               },
-            },
-            {
-              id: 'interactive-step',
-              type: 'interactive',
-              source: {
-                kind: 'custom',
-                document: {
-                  html: `<!doctype html>
+              {
+                id: 'interactive-step',
+                type: 'interactive',
+                source: {
+                  kind: 'custom',
+                  document: {
+                    html: `<!doctype html>
 <html><head><meta charset="utf-8">
 <script type="application/json" id="pg-params">{"requiredHits":3}</script>
 <style>body{margin:0;display:grid;place-items:center;min-height:100vh;font-family:sans-serif;background:#eef;color:#102}button{padding:1rem 2rem;font:inherit;cursor:pointer}</style>
@@ -102,20 +100,23 @@ test('依次完成自定义文本场景与交互挑战后恢复原 URL', async (
   });
 </script>
 </body></html>`,
-                  reviewState: 'ready',
+                    reviewState: 'ready',
+                  },
                 },
               },
-            },
-          ],
-          accessDurationMinutes: 30,
-        }],
+            ],
+            accessDurationMinutes: 30,
+          },
+        ],
       })
       if (!response.ok) throw new Error(JSON.stringify(response))
     }, port)
-    const unauthorizedGateResponse = await options.evaluate(async () => chrome.runtime.sendMessage({
-      type: 'gate:get-context',
-      ruleId: 'e2e-rule',
-    })) as { __pilotGuardianError?: string }
+    const unauthorizedGateResponse = (await options.evaluate(async () =>
+      chrome.runtime.sendMessage({
+        type: 'gate:get-context',
+        ruleId: 'e2e-rule',
+      }),
+    )) as { __pilotGuardianError?: string }
     expect(unauthorizedGateResponse.__pilotGuardianError).toContain('权限')
 
     const page = await context.newPage()
@@ -150,7 +151,7 @@ test('依次完成自定义文本场景与交互挑战后恢复原 URL', async (
   } finally {
     await context.close()
     await new Promise<void>((resolve, reject) => {
-      server?.close((error) => error ? reject(error) : resolve())
+      server?.close((error) => (error ? reject(error) : resolve()))
     })
   }
 })
@@ -177,20 +178,22 @@ test('交互挑战可加载外部 JS、CSS 与图片', async () => {
     await options.evaluate(async () => {
       const response = await chrome.runtime.sendMessage({
         type: 'config:replace',
-        rules: [{
-          id: 'e2e-external-assets',
-          name: '外部资源挑战',
-          enabled: true,
-          priority: 0,
-          urlPatterns: ['http://127.0.0.1/external-assets*'],
-          mode: 'password',
-          challenges: [{
-            id: 'external-step',
-            type: 'interactive',
-            source: {
-              kind: 'custom',
-              document: {
-                html: `<!doctype html>
+        rules: [
+          {
+            id: 'e2e-external-assets',
+            name: '外部资源挑战',
+            enabled: true,
+            priority: 0,
+            urlPatterns: ['http://127.0.0.1/external-assets*'],
+            mode: 'password',
+            challenges: [
+              {
+                id: 'external-step',
+                type: 'interactive',
+                source: {
+                  kind: 'custom',
+                  document: {
+                    html: `<!doctype html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -218,12 +221,14 @@ test('交互挑战可加载外部 JS、CSS 与图片', async () => {
   </script>
 </body>
 </html>`,
-                reviewState: 'ready',
+                    reviewState: 'ready',
+                  },
+                },
               },
-            },
-          }],
-          accessDurationMinutes: 30,
-        }],
+            ],
+            accessDurationMinutes: 30,
+          },
+        ],
       })
       if (!response.ok) throw new Error(JSON.stringify(response))
     })
@@ -235,13 +240,23 @@ test('交互挑战可加载外部 JS、CSS 与图片', async () => {
       .frameLocator('iframe[title*="交互挑战"]')
       .frameLocator('iframe[title="隔离的挑战文档"]')
 
-    await expect.poll(async () => interactive.locator('#external-image').evaluate((img: HTMLImageElement) => (
-      img.complete && img.naturalWidth > 0
-    ))).toBe(true)
+    await expect
+      .poll(async () =>
+        interactive
+          .locator('#external-image')
+          .evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0),
+      )
+      .toBe(true)
 
-    await expect.poll(async () => interactive.locator('#css-probe').evaluate((el) => (
-      getComputedStyle(el).getPropertyValue('--pico-font-family').trim().length > 0
-    ))).toBe(true)
+    await expect
+      .poll(async () =>
+        interactive
+          .locator('#css-probe')
+          .evaluate(
+            (el) => getComputedStyle(el).getPropertyValue('--pico-font-family').trim().length > 0,
+          ),
+      )
+      .toBe(true)
 
     await expect(interactive.locator('#js-probe')).toHaveText(/jquery:3\./)
     const finish = interactive.getByRole('button', { name: '外部资源已就绪' })
@@ -252,7 +267,7 @@ test('交互挑战可加载外部 JS、CSS 与图片', async () => {
   } finally {
     await context.close()
     await new Promise<void>((resolve, reject) => {
-      server?.close((error) => error ? reject(error) : resolve())
+      server?.close((error) => (error ? reject(error) : resolve()))
     })
   }
 })
@@ -268,9 +283,9 @@ test('自定义交互文档通过沙箱预览后才能保存', async () => {
     await options.getByText('交互挑战', { exact: true }).click()
     await expect(options.getByRole('alertdialog')).toContainText('当前步骤中不兼容的答案')
     await options.getByRole('button', { name: '确认切换' }).click()
-    await options.getByLabel('交互挑战 HTML代码编辑器').fill(
-      '<!doctype html><html><body><button>预览测试</button></body></html>',
-    )
+    await options
+      .getByLabel('交互挑战 HTML代码编辑器')
+      .fill('<!doctype html><html><body><button>预览测试</button></body></html>')
     await expect(options.getByText('需要预览', { exact: true })).toBeVisible()
 
     await options.getByRole('button', { name: '保存当前规则' }).click()

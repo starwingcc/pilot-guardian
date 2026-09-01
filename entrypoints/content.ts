@@ -19,9 +19,11 @@ export default defineContentScript({
 
     window.addEventListener('popstate', scheduleCheck)
     window.addEventListener('hashchange', scheduleCheck)
-    const navigation = (window as Window & {
-      navigation?: EventTarget
-    }).navigation
+    const navigation = (
+      window as Window & {
+        navigation?: EventTarget
+      }
+    ).navigation
     navigation?.addEventListener('navigate', scheduleCheck)
 
     ctx.onInvalidated(() => {

@@ -36,7 +36,10 @@ import { Toaster } from '@/src/components/ui/sonner'
 import { TooltipProvider } from '@/src/components/ui/tooltip'
 import { Input } from '@/src/components/ui/input'
 import { createDefaultRule } from '../../src/domain/defaults'
-import { hasUnreviewedDocuments, markCustomDocumentsForReview } from '../../src/domain/custom-documents'
+import {
+  hasUnreviewedDocuments,
+  markCustomDocumentsForReview,
+} from '../../src/domain/custom-documents'
 import {
   CONFIG_SCHEMA_VERSION,
   type AccessRule,
@@ -104,7 +107,11 @@ export function OptionsApp() {
       for (let right = left + 1; right < rules.length; right += 1) {
         const leftRule = rules[left]
         const rightRule = rules[right]
-        if (leftRule && rightRule && patternSetsMayOverlap(leftRule.urlPatterns, rightRule.urlPatterns)) {
+        if (
+          leftRule &&
+          rightRule &&
+          patternSetsMayOverlap(leftRule.urlPatterns, rightRule.urlPatterns)
+        ) {
           ids.add(leftRule.id)
           ids.add(rightRule.id)
         }
@@ -127,12 +134,14 @@ export function OptionsApp() {
 
   const updateRule = (mutate: (draft: AccessRule) => void) => {
     if (selectedIndex < 0) return
-    setRules((current) => current.map((rule, index) => {
-      if (index !== selectedIndex) return rule
-      const draft = structuredClone(rule)
-      mutate(draft)
-      return draft
-    }))
+    setRules((current) =>
+      current.map((rule, index) => {
+        if (index !== selectedIndex) return rule
+        const draft = structuredClone(rule)
+        mutate(draft)
+        return draft
+      }),
+    )
     if (selectedId) markChanged(selectedId)
   }
 
@@ -190,9 +199,7 @@ export function OptionsApp() {
   const removeRule = async () => {
     if (!selected || saving) return
     const removing = selected
-    const next = reindexRules(rules
-      .filter((rule) => rule.id !== selected.id)
-    )
+    const next = reindexRules(rules.filter((rule) => rule.id !== selected.id))
     if (persistedRuleIds.has(removing.id)) {
       setSaving(true)
       try {
@@ -265,8 +272,9 @@ export function OptionsApp() {
       }
       const savedRule = response.config.rules.find((rule) => rule.id === selected.id)
       if (!savedRule) throw new Error('保存结果缺少当前规则')
-      setRules((current) => reindexRules(current.map((rule) =>
-        rule.id === savedRule.id ? savedRule : rule)))
+      setRules((current) =>
+        reindexRules(current.map((rule) => (rule.id === savedRule.id ? savedRule : rule))),
+      )
       setPersistedRuleIds((current) => new Set(current).add(savedRule.id))
       setDirtyRuleIds((current) => {
         const updated = new Set(current)
@@ -291,9 +299,11 @@ export function OptionsApp() {
         exportedAt: new Date().toISOString(),
         rules: config.rules,
       }
-      const url = URL.createObjectURL(new Blob([JSON.stringify(bundle, null, 2)], {
-        type: 'application/json',
-      }))
+      const url = URL.createObjectURL(
+        new Blob([JSON.stringify(bundle, null, 2)], {
+          type: 'application/json',
+        }),
+      )
       const anchor = document.createElement('a')
       anchor.href = url
       anchor.download = `pilot-guardian-${new Date().toISOString().slice(0, 10)}.json`
@@ -364,7 +374,9 @@ export function OptionsApp() {
         <div className="ambient-grid" aria-hidden="true" />
         <header className="mission-header">
           <div className="brand-lockup">
-            <div className="brand-glyph" aria-hidden="true"><ShieldAlertIcon /></div>
+            <div className="brand-glyph" aria-hidden="true">
+              <ShieldAlertIcon />
+            </div>
             <div>
               <span className="kicker">PILOT GUARDIAN / CONTROL NODE</span>
               <h1>访问航线控制台</h1>
@@ -382,21 +394,28 @@ export function OptionsApp() {
               onChange={(event) => void prepareImport(event)}
             />
             <Button variant="outline" onClick={() => importInput.current?.click()}>
-              <FileUpIcon data-icon="inline-start" />导入
+              <FileUpIcon data-icon="inline-start" />
+              导入
             </Button>
-            <Button variant="outline" onClick={() => setExportOpen(true)} disabled={persistedRuleIds.size === 0}>
-              <DownloadIcon data-icon="inline-start" />导出
+            <Button
+              variant="outline"
+              onClick={() => setExportOpen(true)}
+              disabled={persistedRuleIds.size === 0}
+            >
+              <DownloadIcon data-icon="inline-start" />
+              导出
             </Button>
             <Button
               onClick={() => void save()}
               disabled={
-                saving ||
-                !selected ||
-                !dirtyRuleIds.has(selected.id) ||
-                !selectedUrlPatternsValid
+                saving || !selected || !dirtyRuleIds.has(selected.id) || !selectedUrlPatternsValid
               }
             >
-              {saving ? <Spinner data-icon="inline-start" /> : <SaveIcon data-icon="inline-start" />}
+              {saving ? (
+                <Spinner data-icon="inline-start" />
+              ) : (
+                <SaveIcon data-icon="inline-start" />
+              )}
               {saving ? '正在同步' : '保存当前规则'}
             </Button>
           </div>
@@ -440,11 +459,16 @@ export function OptionsApp() {
               />
             ) : (
               <div className="empty-deck">
-                <div className="empty-orbit" aria-hidden="true"><PlusIcon /></div>
+                <div className="empty-orbit" aria-hidden="true">
+                  <PlusIcon />
+                </div>
                 <p className="kicker">NO FLIGHT PLAN</p>
                 <h2>建立第一条访问航线</h2>
                 <p>为容易分心的网站部署口令、时间周期，或把两者组合为多阶段闸门。</p>
-                <Button size="lg" onClick={addRule}><PlusIcon data-icon="inline-start" />新建规则</Button>
+                <Button size="lg" onClick={addRule}>
+                  <PlusIcon data-icon="inline-start" />
+                  新建规则
+                </Button>
               </div>
             )}
           </section>
@@ -465,7 +489,8 @@ export function OptionsApp() {
           <Sheet>
             <SheetTrigger asChild>
               <Button className="diagnostics-trigger" variant="secondary" size="lg">
-                <MenuIcon data-icon="inline-start" />打开规则诊断
+                <MenuIcon data-icon="inline-start" />
+                打开规则诊断
               </Button>
             </SheetTrigger>
             <SheetContent className="diagnostics-sheet">
@@ -486,15 +511,20 @@ export function OptionsApp() {
         <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogMedia><ShieldAlertIcon /></AlertDialogMedia>
+              <AlertDialogMedia>
+                <ShieldAlertIcon />
+              </AlertDialogMedia>
               <AlertDialogTitle>移除这条航线？</AlertDialogTitle>
               <AlertDialogDescription>
-                “{selected?.name}”将立即从已保存配置和浏览器拦截规则中删除；未保存的新规则只会移除草稿。
+                “{selected?.name}
+                ”将立即从已保存配置和浏览器拦截规则中删除；未保存的新规则只会移除草稿。
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>取消</AlertDialogCancel>
-              <AlertDialogAction variant="destructive" onClick={() => void removeRule()}>移除规则</AlertDialogAction>
+              <AlertDialogAction variant="destructive" onClick={() => void removeRule()}>
+                移除规则
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -502,9 +532,13 @@ export function OptionsApp() {
         <AlertDialog open={exportOpen} onOpenChange={setExportOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogMedia><DownloadIcon /></AlertDialogMedia>
+              <AlertDialogMedia>
+                <DownloadIcon />
+              </AlertDialogMedia>
               <AlertDialogTitle>导出包含明文口令</AlertDialogTitle>
-              <AlertDialogDescription>请只把配置文件保存到可信位置，不要通过公开渠道分享。</AlertDialogDescription>
+              <AlertDialogDescription>
+                请只把配置文件保存到可信位置，不要通过公开渠道分享。
+              </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>取消</AlertDialogCancel>
@@ -513,13 +547,21 @@ export function OptionsApp() {
           </AlertDialogContent>
         </AlertDialog>
 
-        <AlertDialog open={Boolean(pendingImport)} onOpenChange={(open) => { if (!open) setPendingImport(undefined) }}>
+        <AlertDialog
+          open={Boolean(pendingImport)}
+          onOpenChange={(open) => {
+            if (!open) setPendingImport(undefined)
+          }}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogMedia><FileUpIcon /></AlertDialogMedia>
+              <AlertDialogMedia>
+                <FileUpIcon />
+              </AlertDialogMedia>
               <AlertDialogTitle>覆盖当前配置？</AlertDialogTitle>
               <AlertDialogDescription>
-                导入的 {pendingImport?.rules.length ?? 0} 条规则将替换已保存配置并清除所有未保存草稿。含自定义代码的规则会保持停用，直到完成预览并由你手动启用。
+                导入的 {pendingImport?.rules.length ?? 0}{' '}
+                条规则将替换已保存配置并清除所有未保存草稿。含自定义代码的规则会保持停用，直到完成预览并由你手动启用。
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

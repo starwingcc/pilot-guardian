@@ -1,4 +1,4 @@
-@use "../../src/styles/mixins" as *;
+@use '../../src/styles/mixins' as *;
 
 body {
   overflow: hidden;
@@ -9,8 +9,16 @@ body {
   min-height: 100vh;
   overflow: hidden;
   background:
-    radial-gradient(circle at 82% -12%, color-mix(in oklch, var(--primary), transparent 79%), transparent 30rem),
-    radial-gradient(circle at 16% 112%, color-mix(in oklch, var(--accent), transparent 70%), transparent 32rem),
+    radial-gradient(
+      circle at 82% -12%,
+      color-mix(in oklch, var(--primary), transparent 79%),
+      transparent 30rem
+    ),
+    radial-gradient(
+      circle at 16% 112%,
+      color-mix(in oklch, var(--accent), transparent 70%),
+      transparent 32rem
+    ),
     var(--background);
 }
 
@@ -155,7 +163,7 @@ body {
   padding-right: 8px;
 }
 
-.rule-stack [data-slot="button"] {
+.rule-stack [data-slot='button'] {
   min-width: 0;
   gap: 10px;
   padding: 11px 9px;
@@ -260,13 +268,13 @@ body {
   gap: 6px;
 }
 
-.editor-stack > [data-slot="card"] {
+.editor-stack > [data-slot='card'] {
   @include glass-surface(18px, 0.08);
   border-color: color-mix(in oklch, var(--border), transparent 10%);
   background: color-mix(in oklch, var(--card), transparent 4%);
 }
 
-.editor-stack > [data-slot="card"] > [data-slot="card-header"] {
+.editor-stack > [data-slot='card'] > [data-slot='card-header'] {
   display: grid;
   grid-template-columns: 36px 1fr auto;
   align-items: center;
@@ -297,7 +305,7 @@ body {
   gap: 8px;
 }
 
-.url-pattern-row [data-slot="input"] {
+.url-pattern-row [data-slot='input'] {
   min-width: 0;
   flex: 1;
 }
@@ -308,12 +316,12 @@ body {
   gap: 8px;
 }
 
-.daily-window-row [data-slot="input"] {
+.daily-window-row [data-slot='input'] {
   min-width: 0;
   flex: 1;
 }
 
-.daily-window-row input[type="time"]::-webkit-calendar-picker-indicator {
+.daily-window-row input[type='time']::-webkit-calendar-picker-indicator {
   display: none;
 }
 
@@ -700,11 +708,31 @@ body {
   overflow: auto;
   background-color: color-mix(in oklch, var(--muted), transparent 42%);
   background-image:
-    linear-gradient(45deg, color-mix(in oklch, var(--border), transparent 55%) 25%, transparent 25%),
-    linear-gradient(-45deg, color-mix(in oklch, var(--border), transparent 55%) 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, color-mix(in oklch, var(--border), transparent 55%) 75%),
-    linear-gradient(-45deg, transparent 75%, color-mix(in oklch, var(--border), transparent 55%) 75%);
-  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    linear-gradient(
+      45deg,
+      color-mix(in oklch, var(--border), transparent 55%) 25%,
+      transparent 25%
+    ),
+    linear-gradient(
+      -45deg,
+      color-mix(in oklch, var(--border), transparent 55%) 25%,
+      transparent 25%
+    ),
+    linear-gradient(
+      45deg,
+      transparent 75%,
+      color-mix(in oklch, var(--border), transparent 55%) 75%
+    ),
+    linear-gradient(
+      -45deg,
+      transparent 75%,
+      color-mix(in oklch, var(--border), transparent 55%) 75%
+    );
+  background-position:
+    0 0,
+    0 8px,
+    8px -8px,
+    -8px 0;
   background-size: 16px 16px;
   overscroll-behavior: contain;
 

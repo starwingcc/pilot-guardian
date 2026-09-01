@@ -15,7 +15,10 @@ const validRule = {
 
 describe('配置校验', () => {
   it('规范化优先级并保留明文答案', () => {
-    const result = validateStoredConfig({ schemaVersion: CONFIG_SCHEMA_VERSION, rules: [validRule] })
+    const result = validateStoredConfig({
+      schemaVersion: CONFIG_SCHEMA_VERSION,
+      rules: [validRule],
+    })
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.value.rules[0]?.priority).toBe(0)
@@ -35,12 +38,14 @@ describe('配置校验', () => {
   it('周期规则忽略未使用的空挑战', () => {
     const result = validateStoredConfig({
       schemaVersion: CONFIG_SCHEMA_VERSION,
-      rules: [{
-        ...validRule,
-        mode: 'schedule',
-        schedule: { kind: 'weekly', weekdays: [1] },
-        challenges: [{ ...validRule.challenges[0], answer: '' }],
-      }],
+      rules: [
+        {
+          ...validRule,
+          mode: 'schedule',
+          schedule: { kind: 'weekly', weekdays: [1] },
+          challenges: [{ ...validRule.challenges[0], answer: '' }],
+        },
+      ],
     })
     expect(result.ok).toBe(true)
     if (result.ok) expect(result.value.rules[0]?.challenges).toEqual([])
@@ -49,11 +54,13 @@ describe('配置校验', () => {
   it('间隔天数只接受正整数', () => {
     const result = validateStoredConfig({
       schemaVersion: CONFIG_SCHEMA_VERSION,
-      rules: [{
-        ...validRule,
-        mode: 'schedule',
-        schedule: { kind: 'interval', intervalDays: 1.5 },
-      }],
+      rules: [
+        {
+          ...validRule,
+          mode: 'schedule',
+          schedule: { kind: 'interval', intervalDays: 1.5 },
+        },
+      ],
     })
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.errors.join('；')).toContain('正整数')
@@ -94,10 +101,12 @@ describe('配置校验', () => {
 
     const duplicate = validateStoredConfig({
       schemaVersion: CONFIG_SCHEMA_VERSION,
-      rules: [{
-        ...validRule,
-        urlPatterns: ['https://example.com/*', 'https://example.com/*'],
-      }],
+      rules: [
+        {
+          ...validRule,
+          urlPatterns: ['https://example.com/*', 'https://example.com/*'],
+        },
+      ],
     })
     expect(duplicate.ok).toBe(false)
     if (!duplicate.ok) expect(duplicate.errors.join('；')).toContain('重复')
@@ -106,13 +115,15 @@ describe('配置校验', () => {
   it('拒绝超过 DNR 上限的 URL 模式总数', () => {
     const result = validateStoredConfig({
       schemaVersion: CONFIG_SCHEMA_VERSION,
-      rules: [{
-        ...validRule,
-        urlPatterns: Array.from(
-          { length: 5_001 },
-          (_, index) => `https://example.com/${index}/*`,
-        ),
-      }],
+      rules: [
+        {
+          ...validRule,
+          urlPatterns: Array.from(
+            { length: 5_001 },
+            (_, index) => `https://example.com/${index}/*`,
+          ),
+        },
+      ],
     })
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.errors.join('；')).toContain('5000')
@@ -143,20 +154,24 @@ describe('配置校验', () => {
   it('接受从官方模板载入并审核过的自定义交互文档', () => {
     const result = validateStoredConfig({
       schemaVersion: CONFIG_SCHEMA_VERSION,
-      rules: [{
-        ...validRule,
-        challenges: [{
-          id: 'interactive',
-          type: 'interactive',
-          source: {
-            kind: 'custom',
-            document: {
-              html: `<!doctype html><script type="application/json" id="pg-params">{"minimumDelay":1500,"maximumDelay":4000,"successWindow":600}</script><button>响应</button>`,
-              reviewState: 'ready',
+      rules: [
+        {
+          ...validRule,
+          challenges: [
+            {
+              id: 'interactive',
+              type: 'interactive',
+              source: {
+                kind: 'custom',
+                document: {
+                  html: `<!doctype html><script type="application/json" id="pg-params">{"minimumDelay":1500,"maximumDelay":4000,"successWindow":600}</script><button>响应</button>`,
+                  reviewState: 'ready',
+                },
+              },
             },
-          },
-        }],
-      }],
+          ],
+        },
+      ],
     })
     expect(result.ok).toBe(true)
   })
@@ -164,18 +179,22 @@ describe('配置校验', () => {
   it('拒绝旧版官方模板引用(kind: template)', () => {
     const result = validateStoredConfig({
       schemaVersion: CONFIG_SCHEMA_VERSION,
-      rules: [{
-        ...validRule,
-        challenges: [{
-          id: 'interactive',
-          type: 'interactive',
-          source: {
-            kind: 'template',
-            templateId: 'wooden-fish',
-            parameters: { requiredHits: 3 },
-          },
-        }],
-      }],
+      rules: [
+        {
+          ...validRule,
+          challenges: [
+            {
+              id: 'interactive',
+              type: 'interactive',
+              source: {
+                kind: 'template',
+                templateId: 'wooden-fish',
+                parameters: { requiredHits: 3 },
+              },
+            },
+          ],
+        },
+      ],
     })
     expect(result.ok).toBe(false)
   })
@@ -183,17 +202,21 @@ describe('配置校验', () => {
   it('拒绝启用尚未预览的自定义文档', () => {
     const result = validateStoredConfig({
       schemaVersion: CONFIG_SCHEMA_VERSION,
-      rules: [{
-        ...validRule,
-        challenges: [{
-          id: 'custom',
-          type: 'interactive',
-          source: {
-            kind: 'custom',
-            document: { html: '<!doctype html><button>完成</button>', reviewState: 'required' },
-          },
-        }],
-      }],
+      rules: [
+        {
+          ...validRule,
+          challenges: [
+            {
+              id: 'custom',
+              type: 'interactive',
+              source: {
+                kind: 'custom',
+                document: { html: '<!doctype html><button>完成</button>', reviewState: 'required' },
+              },
+            },
+          ],
+        },
+      ],
     })
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.errors.join('；')).toContain('尚未预览')
@@ -203,17 +226,21 @@ describe('配置校验', () => {
     const result = validateExportBundle({
       schemaVersion: CONFIG_SCHEMA_VERSION,
       exportedAt: '2026-08-25T00:00:00.000Z',
-      rules: [{
-        ...validRule,
-        challenges: [{
-          id: 'custom',
-          type: 'interactive',
-          source: {
-            kind: 'custom',
-            document: { html: '<!doctype html><button>完成</button>', reviewState: 'required' },
-          },
-        }],
-      }],
+      rules: [
+        {
+          ...validRule,
+          challenges: [
+            {
+              id: 'custom',
+              type: 'interactive',
+              source: {
+                kind: 'custom',
+                document: { html: '<!doctype html><button>完成</button>', reviewState: 'required' },
+              },
+            },
+          ],
+        },
+      ],
     })
     expect(result.ok).toBe(true)
   })
@@ -221,18 +248,22 @@ describe('配置校验', () => {
   it('拒绝超过单文档限制的自定义 HTML', () => {
     const result = validateStoredConfig({
       schemaVersion: CONFIG_SCHEMA_VERSION,
-      rules: [{
-        ...validRule,
-        enabled: false,
-        challenges: [{
-          id: 'custom',
-          type: 'interactive',
-          source: {
-            kind: 'custom',
-            document: { html: 'a'.repeat(256 * 1024 + 1), reviewState: 'required' },
-          },
-        }],
-      }],
+      rules: [
+        {
+          ...validRule,
+          enabled: false,
+          challenges: [
+            {
+              id: 'custom',
+              type: 'interactive',
+              source: {
+                kind: 'custom',
+                document: { html: 'a'.repeat(256 * 1024 + 1), reviewState: 'required' },
+              },
+            },
+          ],
+        },
+      ],
     })
     expect(result.ok).toBe(false)
     if (!result.ok) expect(result.errors.join('；')).toContain('256KB')

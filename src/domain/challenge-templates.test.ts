@@ -14,7 +14,10 @@ function readParams(html: string): Record<string, unknown> {
 
 describe('OFFICIAL_TEMPLATES registry', () => {
   it('exposes each template with inline html that ships in the bundle', () => {
-    expect(OFFICIAL_TEMPLATES.map((template) => template.id)).toEqual(['wooden-fish', 'reaction-test'])
+    expect(OFFICIAL_TEMPLATES.map((template) => template.id)).toEqual([
+      'wooden-fish',
+      'reaction-test',
+    ])
     for (const template of OFFICIAL_TEMPLATES) {
       expect(typeof template.html).toBe('string')
       expect(template.html.length).toBeGreaterThan(0)
@@ -37,7 +40,9 @@ describe('OFFICIAL_TEMPLATES registry', () => {
 
   it('every official template reads parameters from #pg-params at boot', () => {
     for (const template of OFFICIAL_TEMPLATES) {
-      expect(template.html).toContain("JSON.parse(document.getElementById('pg-params').textContent)")
+      expect(template.html).toContain(
+        "JSON.parse(document.getElementById('pg-params').textContent)",
+      )
     }
   })
 

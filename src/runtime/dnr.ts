@@ -16,12 +16,13 @@ export function buildDynamicRules(
     if (!rule.enabled) continue
     const evaluation = evaluateRule(rule, stateForRule(runtime, rule.id), now)
     const priority = Math.max(1, config.rules.length - rule.priority)
-    const action: chrome.declarativeNetRequest.RuleAction = evaluation.state === 'allowed'
-      ? { type: chrome.declarativeNetRequest.RuleActionType.ALLOW }
-      : {
-          type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
-          redirect: { url: `${gateUrl}?ruleId=${encodeURIComponent(rule.id)}` },
-        }
+    const action: chrome.declarativeNetRequest.RuleAction =
+      evaluation.state === 'allowed'
+        ? { type: chrome.declarativeNetRequest.RuleActionType.ALLOW }
+        : {
+            type: chrome.declarativeNetRequest.RuleActionType.REDIRECT,
+            redirect: { url: `${gateUrl}?ruleId=${encodeURIComponent(rule.id)}` },
+          }
 
     for (const urlPattern of rule.urlPatterns) {
       rules.push({
@@ -46,12 +47,7 @@ export async function replaceDynamicRules(
   now: number,
 ): Promise<void> {
   const existing = await chrome.declarativeNetRequest.getDynamicRules()
-  const rules = buildDynamicRules(
-    config,
-    runtime,
-    now,
-    chrome.runtime.getURL('/gate.html'),
-  )
+  const rules = buildDynamicRules(config, runtime, now, chrome.runtime.getURL('/gate.html'))
   await chrome.declarativeNetRequest.updateDynamicRules({
     removeRuleIds: existing.map((rule) => rule.id),
     addRules: rules,

@@ -46,12 +46,15 @@ export function SandboxFrame({
 
   useEffect(() => {
     const receiveMessage = (event: MessageEvent<unknown>) => {
-      if (event.source !== frameRef.current?.contentWindow || !isSandboxHostEvent(event.data)) return
+      if (event.source !== frameRef.current?.contentWindow || !isSandboxHostEvent(event.data))
+        return
       if (event.data.token !== sessionId) return
       if (event.data.type === 'booted') callbacksRef.current.onBoot?.()
       if (event.data.type === 'complete') callbacksRef.current.onComplete?.()
-      if (event.data.type === 'error') callbacksRef.current.onError?.(event.data.detail ?? '自定义文档运行失败')
-      if (event.data.type === 'metrics' && event.data.metrics) callbacksRef.current.onMetrics?.(event.data.metrics)
+      if (event.data.type === 'error')
+        callbacksRef.current.onError?.(event.data.detail ?? '自定义文档运行失败')
+      if (event.data.type === 'metrics' && event.data.metrics)
+        callbacksRef.current.onMetrics?.(event.data.metrics)
     }
     window.addEventListener('message', receiveMessage)
     return () => window.removeEventListener('message', receiveMessage)

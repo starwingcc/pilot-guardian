@@ -66,7 +66,7 @@ export async function saveRuntimeStore(runtime: RuntimeStore): Promise<void> {
 async function loadSessionRecord<T extends Record<string, unknown>>(key: string): Promise<T> {
   const stored = await chrome.storage.session.get(key)
   const value = stored[key]
-  return typeof value === 'object' && value !== null ? value as T : {} as T
+  return typeof value === 'object' && value !== null ? (value as T) : ({} as T)
 }
 
 export async function setPendingNavigation(
@@ -146,9 +146,6 @@ export async function clearRuleChallengeProgress(ruleId: string): Promise<void> 
   if (changed) await chrome.storage.session.set({ [PROGRESS_KEY]: store })
 }
 
-export function stateForRule(
-  store: RuntimeStore,
-  ruleId: string,
-): RuntimeState {
+export function stateForRule(store: RuntimeStore, ruleId: string): RuntimeState {
   return store.byRuleId[ruleId] ?? {}
 }

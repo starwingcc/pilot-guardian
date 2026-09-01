@@ -73,7 +73,7 @@ async function scheduleNextBoundary(
   }
   await chrome.alarms.clear(POLICY_ALARM)
   if (earliest) {
-    chrome.alarms.create(POLICY_ALARM, { when: Math.max(earliest, now + 1_000) })
+    await chrome.alarms.create(POLICY_ALARM, { when: Math.max(earliest, now + 1_000) })
   }
 }
 
@@ -108,11 +108,7 @@ async function saveActivatedRule(
   runtimeStore: RuntimeStore,
   now: number,
 ): Promise<void> {
-  runtimeStore.byRuleId[rule.id] = activateAccess(
-    rule,
-    stateForRule(runtimeStore, rule.id),
-    now,
-  )
+  runtimeStore.byRuleId[rule.id] = activateAccess(rule, stateForRule(runtimeStore, rule.id), now)
   await saveRuntimeStore(runtimeStore)
   await requestPolicySync()
 }
@@ -173,10 +169,7 @@ async function gateContext(ruleId: string, tabId: number): Promise<GateContext> 
     originalUrl: pending.url,
   }
   if (evaluation.state === 'allowed') {
-    await Promise.all([
-      clearPendingNavigation(tabId),
-      clearChallengeProgress(tabId, rule.id),
-    ])
+    await Promise.all([clearPendingNavigation(tabId), clearChallengeProgress(tabId, rule.id)])
   }
   return context
 }
@@ -195,7 +188,9 @@ async function completeChallenge(
   answer?: string,
 ): Promise<GateAdvanceResponse> {
   const [config, runtime] = await Promise.all([loadConfig(), loadRuntimeStore()])
-  const rule = config.rules.find((candidate) => candidate.id === request.ruleId && candidate.enabled)
+  const rule = config.rules.find(
+    (candidate) => candidate.id === request.ruleId && candidate.enabled,
+  )
   if (!rule) return { ok: false, error: '访问规则不存在或已停用' }
   const pending = await getPendingNavigation(tabId)
   if (pending?.ruleId !== rule.id) return { ok: false, error: '当前标签页没有对应的受控导航' }
@@ -214,7 +209,10 @@ async function completeChallenge(
   if (!challenge || challenge.id !== request.stepId || challenge.type !== expectedType) {
     return { ok: false, error: '挑战步骤不匹配' }
   }
-  if (challenge.type === 'text' && (answer === undefined || !isAnswerCorrect(challenge.answer, answer))) {
+  if (
+    challenge.type === 'text' &&
+    (answer === undefined || !isAnswerCorrect(challenge.answer, answer))
+  ) {
     return { ok: false, error: '口令不正确' }
   }
 
@@ -225,24 +223,23 @@ async function completeChallenge(
   }
 
   await saveActivatedRule(rule, runtime, now)
-  await Promise.all([
-    clearChallengeProgress(tabId, rule.id),
-    clearPendingNavigation(tabId),
-  ])
+  await Promise.all([clearChallengeProgress(tabId, rule.id), clearPendingNavigation(tabId)])
   return { ok: true, complete: true, redirectUrl: pending.url }
 }
 
 async function validateDnrPatterns(patterns: string[]): Promise<string[]> {
   const uniquePatterns = [...new Set(patterns)]
-  const results = await Promise.all(uniquePatterns.map(async (pattern) => {
-    const result = await chrome.declarativeNetRequest.isRegexSupported({
-      regex: urlPatternToDnrRegex(pattern),
-      isCaseSensitive: true,
-    })
-    return result.isSupported
-      ? undefined
-      : `URL 模式无法用于浏览器拦截：${pattern}${result.reason ? `（${result.reason}）` : ''}`
-  }))
+  const results = await Promise.all(
+    uniquePatterns.map(async (pattern) => {
+      const result = await chrome.declarativeNetRequest.isRegexSupported({
+        regex: urlPatternToDnrRegex(pattern),
+        isCaseSensitive: true,
+      })
+      return result.isSupported
+        ? undefined
+        : `URL 模式无法用于浏览器拦截：${pattern}${result.reason ? `（${result.reason}）` : ''}`
+    }),
+  )
   return results.filter((error): error is string => Boolean(error))
 }
 
@@ -254,12 +251,14 @@ async function commitRules(
   const parsed = validateStoredConfig({ schemaVersion: CONFIG_SCHEMA_VERSION, rules: input })
   if (!parsed.ok) return { ok: false, errors: parsed.errors }
 
-  const preflightIds = new Set(preflightRuleIds === 'all'
-    ? parsed.value.rules.map((rule) => rule.id)
-    : preflightRuleIds)
-  const dnrErrors = await validateDnrPatterns(parsed.value.rules
-    .filter((rule) => preflightIds.has(rule.id))
-    .flatMap((rule) => rule.urlPatterns))
+  const preflightIds = new Set(
+    preflightRuleIds === 'all' ? parsed.value.rules.map((rule) => rule.id) : preflightRuleIds,
+  )
+  const dnrErrors = await validateDnrPatterns(
+    parsed.value.rules
+      .filter((rule) => preflightIds.has(rule.id))
+      .flatMap((rule) => rule.urlPatterns),
+  )
   if (dnrErrors.length > 0) return { ok: false, errors: dnrErrors }
 
   const [previous, runtime] = await Promise.all([loadConfig(), loadRuntimeStore()])
@@ -272,19 +271,22 @@ async function commitRules(
     const oldRule = previousById.get(rule.id)
     const oldRuntime = stateForRule(runtime, rule.id)
     const forcedReset = oldRule && forcedResetIds.has(rule.id)
-    const behaviorChanged = oldRule && JSON.stringify({
-      urlPatterns: oldRule.urlPatterns,
-      mode: oldRule.mode,
-      challenges: oldRule.challenges,
-      schedule: oldRule.schedule,
-      accessDurationMinutes: oldRule.accessDurationMinutes,
-    }) !== JSON.stringify({
-      urlPatterns: rule.urlPatterns,
-      mode: rule.mode,
-      challenges: rule.challenges,
-      schedule: rule.schedule,
-      accessDurationMinutes: rule.accessDurationMinutes,
-    })
+    const behaviorChanged =
+      oldRule &&
+      JSON.stringify({
+        urlPatterns: oldRule.urlPatterns,
+        mode: oldRule.mode,
+        challenges: oldRule.challenges,
+        schedule: oldRule.schedule,
+        accessDurationMinutes: oldRule.accessDurationMinutes,
+      }) !==
+        JSON.stringify({
+          urlPatterns: rule.urlPatterns,
+          mode: rule.mode,
+          challenges: rule.challenges,
+          schedule: rule.schedule,
+          accessDurationMinutes: rule.accessDurationMinutes,
+        })
     if (oldRule && (forcedReset || behaviorChanged)) {
       changedRuleIds.add(rule.id)
       if (!forcedReset) {
@@ -360,10 +362,12 @@ async function reorderRules(input: unknown): Promise<ConfigMutationResponse> {
     return { ok: false, errors: ['规则列表已发生变化，请刷新后重试排序'] }
   }
   const byId = new Map(config.rules.map((rule) => [rule.id, rule]))
-  return commitRules(ruleIds.flatMap((id) => {
-    const rule = byId.get(id)
-    return rule ? [rule] : []
-  }))
+  return commitRules(
+    ruleIds.flatMap((id) => {
+      const rule = byId.get(id)
+      return rule ? [rule] : []
+    }),
+  )
 }
 
 async function getStatus(url: string, ruleId?: string): Promise<RuleStatus> {
@@ -451,7 +455,11 @@ function senderUrl(sender: chrome.runtime.MessageSender): URL {
 function assertExtensionPage(sender: chrome.runtime.MessageSender, page: string): void {
   const actual = senderUrl(sender)
   const expected = new URL(chrome.runtime.getURL(`/${page}`))
-  if (sender.id !== chrome.runtime.id || actual.origin !== expected.origin || actual.pathname !== expected.pathname) {
+  if (
+    sender.id !== chrome.runtime.id ||
+    actual.origin !== expected.origin ||
+    actual.pathname !== expected.pathname
+  ) {
     throw new Error('消息来源没有执行此操作的权限')
   }
 }
@@ -466,7 +474,11 @@ function assertGatePage(sender: chrome.runtime.MessageSender, ruleId: string): v
 function assertWebPage(sender: chrome.runtime.MessageSender, requestedUrl: string): void {
   const source = senderUrl(sender)
   const requested = new URL(requestedUrl)
-  if (sender.id !== chrome.runtime.id || !/^https?:$/.test(source.protocol) || !/^https?:$/.test(requested.protocol)) {
+  if (
+    sender.id !== chrome.runtime.id ||
+    !/^https?:$/.test(source.protocol) ||
+    !/^https?:$/.test(requested.protocol)
+  ) {
     throw new Error('页面导航消息来源无效')
   }
 }
@@ -494,6 +506,6 @@ export function registerController(): void {
       })
     return true
   })
-  chrome.alarms.create(POLICY_WATCHDOG, { periodInMinutes: 1 })
+  void chrome.alarms.create(POLICY_WATCHDOG, { periodInMinutes: 1 })
   void requestPolicySync()
 }

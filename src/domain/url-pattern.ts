@@ -17,8 +17,7 @@ export interface ParsedUrlPattern {
 }
 
 export type UrlPatternParseResult =
-  | { ok: true; value: ParsedUrlPattern }
-  | { ok: false; error: string }
+  { ok: true; value: ParsedUrlPattern } | { ok: false; error: string }
 
 function escapeRegex(value: string): string {
   return value.replace(REGEX_META, '\\$&')
@@ -92,7 +91,8 @@ export function matchesUrlPattern(pattern: string, candidate: string): boolean {
 export function findMatchingRule(rules: AccessRule[], url: string): AccessRule | undefined {
   let best: AccessRule | undefined
   for (const rule of rules) {
-    if (!rule.enabled || !rule.urlPatterns.some((pattern) => matchesUrlPattern(pattern, url))) continue
+    if (!rule.enabled || !rule.urlPatterns.some((pattern) => matchesUrlPattern(pattern, url)))
+      continue
     if (!best || rule.priority < best.priority) best = rule
   }
   return best
@@ -118,7 +118,8 @@ export function patternsMayOverlap(left: string, right: string): boolean {
   if (!parsedLeft.ok || !parsedRight.ok) return false
 
   const schemeOverlap = parsedLeft.value.schemes.some((scheme) =>
-    parsedRight.value.schemes.includes(scheme))
+    parsedRight.value.schemes.includes(scheme),
+  )
   return (
     schemeOverlap &&
     hostsMayOverlap(parsedLeft.value, parsedRight.value) &&
@@ -128,27 +129,23 @@ export function patternsMayOverlap(left: string, right: string): boolean {
 
 export function patternSetsMayOverlap(left: string[], right: string[]): boolean {
   return left.some((leftPattern) =>
-    right.some((rightPattern) => patternsMayOverlap(leftPattern, rightPattern)))
+    right.some((rightPattern) => patternsMayOverlap(leftPattern, rightPattern)),
+  )
 }
 
 export function hasOverlappingPatterns(patterns: string[]): boolean {
   return patterns.some((pattern, index) =>
-    patterns.slice(index + 1).some((other) => patternsMayOverlap(pattern, other)))
+    patterns.slice(index + 1).some((other) => patternsMayOverlap(pattern, other)),
+  )
 }
 
 export function urlPatternToDnrRegex(pattern: string): string {
   const parsed = parseUrlPattern(pattern)
   if (!parsed.ok) throw new Error(parsed.error)
 
-  const scheme =
-    parsed.value.schemes.length === 2
-      ? 'https?'
-      : parsed.value.schemes[0]
+  const scheme = parsed.value.schemes.length === 2 ? 'https?' : parsed.value.schemes[0]
   const host = escapeRegex(parsed.value.host)
-  const hostExpression = parsed.value.includeSubdomains
-    ? `(?:[^./:]+\\.)*${host}`
-    : host
+  const hostExpression = parsed.value.includeSubdomains ? `(?:[^./:]+\\.)*${host}` : host
   const path = escapeRegex(parsed.value.path).replace(/\\\*/g, '.*')
   return `^${scheme}://${hostExpression}(?::[0-9]+)?${path}(?:[?].*)?$`
 }
-

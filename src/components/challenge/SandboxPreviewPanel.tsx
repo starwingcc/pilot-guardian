@@ -49,7 +49,9 @@ export function SandboxPreviewPanel({
     if (!viewport) return
     const measure = () => {
       const next = { width: viewport.clientWidth, height: viewport.clientHeight }
-      setBounds((current) => current.width === next.width && current.height === next.height ? current : next)
+      setBounds((current) =>
+        current.width === next.width && current.height === next.height ? current : next,
+      )
     }
     measure()
     const observer = new ResizeObserver(measure)
@@ -58,7 +60,8 @@ export function SandboxPreviewPanel({
   }, [])
 
   useEffect(() => {
-    const handleFullscreenChange = () => setFullscreen(document.fullscreenElement === cardRef.current)
+    const handleFullscreenChange = () =>
+      setFullscreen(document.fullscreenElement === cardRef.current)
     document.addEventListener('fullscreenchange', handleFullscreenChange)
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
@@ -67,7 +70,10 @@ export function SandboxPreviewPanel({
 
   const scale = useMemo(() => {
     if (fullscreen || mode === 'actual') return 1
-    return Math.min(1, Math.max(0.1, Math.min(bounds.width / DESKTOP_WIDTH, bounds.height / DESKTOP_HEIGHT)))
+    return Math.min(
+      1,
+      Math.max(0.1, Math.min(bounds.width / DESKTOP_WIDTH, bounds.height / DESKTOP_HEIGHT)),
+    )
   }, [bounds.height, bounds.width, fullscreen, mode])
   const useFluidViewport = fullscreen
   const canvasStyle: CSSProperties = useFluidViewport
@@ -81,13 +87,14 @@ export function SandboxPreviewPanel({
         transform: `scale(${scale})`,
         transformOrigin: 'top left',
       }
-  const overflowLabel = metrics?.overflowX && metrics.overflowY
-    ? '内容横向及纵向溢出'
-    : metrics?.overflowX
-      ? '内容横向溢出'
-      : metrics?.overflowY
-        ? '内容纵向溢出'
-        : ''
+  const overflowLabel =
+    metrics?.overflowX && metrics.overflowY
+      ? '内容横向及纵向溢出'
+      : metrics?.overflowX
+        ? '内容横向溢出'
+        : metrics?.overflowY
+          ? '内容纵向溢出'
+          : ''
 
   const toggleFullscreen = async () => {
     try {
@@ -113,7 +120,9 @@ export function SandboxPreviewPanel({
               size="sm"
               variant="outline"
               value={mode}
-              onValueChange={(value) => { if (value) setMode(value as 'fit' | 'actual') }}
+              onValueChange={(value) => {
+                if (value) setMode(value as 'fit' | 'actual')
+              }}
               aria-label="预览缩放模式"
             >
               <ToggleGroupItem value="fit">适应窗口</ToggleGroupItem>
@@ -121,9 +130,11 @@ export function SandboxPreviewPanel({
             </ToggleGroup>
           ) : null}
           <Button type="button" variant="outline" size="sm" onClick={() => void toggleFullscreen()}>
-            {fullscreen
-              ? <Minimize2Icon data-icon="inline-start" />
-              : <Maximize2Icon data-icon="inline-start" />}
+            {fullscreen ? (
+              <Minimize2Icon data-icon="inline-start" />
+            ) : (
+              <Maximize2Icon data-icon="inline-start" />
+            )}
             {fullscreen ? '退出全屏' : '全屏预览'}
           </Button>
         </div>
@@ -150,9 +161,16 @@ export function SandboxPreviewPanel({
       <CardFooter className="document-preview-readout">
         <span>{fullscreen ? '浏览器可用尺寸' : `${DESKTOP_WIDTH} × ${DESKTOP_HEIGHT}`}</span>
         <span>{fullscreen ? '自动' : `${Math.round(scale * 100)}%`}</span>
-        {metrics ? <span>内容 {metrics.contentWidth} × {metrics.contentHeight}</span> : null}
+        {metrics ? (
+          <span>
+            内容 {metrics.contentWidth} × {metrics.contentHeight}
+          </span>
+        ) : null}
         {overflowLabel ? (
-          <Badge variant="secondary"><TriangleAlertIcon data-icon="inline-start" />{overflowLabel}，可在画面内滚动</Badge>
+          <Badge variant="secondary">
+            <TriangleAlertIcon data-icon="inline-start" />
+            {overflowLabel}，可在画面内滚动
+          </Badge>
         ) : null}
       </CardFooter>
     </Card>

@@ -86,9 +86,9 @@ function isolatedDocument(html: string, token: string): string {
   policy.httpEquiv = 'Content-Security-Policy'
   policy.content = [
     "default-src 'none'",
-    "img-src data: https: http:",
-    "media-src data: https: http:",
-    "font-src data: https: http:",
+    'img-src data: https: http:',
+    'media-src data: https: http:',
+    'font-src data: https: http:',
     "style-src 'unsafe-inline' data: https: http:",
     "script-src 'unsafe-inline' 'unsafe-eval' https: http:",
     "connect-src 'none'",
