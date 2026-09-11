@@ -1,0 +1,1286 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Options 视觉方案 V2 · Pilot Guardian</title>
+<style>
+:root {
+  --desk: #e7e2d6;
+  --paper: #f9f6ec;
+  --paper-deep: #f1ecdd;
+  --ink: #22303f;
+  --ink-soft: #5b6672;
+  --ink-faint: #99a1aa;
+  --hairline: #d8d1bd;
+  --edge: #d0c8b2;
+  --stamp-green: #2f7d4f;
+  --stamp-amber: #a2690f;
+  --stamp-red: #b23c32;
+  --stamp-gray: #77808a;
+  --accent: #27567f;
+  --accent-deep: #1d4262;
+  --paper-on-ink: #f6f3e9;
+  --serif: Georgia, "Times New Roman", "Songti SC", SimSun, serif;
+  --sans: "Segoe UI", system-ui, "Microsoft YaHei", "PingFang SC", sans-serif;
+  --mono: "Cascadia Mono", Consolas, "Courier New", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+
+body {
+  margin: 0;
+  padding: 34px 26px 72px;
+  color: var(--ink);
+  font-family: var(--sans);
+  background:
+    radial-gradient(1100px 480px at 50% -8%, #efeadf, transparent 70%),
+    var(--desk);
+}
+
+::selection { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+.icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.page-mark {
+  max-width: 1560px;
+  margin: 0 auto 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 20px;
+  font: 700 10px/1 var(--mono);
+  letter-spacing: .24em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.sheet {
+  max-width: 1560px;
+  margin: 0 auto;
+  background: var(--paper);
+  border: 1px solid var(--edge);
+  border-radius: 18px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .65),
+    0 30px 60px -34px rgba(64, 54, 24, .42),
+    0 3px 10px rgba(64, 54, 24, .08);
+  overflow: hidden;
+}
+
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px 26px;
+  padding: 22px 28px;
+  border-bottom: 3px double var(--ink);
+}
+
+.brand-lockup { display: flex; align-items: center; gap: 16px; }
+
+.brand-glyph {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border: 2px solid var(--ink);
+  border-radius: 12px 4px 12px 4px;
+  background: var(--paper-deep);
+  box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4px var(--edge);
+}
+
+.brand-glyph .icon { width: 20px; height: 20px; color: var(--accent); }
+
+.kicker-block {
+  font: 700 10px/1 var(--mono);
+  letter-spacing: .24em;
+  color: var(--ink-faint);
+}
+
+.brand-lockup h1 {
+  margin: 7px 0 0;
+  font: 700 clamp(22px, 2.4vw, 30px)/1.05 var(--serif);
+  letter-spacing: -0.01em;
+}
+
+.mast-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+
+.sync-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 13px;
+  border: 1.5px solid var(--stamp-amber);
+  border-radius: 8px;
+  background: rgba(162, 105, 15, .06);
+  color: var(--stamp-amber);
+  font: 700 11px/1 var(--mono);
+  letter-spacing: .12em;
+}
+
+.sync-badge .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--stamp-amber); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 15px;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font: 600 13px/1 var(--sans);
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease, color .12s ease;
+}
+
+.btn:hover { transform: translateY(-1px); box-shadow: 0 5px 12px -6px rgba(40, 50, 62, .4); }
+
+.btn:active { transform: translateY(0); box-shadow: none; }
+
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.btn .icon { width: 15px; height: 15px; }
+
+.btn--ghost { border-color: var(--edge); color: var(--ink-soft); }
+
+.btn--ghost:hover { border-color: var(--ink-soft); color: var(--ink); }
+
+.btn--primary { background: var(--accent); border-color: var(--accent-deep); color: #fdfcf7; }
+
+.btn--primary:hover { background: var(--accent-deep); }
+
+.console {
+  display: grid;
+  grid-template-columns: 296px minmax(560px, 1fr) 372px;
+  align-items: stretch;
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 16px 14px;
+  border-right: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--paper-deep) 62%, var(--paper));
+}
+
+.rail-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+.rail-head .kicker {
+  font: 700 10px/1 var(--mono);
+  letter-spacing: .22em;
+  color: var(--ink-faint);
+}
+
+.rail-head h2 { margin: 5px 0 0; font: 700 19px/1.1 var(--serif); }
+
+.icon-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background .12s ease, color .12s ease, border-color .12s ease;
+}
+
+.icon-btn:hover { background: var(--ink); color: var(--paper-on-ink); }
+
+.icon-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.icon-btn:disabled { opacity: .38; pointer-events: none; }
+
+.icon-btn .icon { width: 15px; height: 15px; }
+
+.icon-btn--ghost { border-color: var(--edge); color: var(--ink-soft); }
+
+.icon-btn--ghost:hover { border-color: var(--ink-soft); background: transparent; color: var(--ink); }
+
+.icon-btn--danger { border-color: color-mix(in srgb, var(--stamp-red) 50%, transparent); color: var(--stamp-red); }
+
+.icon-btn--danger:hover { background: var(--stamp-red); border-color: var(--stamp-red); color: #fdfcf7; }
+
+.rail-search { position: relative; }
+
+.rail-search .icon {
+  position: absolute;
+  top: 50%;
+  left: 11px;
+  transform: translateY(-50%);
+  width: 14px;
+  height: 14px;
+  color: var(--ink-faint);
+}
+
+.rail-search input {
+  width: 100%;
+  padding: 10px 12px 10px 33px;
+  border: 1.5px solid var(--edge);
+  border-radius: 9px;
+  background: var(--paper);
+  font: 400 13px/1 var(--sans);
+  color: var(--ink);
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+
+.rail-search input::placeholder { color: var(--ink-faint); }
+
+.rail-search input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.manifest { display: flex; flex-direction: column; gap: 4px; }
+
+.manifest-row {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  gap: 4px 10px;
+  align-items: start;
+  padding: 11px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background .12s ease;
+}
+
+.manifest-row:not(.manifest-row--selected):hover { background: rgba(34, 48, 63, .05); }
+
+.mr-copy { min-width: 0; }
+
+.mr-idx { font: 700 10px/1.4 var(--mono); letter-spacing: .1em; color: var(--ink-faint); }
+
+.mr-name { font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 7px; }
+
+.mr-url {
+  margin-top: 3px;
+  font: 400 10px/1.4 var(--mono);
+  letter-spacing: .02em;
+  color: var(--ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mr-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+
+.mr-conflict { color: var(--stamp-amber); display: inline-flex; }
+
+.mr-conflict .icon { width: 14px; height: 14px; }
+
+.dirty-dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--stamp-amber); box-shadow: 0 0 0 3px rgba(162, 105, 15, .18); }
+
+.stamp-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border: 1.5px solid currentColor;
+  border-radius: 5px;
+  background: color-mix(in srgb, currentColor 7%, transparent);
+  font: 700 10px/1 var(--mono);
+  letter-spacing: .14em;
+}
+
+.stamp-chip--green { color: var(--stamp-green); }
+.stamp-chip--amber { color: var(--stamp-amber); }
+.stamp-chip--red { color: var(--stamp-red); }
+.stamp-chip--gray { color: var(--stamp-gray); }
+
+.manifest-row--selected { background: var(--ink); }
+
+.manifest-row--selected .mr-name { color: var(--paper-on-ink); }
+
+.manifest-row--selected .mr-idx,
+.manifest-row--selected .mr-url { color: rgba(246, 243, 233, .62); }
+
+.manifest-row--selected .stamp-chip { color: var(--paper-on-ink); }
+
+.manifest-row--selected .dirty-dot { background: #f0c674; box-shadow: 0 0 0 3px rgba(240, 198, 116, .22); }
+
+.manifest-row--off { opacity: .58; }
+
+.rail-foot {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--hairline);
+  font: 700 10px/1 var(--mono);
+  letter-spacing: .16em;
+  color: var(--ink-faint);
+}
+
+.editor { padding: 24px clamp(20px, 2.6vw, 44px) 30px; }
+
+.ed-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 20px; margin-bottom: 6px; }
+
+.ed-head .kicker {
+  font: 700 10px/1 var(--mono);
+  letter-spacing: .22em;
+  color: var(--accent);
+}
+
+.ed-head h2 { margin: 7px 0 0; font: 700 clamp(26px, 2.6vw, 38px)/1.02 var(--serif); letter-spacing: -0.01em; }
+
+.ed-actions { display: flex; gap: 7px; }
+
+.alert {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 13px 15px;
+  margin: 14px 0 0;
+  border: 1.5px solid currentColor;
+  border-radius: 11px;
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+
+.alert .icon { width: 17px; height: 17px; margin-top: 2px; }
+
+.alert strong { display: block; margin-bottom: 2px; font-size: 13px; }
+
+.alert p { margin: 0; }
+
+.alert code { font-family: var(--mono); font-size: 11.5px; color: var(--accent); }
+
+.alert--amber { color: var(--stamp-amber); background: rgba(162, 105, 15, .07); }
+
+.alert--amber strong { color: var(--ink); }
+
+.alert--amber p { color: var(--ink-soft); }
+
+.alert--accent { color: var(--accent); background: rgba(39, 86, 127, .06); }
+
+.alert--accent strong { color: var(--ink); }
+
+.alert--accent p { color: var(--ink-soft); }
+
+.alert--line {
+  padding: 9px 12px;
+  gap: 9px;
+  align-items: center;
+  border-width: 1px;
+  border-style: dashed;
+}
+
+.alert--line strong { display: inline; margin: 0 6px 0 0; }
+
+.card {
+  margin-top: 18px;
+  padding: 18px 20px;
+  border: 1px solid var(--edge);
+  border-radius: 13px;
+  background: var(--paper);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .6) inset;
+}
+
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+
+.card-kicker {
+  font: 700 9.5px/1 var(--mono);
+  letter-spacing: .22em;
+  color: var(--ink-faint);
+}
+
+.card-head h3 { margin: 5px 0 0; font: 700 17px/1.15 var(--serif); }
+
+.card-badge { flex: none; }
+
+.card-desc { margin: 7px 0 0; font-size: 12.5px; line-height: 1.65; color: var(--ink-soft); }
+
+.card-body { margin-top: 16px; display: flex; flex-direction: column; gap: 16px; }
+
+.field { display: flex; flex-direction: column; gap: 7px; }
+
+.field > label, .field-label {
+  font: 700 11px/1 var(--mono);
+  letter-spacing: .14em;
+  color: var(--ink-soft);
+}
+
+.field-desc { font-size: 11.5px; line-height: 1.6; color: var(--ink-faint); }
+
+.input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid var(--edge);
+  border-radius: 9px;
+  background: var(--paper);
+  font: 500 14px/1.3 var(--sans);
+  color: var(--ink);
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+
+.input::placeholder { color: var(--ink-faint); }
+
+.input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.input--mono { font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+
+.input--bare {
+  padding: 8px 2px;
+  border: 0;
+  border-bottom: 1.5px solid var(--ink-faint);
+  border-radius: 0;
+  background: transparent;
+  font: 600 16px/1.3 var(--serif);
+}
+
+.input--bare:focus { border-bottom-color: var(--accent); box-shadow: none; }
+
+.row-2 { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+
+.lever-icon {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  color: var(--accent);
+}
+
+.lever-icon .icon { width: 19px; height: 19px; }
+
+.lever-copy { flex: 1; min-width: 0; }
+
+.lever-copy strong { font-size: 14.5px; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+
+.lever-copy strong i {
+  font: 700 9px/1 var(--mono);
+  font-style: normal;
+  letter-spacing: .2em;
+  color: var(--ink-faint);
+}
+
+.lever-copy small { display: block; margin-top: 4px; font-size: 12px; line-height: 1.6; color: var(--ink-soft); }
+
+label.lever { display: flex; align-items: flex-start; gap: 13px; cursor: pointer; }
+
+label.lever > input[type="checkbox"] { position: absolute; opacity: 0; }
+
+.switch { position: relative; display: inline-block; flex: none; width: 48px; height: 25px; margin-top: 2px; }
+
+.switch-track {
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid var(--ink);
+  border-radius: 6px;
+  background: var(--paper-deep);
+  transition: background .15s ease;
+}
+
+.switch-knob {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 17px;
+  height: 17px;
+  border-radius: 4px;
+  background: var(--ink);
+  box-shadow: 0 1px 2px rgba(30, 40, 52, .28);
+  transition: transform .15s ease, background .15s ease;
+}
+
+label.lever > input[type="checkbox"]:checked ~ .switch .switch-track { background: var(--ink); }
+
+label.lever > input[type="checkbox"]:checked ~ .switch .switch-knob { transform: translateX(23px); background: var(--paper-on-ink); }
+
+label.lever > input[type="checkbox"]:focus-visible ~ .switch .switch-track { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.unit-row { display: flex; align-items: center; gap: 8px; }
+
+.unit-row .unit { font: 700 12px/1 var(--sans); color: var(--ink-soft); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 9px; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 8px 8px 12px;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  background: var(--paper);
+  font: 500 12px/1 var(--mono);
+  color: var(--ink);
+}
+
+.chip button {
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition: color .12s ease, background .12s ease;
+}
+
+.chip button .icon { width: 12px; height: 12px; }
+
+.chip button:hover { color: var(--stamp-red); background: rgba(178, 60, 50, .1); }
+
+.chip-input {
+  flex: 1;
+  min-width: 180px;
+  padding: 8px 12px;
+  border: 1.5px dashed var(--edge);
+  border-radius: 8px;
+  background: transparent;
+  font: 400 12px/1 var(--mono);
+  color: var(--ink-soft);
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+
+.chip-input::placeholder { color: var(--ink-faint); }
+
+.chip-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  border-style: solid;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
+}
+
+.tchips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.tchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 13px;
+  border: 1.5px solid var(--edge);
+  border-radius: 8px;
+  background: var(--paper);
+  font: 600 12.5px/1 var(--sans);
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition: border-color .12s ease, color .12s ease, background .12s ease;
+}
+
+.tchip:hover { border-color: var(--ink-soft); color: var(--ink); }
+
+.tchip .icon { width: 14px; height: 14px; }
+
+.tchip--on { border-color: var(--ink); background: var(--ink); color: var(--paper-on-ink); }
+
+.tchip--on:hover { color: var(--paper-on-ink); }
+
+.tchip--day { padding: 8px 0; width: 40px; text-align: center; justify-content: center; font-family: var(--mono); font-size: 11.5px; }
+
+.sub-card {
+  margin-top: 16px;
+  margin-left: 15px;
+  padding: 16px 18px;
+  border: 1.5px dashed var(--edge);
+  border-left: 3px double var(--ink-faint);
+  border-radius: 0 12px 12px 0;
+  background: color-mix(in srgb, var(--paper-deep) 46%, var(--paper));
+}
+
+.sub-card.is-collapsed { display: none; }
+
+.sub-title { display: flex; align-items: baseline; gap: 10px; }
+
+.sub-title .card-kicker { color: var(--accent); }
+
+.sub-title strong { font: 700 14.5px/1 var(--sans); }
+
+.sub-body { margin-top: 14px; display: flex; flex-direction: column; gap: 15px; }
+
+.time-pair { display: flex; align-items: center; gap: 10px; }
+
+.time-pair .input {
+  width: 108px;
+  font-family: var(--mono);
+  font-size: 13px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.time-pair .sep { font: 400 12px/1 var(--sans); color: var(--ink-faint); }
+
+.time-pair input[type="time"]::-webkit-calendar-picker-indicator { display: none; }
+
+.select-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 13px;
+  border: 1.5px solid var(--edge);
+  border-radius: 9px;
+  background: var(--paper);
+  font: 500 13px/1 var(--sans);
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+
+.select-box:hover { border-color: var(--ink-soft); }
+
+.select-box:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.select-box .icon { width: 14px; height: 14px; color: var(--ink-faint); transform: rotate(90deg); }
+
+.step {
+  border: 1px solid var(--edge);
+  border-radius: 12px;
+  background: var(--paper);
+  overflow: hidden;
+}
+
+.step-head {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px dashed var(--hairline);
+  background: color-mix(in srgb, var(--paper-deep) 55%, var(--paper));
+}
+
+.step-no {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid var(--ink);
+  border-radius: 7px;
+  font: 700 11px/1 var(--mono);
+  letter-spacing: .06em;
+}
+
+.step-body { padding: 15px 16px; display: flex; flex-direction: column; gap: 15px; }
+
+.step-actions { display: flex; gap: 6px; }
+
+.step-actions .icon-btn { width: 30px; height: 30px; border-radius: 7px; }
+
+.workbench {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 118px;
+  border: 1.5px dashed var(--edge);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--paper-deep) 40%, var(--paper));
+  color: var(--ink-faint);
+  font-size: 12px;
+  text-align: center;
+  padding: 14px;
+}
+
+.workbench .icon { width: 18px; height: 18px; }
+
+.add-step {
+  width: 100%;
+  padding: 11px;
+  border: 1.5px dashed var(--edge);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-soft);
+  font: 600 12.5px/1 var(--sans);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: border-color .12s ease, color .12s ease, background .12s ease;
+}
+
+.add-step:hover { border-color: var(--ink-soft); color: var(--ink); background: rgba(34, 48, 63, .04); }
+
+.add-step .icon { width: 14px; height: 14px; }
+
+.save-bar {
+  position: sticky;
+  bottom: 16px;
+  z-index: 6;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 18px;
+  margin-top: 22px;
+  padding: 14px 17px;
+  border-radius: 13px;
+  background: var(--ink);
+  color: var(--paper-on-ink);
+  box-shadow: 0 22px 40px -18px rgba(30, 40, 52, .6), inset 0 1px 0 rgba(255, 255, 255, .08);
+}
+
+.sb-left { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; }
+
+.sb-count { font: 700 11px/1 var(--mono); letter-spacing: .18em; color: #f0c674; }
+
+.sb-fields { font-size: 12px; color: rgba(246, 243, 233, .72); }
+
+.sb-actions { display: flex; gap: 10px; }
+
+.btn--invert-ghost { border-color: rgba(246, 243, 233, .42); color: var(--paper-on-ink); }
+
+.btn--invert-ghost:hover { box-shadow: none; }
+
+.btn--invert-primary { border-color: var(--paper-on-ink); background: var(--paper-on-ink); color: var(--ink); }
+
+.preview {
+  padding: 24px 22px 28px 20px;
+  border-left: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--paper-deep) 34%, var(--paper));
+}
+
+.preview .card { margin-top: 0; }
+
+.preview .card + .card { margin-top: 16px; }
+
+.pv-result {
+  display: flex;
+  gap: 13px;
+  align-items: center;
+  padding: 13px 14px;
+  border: 1.5px solid color-mix(in srgb, var(--stamp-green) 55%, transparent);
+  border-radius: 11px;
+  background: rgba(47, 125, 79, .07);
+}
+
+.pv-result .icon { width: 21px; height: 21px; color: var(--stamp-green); }
+
+.pv-result .pv-copy strong { display: block; font-size: 14px; }
+
+.pv-result .pv-copy span { display: block; margin-top: 3px; font-size: 11.5px; line-height: 1.55; color: var(--ink-soft); }
+
+.facts { margin: 4px 0 0; }
+
+.facts > div {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--hairline);
+}
+
+.facts > div:last-child { border-bottom: 0; }
+
+.facts dt { font: 700 9.5px/1.9 var(--mono); letter-spacing: .16em; color: var(--ink-faint); }
+
+.facts dd { margin: 0; font-size: 12.5px; font-weight: 600; }
+
+.facts dd code { font: 400 11px/1.7 var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+
+.empty-sheet {
+  max-width: 680px;
+  margin: 56px auto 0;
+  padding: 52px 40px 44px;
+  text-align: center;
+  background: var(--paper);
+  border: 1px solid var(--edge);
+  border-radius: 18px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .65),
+    0 30px 60px -34px rgba(64, 54, 24, .42);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.stamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px;
+  border: 2px solid currentColor;
+  border-radius: 7px;
+  box-shadow: inset 0 0 0 4px var(--paper), inset 0 0 0 5px currentColor;
+  font: 700 14px/1 var(--mono);
+  letter-spacing: .22em;
+  transform: rotate(-3.5deg);
+  opacity: .94;
+}
+
+.stamp--gray { color: var(--stamp-gray); }
+
+.empty-sheet h2 { margin: 8px 0 0; font: 700 clamp(28px, 4vw, 40px)/1.1 var(--serif); }
+
+.empty-sheet > p { margin: 0; max-width: 430px; font-size: 13.5px; line-height: 1.85; color: var(--ink-soft); }
+
+.barcode {
+  width: 150px;
+  height: 24px;
+  opacity: .85;
+  background: repeating-linear-gradient(90deg,
+    var(--ink) 0 2px, transparent 2px 5px,
+    var(--ink) 5px 6px, transparent 6px 10px,
+    var(--ink) 10px 13px, transparent 13px 15px,
+    var(--ink) 15px 16px, transparent 16px 20px,
+    var(--ink) 20px 23px, transparent 23px 25px);
+}
+
+@media (max-width: 1360px) {
+  .console { grid-template-columns: 280px minmax(0, 1fr); }
+  .preview {
+    grid-column: 1 / -1;
+    border-left: 0;
+    border-top: 1px solid var(--hairline);
+  }
+}
+
+@media (max-width: 900px) {
+  body { padding: 22px 12px 56px; }
+  .console { display: block; }
+  .rail { border-right: 0; border-bottom: 1px solid var(--hairline); }
+  .row-2 { grid-template-columns: 1fr; }
+  .save-bar { position: static; }
+}
+</style>
+</head>
+<body>
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-shield-alert" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M12 8v4"/><path d="M12 16h.01"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-trash-2" viewBox="0 0 24 24"><path d="M10 11v6"/><path d="M14 11v6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></symbol>
+  <symbol id="i-arrow-up" viewBox="0 0 24 24"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></symbol>
+  <symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></symbol>
+  <symbol id="i-file-up" viewBox="0 0 24 24"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M12 12v6"/><path d="m15 15-3-3-3 3"/></symbol>
+  <symbol id="i-save" viewBox="0 0 24 24"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+  <symbol id="i-key-round" viewBox="0 0 24 24"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></symbol>
+  <symbol id="i-calendar-days" viewBox="0 0 24 24"><path d="M8 2v3"/><path d="M16 2v3"/><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M8 13h.01"/><path d="M12 13h.01"/><path d="M16 13h.01"/><path d="M8 17h.01"/><path d="M12 17h.01"/><path d="M16 17h.01"/></symbol>
+  <symbol id="i-undo-2" viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5 5.5 5.5 0 0 1-5.5 5.5H11"/></symbol>
+  <symbol id="i-triangle-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-scan-search" viewBox="0 0 24 24"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="12" cy="12" r="3"/><path d="m16 16-1.9-1.9"/></symbol>
+  <symbol id="i-type" viewBox="0 0 24 24"><path d="M12 4v16"/><path d="M4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2"/><path d="M9 20h6"/></symbol>
+  <symbol id="i-mouse-pointer-click" viewBox="0 0 24 24"><path d="M14 4.1 12 6"/><path d="m5.1 8-2.9-.8"/><path d="m6 12-1.9 2"/><path d="M7.2 2.2 8 5.1"/><path d="M9.037 9.69a.498.498 0 0 1 .653-.653l11 4.5a.5.5 0 0 1-.074.949l-4.349 1.041a1 1 0 0 0-.74.739l-1.04 4.35a.5.5 0 0 1-.95.074z"/></symbol>
+  <symbol id="i-braces" viewBox="0 0 24 24"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/><path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></symbol>
+  <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+</svg>
+
+<div class="page-mark">
+  <span>PILOT GUARDIAN · OPTIONS V2</span>
+  <span>2026-09-02</span>
+</div>
+
+<div class="sheet">
+
+  <header class="masthead">
+    <div class="brand-lockup">
+      <div class="brand-glyph"><svg class="icon" aria-hidden="true"><use href="#i-shield-alert"/></svg></div>
+      <div>
+        <span class="kicker-block">PILOT GUARDIAN</span>
+        <h1>访问规则控制台</h1>
+      </div>
+    </div>
+    <div class="mast-actions">
+      <span class="sync-badge"><span class="dot"></span>2 条规则未保存</span>
+      <button class="btn btn--ghost"><svg class="icon" aria-hidden="true"><use href="#i-file-up"/></svg>导入</button>
+      <button class="btn btn--ghost"><svg class="icon" aria-hidden="true"><use href="#i-download"/></svg>导出</button>
+    </div>
+  </header>
+
+  <main class="console">
+
+    <aside class="rail">
+      <div class="rail-head">
+        <div>
+          <span class="kicker">FLIGHT PLANS</span>
+          <h2>访问规则</h2>
+        </div>
+        <button class="icon-btn" aria-label="新建规则"><svg class="icon"><use href="#i-plus"/></svg></button>
+      </div>
+      <div class="rail-search">
+        <svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+        <input type="text" placeholder="搜索规则名称或 URL 匹配模式">
+      </div>
+      <div class="manifest">
+        <div class="manifest-row">
+          <span class="mr-idx">01</span>
+          <div class="mr-copy">
+            <div class="mr-name">视频平台</div>
+            <div class="mr-url">https://*.bilibili.com/*</div>
+          </div>
+          <div class="mr-side">
+            <span class="stamp-chip stamp-chip--red">等待开放</span>
+          </div>
+        </div>
+        <div class="manifest-row manifest-row--selected">
+          <span class="mr-idx">02</span>
+          <div class="mr-copy">
+            <div class="mr-name">Linux 社区<span class="dirty-dot" title="有未保存修改"></span></div>
+            <div class="mr-url">https://linux.do/* +1</div>
+          </div>
+          <div class="mr-side">
+            <span class="mr-conflict" title="与规则 03「资讯流」可能命中相同地址"><svg class="icon"><use href="#i-triangle-alert"/></svg></span>
+          </div>
+        </div>
+        <div class="manifest-row">
+          <span class="mr-idx">03</span>
+          <div class="mr-copy">
+            <div class="mr-name">资讯流<span class="dirty-dot" title="有未保存修改"></span></div>
+            <div class="mr-url">https://36kr.com/* +1</div>
+          </div>
+          <div class="mr-side">
+            <span class="mr-conflict" title="与规则 02「Linux 社区」可能命中相同地址"><svg class="icon"><use href="#i-triangle-alert"/></svg></span>
+            <span class="stamp-chip stamp-chip--amber">等待挑战</span>
+          </div>
+        </div>
+        <div class="manifest-row manifest-row--off">
+          <span class="mr-idx">04</span>
+          <div class="mr-copy">
+            <div class="mr-name">游戏门户</div>
+            <div class="mr-url">https://store.steampowered.com/*</div>
+          </div>
+          <div class="mr-side">
+            <span class="stamp-chip stamp-chip--gray">已停用</span>
+          </div>
+        </div>
+      </div>
+      <div class="rail-foot">
+        <span>3 条在线 · 共 4 条</span>
+      </div>
+    </aside>
+
+    <section class="editor">
+
+      <div class="ed-head">
+        <div>
+          <span class="kicker">PRIORITY 02 · 编辑中</span>
+          <h2>Linux 社区</h2>
+        </div>
+        <div class="ed-actions">
+          <button class="icon-btn icon-btn--ghost" aria-label="上移规则"><svg class="icon"><use href="#i-arrow-up"/></svg></button>
+          <button class="icon-btn icon-btn--ghost" aria-label="下移规则"><svg class="icon"><use href="#i-arrow-down"/></svg></button>
+          <button class="icon-btn icon-btn--danger" aria-label="删除规则"><svg class="icon"><use href="#i-trash-2"/></svg></button>
+        </div>
+      </div>
+
+      <div class="alert alert--amber">
+        <svg class="icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>
+        <div>
+          <strong>检测到航线重叠</strong>
+          <p>与规则 03「资讯流」可能命中相同地址，将采用优先级最高的一条（本规则优先）。</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <span class="card-kicker">BASIC · 基本信息</span>
+            <h3>规则名称与部署状态</h3>
+          </div>
+          <span class="card-badge stamp-chip stamp-chip--green">正在执行</span>
+        </div>
+        <div class="card-body">
+          <div class="row-2">
+            <div class="field">
+              <label for="rule-name">规则名称</label>
+              <input class="input input--bare" id="rule-name" value="Linux 社区">
+              <span class="field-desc">这个名称将显示在闸门中。</span>
+            </div>
+            <label class="lever">
+              <input type="checkbox" checked>
+              <span class="lever-copy">
+                <strong>启用此规则<i>ENABLED</i></strong>
+                <small>立即参与浏览器导航匹配。</small>
+              </span>
+              <span class="switch"><span class="switch-track"></span><span class="switch-knob"></span></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <span class="card-kicker">TARGETS · 受控目标</span>
+            <h3>URL 匹配模式</h3>
+          </div>
+          <span class="card-badge stamp-chip stamp-chip--gray">2 条模式</span>
+        </div>
+        <p class="card-desc">支持 http、https 或 * 协议与 *.example.com 子域写法；路径可使用 *，多条模式按「或」生效。</p>
+        <div class="card-body">
+          <div class="chips">
+            <span class="chip">https://linux.do/*<button aria-label="删除模式"><svg class="icon"><use href="#i-x"/></svg></button></span>
+            <span class="chip">https://*.linux.do/*<button aria-label="删除模式"><svg class="icon"><use href="#i-x"/></svg></button></span>
+            <input class="chip-input" type="text" placeholder="添加 URL 匹配模式，如 https://linux.do/*">
+          </div>
+          <div class="alert alert--amber alert--line">
+            <svg class="icon" aria-hidden="true"><use href="#i-triangle-alert"/></svg>
+            <p><strong>范围重叠</strong>较窄的一条已被较宽范围覆盖，可考虑移除。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <span class="card-kicker">POLICY · 访问策略</span>
+            <h3>组合挑战验证与时间限制</h3>
+          </div>
+        </div>
+        <div class="card-body">
+          <label class="lever">
+            <input type="checkbox" checked data-target="card-challenges">
+            <span class="lever-icon"><svg class="icon" aria-hidden="true"><use href="#i-key-round"/></svg></span>
+            <span class="lever-copy">
+              <strong>挑战验证<i>CHALLENGE</i></strong>
+              <small>开启后，访问前需按顺序完成挑战序列。仅开启挑战 = 口令模式。</small>
+            </span>
+            <span class="switch"><span class="switch-track"></span><span class="switch-knob"></span></span>
+          </label>
+          <label class="lever">
+            <input type="checkbox" checked data-target="card-schedule">
+            <span class="lever-icon"><svg class="icon" aria-hidden="true"><use href="#i-calendar-days"/></svg></span>
+            <span class="lever-copy">
+              <strong>时间限制<i>SCHEDULE</i></strong>
+              <small>开启后，只在开放日与开放时段内放行或接受挑战。仅开启时间 = 周期模式；两者都开 = 口令 + 周期。</small>
+            </span>
+            <span class="switch"><span class="switch-track"></span><span class="switch-knob"></span></span>
+          </label>
+          <div class="field">
+            <label for="duration">放行时长（分钟）</label>
+            <div class="unit-row">
+              <input class="input" id="duration" style="max-width:120px" value="30">
+              <span class="unit">分钟</span>
+            </div>
+            <span class="field-desc">放行窗口开启后，在此时长内不再重复拦截；已开启的放行窗口不因时段结束而收回。</span>
+          </div>
+        </div>
+
+        <div class="sub-card" id="card-schedule">
+          <div class="sub-title">
+            <span class="card-kicker">SCHEDULE</span>
+            <strong>周期安排</strong>
+          </div>
+          <div class="sub-body">
+            <div class="field">
+              <span class="field-label">周期类型</span>
+              <div class="tchips">
+                <button class="tchip">间隔天数</button>
+                <button class="tchip tchip--on">每周开放日</button>
+                <button class="tchip">每月开放日</button>
+              </div>
+            </div>
+            <div class="field">
+              <span class="field-label">每周开放日</span>
+              <div class="tchips">
+                <button class="tchip tchip--day">日</button>
+                <button class="tchip tchip--day">一</button>
+                <button class="tchip tchip--day">二</button>
+                <button class="tchip tchip--day">三</button>
+                <button class="tchip tchip--day">四</button>
+                <button class="tchip tchip--day">五</button>
+                <button class="tchip tchip--day tchip--on">六</button>
+              </div>
+              <span class="field-desc">按本地自然日计算。</span>
+            </div>
+            <label class="lever">
+              <input type="checkbox" checked>
+              <span class="lever-copy">
+                <strong>开放时段<i>OPEN HOURS</i></strong>
+                <small>闸门只在开放时段内放行或接受挑战。</small>
+              </span>
+              <span class="switch"><span class="switch-track"></span><span class="switch-knob"></span></span>
+            </label>
+            <div class="time-pair">
+              <input class="input" type="time" value="20:00" aria-label="开放时段开始">
+              <span class="sep">至</span>
+              <input class="input" type="time" value="23:00" aria-label="开放时段结束">
+            </div>
+            <span class="field-desc">开始晚于结束表示跨午夜时段（如 22:00 至 06:00）。</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="card-challenges">
+        <div class="card-head">
+          <div>
+            <span class="card-kicker">CHALLENGES · 挑战序列</span>
+            <h3>按顺序完成的验证步骤</h3>
+          </div>
+          <span class="card-badge stamp-chip stamp-chip--gray">2 步</span>
+        </div>
+        <div class="card-body">
+
+          <div class="step">
+            <div class="step-head">
+              <span class="step-no">01</span>
+              <div class="tchips">
+                <button class="tchip tchip--on"><svg class="icon" aria-hidden="true"><use href="#i-type"/></svg>文本挑战</button>
+                <button class="tchip"><svg class="icon" aria-hidden="true"><use href="#i-mouse-pointer-click"/></svg>交互挑战</button>
+              </div>
+              <div class="step-actions">
+                <button class="icon-btn icon-btn--ghost" disabled aria-label="上移步骤"><svg class="icon"><use href="#i-arrow-up"/></svg></button>
+                <button class="icon-btn icon-btn--ghost" aria-label="下移步骤"><svg class="icon"><use href="#i-arrow-down"/></svg></button>
+                <button class="icon-btn icon-btn--danger" disabled aria-label="删除步骤"><svg class="icon"><use href="#i-trash-2"/></svg></button>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="field">
+                <label for="answer-1">文本答案</label>
+                <input class="input input--mono" id="answer-1" value="先想清楚" autocomplete="off" spellcheck="false">
+                <span class="field-desc">支持中文，并以明文形式保存在当前设备。</span>
+              </div>
+              <div class="field">
+                <span class="field-label">挑战场景</span>
+                <div class="tchips">
+                  <button class="tchip tchip--on">默认闸门</button>
+                  <button class="tchip"><svg class="icon" aria-hidden="true"><use href="#i-braces"/></svg>自定义 HTML</button>
+                </div>
+                <span class="field-desc">不指定时使用默认场景；自定义场景将作为口令卡片背景。</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="step">
+            <div class="step-head">
+              <span class="step-no">02</span>
+              <div class="tchips">
+                <button class="tchip"><svg class="icon" aria-hidden="true"><use href="#i-type"/></svg>文本挑战</button>
+                <button class="tchip tchip--on"><svg class="icon" aria-hidden="true"><use href="#i-mouse-pointer-click"/></svg>交互挑战</button>
+              </div>
+              <div class="step-actions">
+                <button class="icon-btn icon-btn--ghost" aria-label="上移步骤"><svg class="icon"><use href="#i-arrow-up"/></svg></button>
+                <button class="icon-btn icon-btn--ghost" disabled aria-label="下移步骤"><svg class="icon"><use href="#i-arrow-down"/></svg></button>
+                <button class="icon-btn icon-btn--danger" aria-label="删除步骤"><svg class="icon"><use href="#i-trash-2"/></svg></button>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="field">
+                <label for="preset-2">从官方预设加载</label>
+                <button class="select-box" id="preset-2">
+                  <span>滑动解锁 · 已载入，可继续编辑</span>
+                  <svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg>
+                </button>
+                <span class="field-desc">载入预设会覆盖下方编辑器内容，之后在这里修改的结果独立于预设本身。</span>
+              </div>
+              <div class="alert alert--accent">
+                <svg class="icon" aria-hidden="true"><use href="#i-braces"/></svg>
+                <div>
+                  <strong>完成接口</strong>
+                  <p>在交互达成时调用 <code>window.PilotGuardian.complete()</code>，重复调用只会生效一次。</p>
+                </div>
+              </div>
+              <div class="workbench">
+                <svg class="icon" aria-hidden="true"><use href="#i-braces"/></svg>
+                <span>HTML 编辑器 · 沙箱实时预览</span>
+              </div>
+            </div>
+          </div>
+
+          <button class="add-step"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>添加挑战步骤</button>
+        </div>
+      </div>
+
+      <div class="save-bar">
+        <div class="sb-left">
+          <span class="sb-count">2 处未保存</span>
+          <span class="sb-fields">受控目标 · 访问策略</span>
+        </div>
+        <div class="sb-actions">
+          <button class="btn btn--invert-ghost"><svg class="icon" aria-hidden="true"><use href="#i-undo-2"/></svg>放弃更改</button>
+          <button class="btn btn--invert-primary"><svg class="icon" aria-hidden="true"><use href="#i-save"/></svg>保存更改</button>
+        </div>
+      </div>
+
+    </section>
+
+    <aside class="preview">
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <span class="card-kicker">ROUTE CHECK · 命中测试</span>
+            <h3>这个地址会由谁接管</h3>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="field">
+            <label for="test-url">测试完整 URL</label>
+            <input class="input input--mono" id="test-url" value="https://linux.do/t/topic/423000" spellcheck="false">
+            <span class="field-desc">按照规则顺序和启用状态实时计算，含未保存修改。</span>
+          </div>
+          <div class="pv-result">
+            <svg class="icon" aria-hidden="true"><use href="#i-scan-search"/></svg>
+            <div class="pv-copy">
+              <strong>当前规则生效</strong>
+              <span>命中模式 <code style="font-family:var(--mono)">https://linux.do/*</code>，该地址由正在编辑的规则接管。</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <span class="card-kicker">FACTS · 规则事实</span>
+            <h3>当前规则速览</h3>
+          </div>
+        </div>
+        <dl class="facts">
+          <div><dt>优先级</dt><dd>02（共 4 条）</dd></div>
+          <div><dt>执行状态</dt><dd>在线</dd></div>
+          <div><dt>挑战序列</dt><dd>2 步 · 文本 + 交互</dd></div>
+          <div><dt>周期</dt><dd>每周开放日 · 周六</dd></div>
+          <div><dt>开放时段</dt><dd><code>20:00 – 23:00</code></dd></div>
+          <div><dt>放行时长</dt><dd>30 分钟</dd></div>
+        </dl>
+      </div>
+
+    </aside>
+
+  </main>
+</div>
+
+<section class="empty-sheet">
+  <span class="stamp stamp--gray">暂无规则</span>
+  <h2>建立第一条访问规则</h2>
+  <p>为容易分心的网站部署挑战步骤与时间限制，或把两者组合为多阶段闸门。规则保存后立即接管匹配的导航。</p>
+  <button class="btn btn--primary" style="padding:12px 22px"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>新建规则</button>
+  <div class="barcode" aria-hidden="true"></div>
+</section>
+
+<script>
+  (function () {
+    document.querySelectorAll('input[type="checkbox"][data-target]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        var target = document.getElementById(input.getAttribute('data-target'));
+        if (target) target.classList.toggle('is-collapsed', !input.checked);
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

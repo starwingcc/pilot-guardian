@@ -1,0 +1,1191 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Popup UX 静态稿 v1 · Pilot Guardian</title>
+<style>
+:root {
+  --desk: #e7e2d6;
+  --paper: #f9f6ec;
+  --paper-deep: #f1ecdd;
+  --ink: #22303f;
+  --ink-soft: #5b6672;
+  --ink-faint: #99a1aa;
+  --hairline: #d8d1bd;
+  --edge: #d0c8b2;
+  --stamp-green: #2f7d4f;
+  --stamp-amber: #a2690f;
+  --stamp-red: #b23c32;
+  --stamp-gray: #77808a;
+  --accent: #27567f;
+  --accent-deep: #1d4262;
+  --serif: Georgia, "Times New Roman", "Songti SC", SimSun, serif;
+  --sans: "Segoe UI", system-ui, "Microsoft YaHei", "PingFang SC", sans-serif;
+  --mono: "Cascadia Mono", Consolas, "Courier New", monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 40px 32px 72px;
+  color: var(--ink);
+  font-family: var(--sans);
+  background:
+    radial-gradient(1100px 480px at 50% -8%, #efeadf, transparent 70%),
+    var(--desk);
+}
+
+.icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.review-head { max-width: 1240px; margin: 0 auto 42px; }
+
+.review-meta {
+  font: 700 10px/1 var(--mono);
+  letter-spacing: .26em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  align-items: center;
+}
+
+.review-head h1 {
+  margin: 14px 0 10px;
+  font: 700 clamp(30px, 4vw, 44px)/1.05 var(--serif);
+  letter-spacing: -0.01em;
+}
+
+.review-head h1 em { font-style: normal; color: var(--accent); }
+
+.review-head .lede {
+  max-width: 720px;
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--ink-soft);
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  align-items: center;
+  margin-top: 22px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--edge);
+  border-radius: 12px;
+  background: rgba(249, 246, 236, .72);
+}
+
+.legend .lg-title { font: 700 10px/1 var(--mono); letter-spacing: .22em; color: var(--ink-faint); }
+
+.legend .lg-item { display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: var(--ink-soft); }
+
+section.variant { max-width: 1240px; margin: 0 auto 54px; }
+
+.variant-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px 18px; margin-bottom: 8px; }
+
+.variant-head .no {
+  font: 700 13px/1 var(--mono);
+  letter-spacing: .2em;
+  color: #fdfcf7;
+  background: var(--ink);
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.variant-head h2 { margin: 0; font: 700 26px/1.1 var(--serif); }
+
+.variant-head .reason-tag { font: 700 10px/1 var(--mono); letter-spacing: .18em; color: var(--accent); }
+
+.variant-lede { margin: 0 0 26px; font-size: 13px; line-height: 1.8; color: var(--ink-soft); max-width: 720px; }
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 370px);
+  gap: 44px 30px;
+  justify-content: center;
+}
+
+.state-tag {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  align-items: baseline;
+  margin-bottom: 10px;
+  font: 700 10px/1.4 var(--mono);
+  letter-spacing: .16em;
+}
+
+.state-tag .idx { font-size: 12px; color: var(--accent); }
+
+.state-tag .when { color: var(--ink-faint); font-weight: 400; }
+
+.state-tag .reason {
+  color: var(--ink-soft);
+  font-weight: 400;
+  padding: 2px 7px;
+  border: 1px dashed var(--ink-faint);
+  border-radius: 5px;
+}
+
+.ticket {
+  width: 370px;
+  background: var(--paper);
+  border: 1px solid var(--edge);
+  border-radius: 14px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .65),
+    0 22px 38px -20px rgba(64, 54, 24, .38),
+    0 2px 7px rgba(64, 54, 24, .08);
+  overflow: hidden;
+}
+
+.t-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font: 700 11px/1 var(--mono);
+  letter-spacing: .24em;
+}
+
+.brand .icon { width: 17px; height: 17px; color: var(--accent); }
+
+.t-head .ticket-no { font: 700 10px/1 var(--mono); letter-spacing: .18em; color: var(--ink-faint); }
+
+.kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 700 9.5px/1 var(--mono);
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.kicker::after { content: ""; flex: 1; border-top: 1px solid var(--hairline); }
+
+.t-route { padding: 16px 18px 14px; }
+
+.route-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 13px;
+}
+
+.route-from { min-width: 0; }
+
+.route-from .domain {
+  font: 700 25px/1.02 var(--serif);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.route-from .sub { margin-top: 5px; font: 400 10px/1 var(--mono); letter-spacing: .1em; color: var(--ink-faint); }
+
+.route-path { position: relative; flex: 1; border-top: 2px dashed var(--ink-faint); min-width: 18px; }
+
+.route-path .icon {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 15px;
+  height: 15px;
+  color: var(--ink-soft);
+  background: var(--paper);
+  border-radius: 50%;
+}
+
+.stamp {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 11px;
+  border: 1.5px solid currentColor;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4px currentColor;
+  font: 700 12px/1 var(--mono);
+  letter-spacing: .2em;
+  transform: rotate(-3.5deg);
+  opacity: .94;
+}
+
+.stamp .icon { width: 13px; height: 13px; }
+
+.stamp--green { color: var(--stamp-green); }
+.stamp--amber { color: var(--stamp-amber); }
+.stamp--red { color: var(--stamp-red); }
+.stamp--gray { color: var(--stamp-gray); transform: rotate(2deg); }
+
+.stamp-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border: 1.5px solid currentColor;
+  border-radius: 5px;
+  font: 700 10px/1 var(--mono);
+  letter-spacing: .14em;
+}
+
+.stamp-chip .icon { width: 11px; height: 11px; }
+
+.stamp-chip--green { color: var(--stamp-green); }
+.stamp-chip--amber { color: var(--stamp-amber); }
+.stamp-chip--red { color: var(--stamp-red); }
+.stamp-chip--gray { color: var(--stamp-gray); }
+
+.rule-ref { margin-top: 13px; font: 400 11px/1.5 var(--mono); letter-spacing: .04em; color: var(--ink-soft); }
+
+.rule-ref b { color: var(--ink); font-weight: 700; }
+
+.match-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 9px;
+  padding: 5px 9px;
+  max-width: 100%;
+  border: 1px dashed var(--edge);
+  border-radius: 7px;
+  background: var(--paper-deep);
+  font: 400 10.5px/1 var(--mono);
+  letter-spacing: .03em;
+  color: var(--ink-soft);
+}
+
+.match-chip .icon { width: 12px; height: 12px; color: var(--ink-faint); }
+
+.match-chip code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.t-basis { padding: 15px 18px 8px; }
+
+.factor-list { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+
+.factor {
+  display: grid;
+  grid-template-columns: 15px minmax(0, 1fr) auto;
+  gap: 4px 10px;
+  align-items: start;
+  padding: 8px 10px;
+  border-left: 3px solid transparent;
+  border-radius: 7px;
+}
+
+.factor .icon { width: 15px; height: 15px; margin-top: 1px; color: var(--ink-faint); }
+
+.factor .f-copy { min-width: 0; }
+
+.factor .f-name { font-size: 13px; font-weight: 600; }
+
+.factor .f-sub { margin-top: 3px; font-size: 11.5px; line-height: 1.55; color: var(--ink-soft); }
+
+.factor .f-word { font: 700 10px/1 var(--mono); letter-spacing: .14em; padding-top: 3px; color: var(--ink-faint); }
+
+.factor--ok { border-left-color: var(--hairline); }
+
+.factor--ok .f-word { color: var(--stamp-green); }
+
+.factor--decisive-ok {
+  border-left-color: var(--stamp-green);
+  background: rgba(47, 125, 79, .08);
+}
+
+.factor--decisive-ok .icon { color: var(--stamp-green); }
+
+.factor--decisive-ok .f-word { color: var(--stamp-green); }
+
+.factor--decisive-hold {
+  border-left-color: var(--stamp-red);
+  background: rgba(178, 60, 50, .07);
+}
+
+.factor--decisive-hold .icon { color: var(--stamp-red); }
+
+.factor--decisive-hold .f-word { color: var(--stamp-red); }
+
+.factor--idle { opacity: .82; }
+
+.basis-next {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: baseline;
+  margin: 12px 0 0;
+  padding: 9px 12px;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  background: var(--paper-deep);
+  font: 400 10.5px/1.5 var(--mono);
+  letter-spacing: .05em;
+  color: var(--ink-soft);
+}
+
+.basis-next b { font-size: 12px; font-weight: 700; color: var(--ink); }
+
+.basis-next .cd { color: var(--accent); font-weight: 700; }
+
+.t-body-note { padding: 16px 18px 12px; }
+
+.t-body-note p { margin: 12px 0 0; font-size: 13px; line-height: 1.75; color: var(--ink-soft); }
+
+.t-body-note p b { color: var(--ink); }
+
+.perf-x {
+  position: relative;
+  height: 0;
+  margin: 0 13px;
+  border-top: 2px dashed #ccc4ae;
+}
+
+.perf-x::before,
+.perf-x::after {
+  content: "";
+  position: absolute;
+  top: -10px;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: var(--desk);
+  border: 1px solid var(--edge);
+}
+
+.perf-x::before { left: -10px; }
+.perf-x::after { right: -10px; }
+
+.t-actions {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  padding: 14px 18px;
+  background: var(--paper-deep);
+}
+
+.t-actions--single { grid-template-columns: 1fr; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 15px;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font: 600 13px/1 var(--sans);
+  cursor: pointer;
+}
+
+.btn .icon { width: 15px; height: 15px; }
+
+.btn--primary { background: var(--accent); border-color: var(--accent-deep); color: #fdfcf7; }
+
+.btn--ghost { border-color: var(--edge); color: var(--ink-soft); }
+
+.btn--block { width: 100%; }
+
+.t-foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px 14px;
+  border-top: 1px solid var(--hairline);
+}
+
+.barcode {
+  flex: none;
+  width: 128px;
+  height: 23px;
+  opacity: .88;
+  background: repeating-linear-gradient(90deg,
+    var(--ink) 0 2px, transparent 2px 5px,
+    var(--ink) 5px 6px, transparent 6px 10px,
+    var(--ink) 10px 13px, transparent 13px 15px,
+    var(--ink) 15px 16px, transparent 16px 20px,
+    var(--ink) 20px 23px, transparent 23px 25px);
+}
+
+.t-foot .serial { font: 400 9px/1.5 var(--mono); letter-spacing: .2em; color: var(--ink-faint); }
+
+.t-current { padding: 15px 18px 12px; }
+
+.cs-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+
+.cs-row .domain {
+  font: 700 21px/1.05 var(--serif);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cs-rule { margin-top: 4px; font: 400 10.5px/1.4 var(--mono); letter-spacing: .05em; color: var(--ink-soft); }
+
+.cs-rule b { color: var(--ink); font-weight: 700; }
+
+.cs-decisive {
+  margin: 11px 0 0;
+  padding: 8px 11px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.cs-decisive--green { background: rgba(47, 125, 79, .09); color: var(--stamp-green); font-weight: 600; }
+.cs-decisive--amber { background: rgba(162, 105, 15, .1); color: var(--stamp-amber); font-weight: 600; }
+.cs-decisive--red { background: rgba(178, 60, 50, .08); color: var(--stamp-red); font-weight: 600; }
+.cs-decisive--gray { background: var(--paper-deep); color: var(--ink-soft); }
+
+.cs-decisive .cd { font-family: var(--mono); font-weight: 700; }
+
+.t-list { padding: 12px 12px 8px; }
+
+.route-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  gap: 4px 10px;
+  align-items: center;
+  padding: 9px 9px;
+  border-bottom: 1px dashed var(--hairline);
+}
+
+.route-row:last-child { border-bottom: 0; }
+
+.rr-idx { font: 700 10px/1 var(--mono); letter-spacing: .1em; color: var(--ink-faint); }
+
+.rr-copy { min-width: 0; }
+
+.rr-copy .rr-name { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 7px; }
+
+.rr-copy .rr-sub { margin-top: 3px; font: 400 10px/1.4 var(--mono); letter-spacing: .04em; color: var(--ink-soft); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.rr-now {
+  flex: none;
+  padding: 2px 6px;
+  border: 1px solid var(--stamp-amber);
+  border-radius: 4px;
+  color: var(--stamp-amber);
+  font: 700 9px/1 var(--mono);
+  letter-spacing: .16em;
+}
+
+.route-row--current { background: rgba(39, 86, 127, .07); border-radius: 8px; border-bottom-color: transparent; }
+
+.route-row--off { opacity: .55; }
+
+.t-actions--stack { grid-template-columns: 1fr; padding-bottom: 16px; }
+
+.note {
+  margin-top: 14px;
+  padding: 11px 13px;
+  border: 1.5px dashed var(--ink-faint);
+  border-radius: 10px;
+  background: rgba(249, 246, 236, .6);
+  font-size: 11.5px;
+  line-height: 1.75;
+  color: var(--ink-soft);
+}
+
+.note .note-kicker { display: block; margin-bottom: 4px; font: 700 9px/1 var(--mono); letter-spacing: .22em; color: var(--ink-faint); }
+
+.note code { font-family: var(--mono); font-size: 10.5px; color: var(--accent); }
+
+.review-foot { max-width: 1240px; margin: 0 auto; }
+
+.review-foot h2 { margin: 0 0 14px; font: 700 24px/1.1 var(--serif); }
+
+.review-foot ol { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; }
+
+.review-foot li { font-size: 13px; line-height: 1.8; color: var(--ink-soft); }
+
+.review-foot li code { font-family: var(--mono); font-size: 11.5px; color: var(--accent); }
+
+@media (max-width: 860px) {
+  body { padding: 28px 16px 56px; }
+  .panel-grid { grid-template-columns: 370px; justify-content: center; }
+}
+</style>
+</head>
+<body>
+
+<svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></symbol>
+  <symbol id="i-shield-check" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-key-round" viewBox="0 0 24 24"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></symbol>
+  <symbol id="i-clock-3" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6h4"/></symbol>
+  <symbol id="i-circle-off" viewBox="0 0 24 24"><path d="m2 2 20 20"/><path d="M8.35 2.69A10 10 0 0 1 21.3 15.65"/><path d="M19.08 19.08A10 10 0 1 1 4.92 4.92"/></symbol>
+  <symbol id="i-timer" viewBox="0 0 24 24"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></symbol>
+  <symbol id="i-calendar-days" viewBox="0 0 24 24"><path d="M8 2v3"/><path d="M16 2v3"/><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M8 13h.01"/><path d="M12 13h.01"/><path d="M16 13h.01"/><path d="M8 17h.01"/><path d="M12 17h.01"/><path d="M16 17h.01"/></symbol>
+  <symbol id="i-alarm-clock" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/><path d="M6.38 18.7 4 21"/><path d="M17.64 18.67 20 21"/></symbol>
+  <symbol id="i-arrow-up-right" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></symbol>
+  <symbol id="i-pen-line" viewBox="0 0 24 24"><path d="M13 21h8"/><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></symbol>
+  <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/></symbol>
+</svg>
+
+<header class="review-head">
+  <div class="review-meta">
+    <span>PILOT GUARDIAN / UX MOCKUP</span>
+    <span>POPUP · V1</span>
+    <span>2026-08-31</span>
+    <span>航票印刷风</span>
+  </div>
+  <h1>Popup <em>静态稿</em>：两案 × 四状态</h1>
+  <p class="lede">
+    评审用静态稿，宽 370px 与真实弹窗一致，数据全部为示例快照。每张票据下方附审阅备注，标注该布局需要的数据来源与实现代价。倒计时为演示性滴答，实际实现按 nextChangeAt 计算。
+  </p>
+  <div class="legend">
+    <span class="lg-title">STAMP / 状态章</span>
+    <span class="lg-item"><span class="stamp stamp--green" style="transform:none">已放行</span>放行窗口进行中，可直接访问</span>
+    <span class="lg-item"><span class="stamp stamp--amber" style="transform:none">等待挑战</span>访问将进入闸门，需完成挑战步骤</span>
+    <span class="lg-item"><span class="stamp stamp--red" style="transform:none">等待开放</span>处于冷却期或非开放日 / 时段</span>
+    <span class="lg-item"><span class="stamp stamp--gray" style="transform:none">未受控</span>没有访问规则匹配当前地址</span>
+  </div>
+</header>
+
+<main>
+  <section class="variant" id="variant-a">
+    <div class="variant-head">
+      <span class="no">方案 A</span>
+      <h2>票根状态卡</h2>
+      <span class="reason-tag">状态 + 决策依据 + 上下文动作</span>
+    </div>
+    <p class="variant-lede">
+      保持现有弹窗的单一职责，但把「状态牌」升级为一张完整票据：说清是哪条访问规则、命中了哪条 URL 匹配模式、当前决策由哪个条件决定、下一次变化在什么时候。评审关注点：决策依据清单是否易懂？决定性行的强调强度？票据隐喻是否过度装饰？
+    </p>
+    <div class="panel-grid">
+
+      <div class="panel">
+        <div class="state-tag">
+          <span class="idx">A-1</span><span>未受控</span>
+          <span class="reason">reason: 无匹配</span>
+          <span class="when">快照 · 周一 10:00 · github.com</span>
+        </div>
+        <div class="ticket">
+          <div class="t-head">
+            <div class="brand"><svg class="icon"><use href="#i-shield"/></svg>PILOT GUARDIAN</div>
+            <div class="ticket-no">STANDBY</div>
+          </div>
+          <div class="t-route">
+            <div class="kicker">CURRENT ROUTE · 当前航线</div>
+            <div class="route-line">
+              <div class="route-from">
+                <div class="domain">github.com</div>
+                <div class="sub">当前页面</div>
+              </div>
+              <div class="route-path" aria-hidden="true"></div>
+              <span class="stamp stamp--gray"><svg class="icon"><use href="#i-circle-off"/></svg>未受控</span>
+            </div>
+          </div>
+          <div class="t-body-note">
+            <div class="kicker">NO FLIGHT PLAN · 无匹配规则</div>
+            <p>没有<b>启用的访问规则</b>匹配这个地址，本次访问不受 Pilot Guardian 影响。</p>
+            <p>如果这个站点也容易让你分心，可以在控制台为它建立一条访问规则。</p>
+          </div>
+          <div class="perf-x" aria-hidden="true"></div>
+          <div class="t-actions t-actions--single">
+            <button class="btn btn--primary btn--block"><svg class="icon"><use href="#i-arrow-up-right"/></svg>打开控制台，建立访问规则</button>
+          </div>
+          <div class="t-foot">
+            <div class="barcode" aria-hidden="true"></div>
+            <div class="serial">PG · STANDBY · 2026-08-31</div>
+          </div>
+        </div>
+        <div class="note">
+          <span class="note-kicker">REVIEW NOTE · 审阅备注</span>
+          现有 <code>status:get</code> 无匹配时返回空规则即可渲染；无需新数据。文案沿用领域术语「访问规则」。
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="state-tag">
+          <span class="idx">A-2</span><span>已放行</span>
+          <span class="reason">reason: active-window</span>
+          <span class="when">快照 · 周六 20:04 · linux.do</span>
+        </div>
+        <div class="ticket">
+          <div class="t-head">
+            <div class="brand"><svg class="icon"><use href="#i-shield"/></svg>PILOT GUARDIAN</div>
+            <div class="ticket-no">GATE 02</div>
+          </div>
+          <div class="t-route">
+            <div class="kicker">CURRENT ROUTE · 当前航线</div>
+            <div class="route-line">
+              <div class="route-from">
+                <div class="domain">linux.do</div>
+                <div class="sub">当前页面</div>
+              </div>
+              <div class="route-path"><svg class="icon"><use href="#i-route"/></svg></div>
+              <span class="stamp stamp--green"><svg class="icon"><use href="#i-shield-check"/></svg>已放行</span>
+            </div>
+            <div class="rule-ref">访问规则 <b>「Linux 社区」</b> · 优先级 02</div>
+            <div class="match-chip"><svg class="icon"><use href="#i-route"/></svg>命中模式 <code>https://linux.do/*</code></div>
+          </div>
+          <div class="t-basis">
+            <div class="kicker">DECISION BASIS · 决策依据</div>
+            <ul class="factor-list">
+              <li class="factor factor--decisive-ok">
+                <svg class="icon"><use href="#i-timer"/></svg>
+                <div class="f-copy">
+                  <div class="f-name">放行窗口</div>
+                  <div class="f-sub">20:00 完成挑战后开启 · 时长 30 分钟</div>
+                </div>
+                <span class="f-word">进行中</span>
+              </li>
+              <li class="factor factor--ok">
+                <svg class="icon"><use href="#i-calendar-days"/></svg>
+                <div class="f-copy">
+                  <div class="f-name">开放日</div>
+                  <div class="f-sub">每周开放日 · 周六 · 今日为开放日</div>
+                </div>
+                <span class="f-word">开放</span>
+              </li>
+              <li class="factor factor--ok">
+                <svg class="icon"><use href="#i-alarm-clock"/></svg>
+                <div class="f-copy">
+                  <div class="f-name">开放时段</div>
+                  <div class="f-sub">20:00 – 23:00 · 开放中</div>
+                </div>
+                <span class="f-word">开放中</span>
+              </li>
+              <li class="factor factor--idle">
+                <svg class="icon"><use href="#i-key-round"/></svg>
+                <div class="f-copy">
+                  <div class="f-name">挑战序列</div>
+                  <div class="f-sub">文本挑战 ×1 · 本次窗口已通过</div>
+                </div>
+                <span class="f-word">已通过</span>
+              </li>
+            </ul>
+            <div class="basis-next">
+              <span>下一次变化</span>
+              <span>放行窗口关闭 · <b>20:30</b></span>
+              <span>剩余 <b class="cd" data-seconds="1560">26:00</b></span>
+            </div>
+          </div>
+          <div class="perf-x" aria-hidden="true"></div>
+          <div class="t-actions">
+            <button class="btn btn--primary"><svg class="icon"><use href="#i-pen-line"/></svg>编辑这条规则</button>
+            <button class="btn btn--ghost"><svg class="icon"><use href="#i-arrow-up-right"/></svg>控制台</button>
+          </div>
+          <div class="t-foot">
+            <div class="barcode" aria-hidden="true"></div>
+            <div class="serial">PG · GATE 02 · WINDOW 30M</div>
+          </div>
+        </div>
+        <div class="note">
+          <span class="note-kicker">REVIEW NOTE · 审阅备注</span>
+          现有 <code>status:get</code> 已含 <code>reason: active-window</code> 与 <code>nextChangeAt</code>，倒计时每秒本地刷新。「编辑这条规则」需要控制台支持深链 <code>options.html?rule=&lt;id&gt;</code>（新增，改动小）。
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="state-tag">
+          <span class="idx">A-3</span><span>等待挑战</span>
+          <span class="reason">reason: password-required</span>
+          <span class="when">快照 · 周六 20:00 · linux.do</span>
+        </div>
+        <div class="ticket">
+          <div class="t-head">
+            <div class="brand"><svg class="icon"><use href="#i-shield"/></svg>PILOT GUARDIAN</div>
+            <div class="ticket-no">GATE 02</div>
+          </div>
+          <div class="t-route">
+            <div class="kicker">CURRENT ROUTE · 当前航线</div>
+            <div class="route-line">
+              <div class="route-from">
+                <div class="domain">linux.do</div>
+                <div class="sub">当前页面</div>
+              </div>
+              <div class="route-path"><svg class="icon"><use href="#i-route"/></svg></div>
+              <span class="stamp stamp--amber"><svg class="icon"><use href="#i-key-round"/></svg>等待挑战</span>
+            </div>
+            <div class="rule-ref">访问规则 <b>「Linux 社区」</b> · 优先级 02</div>
+            <div class="match-chip"><svg class="icon"><use href="#i-route"/></svg>命中模式 <code>https://linux.do/*</code></div>
+          </div>
+          <div class="t-basis">
+            <div class="kicker">DECISION BASIS · 决策依据</div>
+            <ul class="factor-list">
+              <li class="factor factor--decisive-ok">
+                <svg class="icon"><use href="#i-key-round"/></svg>
+                <div class="f-copy">
+                  <div class="f-name">挑战序列</div>
+                  <div class="f-sub">文本挑战 ×1 · 就绪，等待你完成</div>
+                </div>
+                <span class="f-word">就绪</span>
+              </li>
+              <li class="factor factor--ok">
+                <svg class="icon"><use href="#i-calendar-days"/></svg>
+                <div class="f-copy">
+                  <div class="f-name">开放日</div>
+                  <div class="f-sub">每周开放日 · 周六 · 今日为开放日</div>
+                </div>
+                <span class="f-word">开放</span>
+              </li>
+              <li class="factor factor--ok">
+                <svg class="icon"><use href="#i-alarm-clock"/></svg>
+                <div class="f-copy">
+                  <div class="f-name">开放时段</div>
+                  <div class="f-sub">20:00 – 23:00 · 开放中</div>
+                </div>
+                <span class="f-word">开放中</span>
+              </li>
+              <li class="factor factor--idle">
+                <svg class="icon"><use href="#i-timer"/></svg>
+                <div class="f-copy">
+                  <div class="f-name">放行窗口</div>
+                  <div class="f-sub">未开启 · 完成挑战后持续 30 分钟</div>
+                </div>
+                <span class="f-word">未开启</span>
+              </li>
+            </ul>
+            <div class="basis-next">
+              <span>下一次变化</span>
+              <span>由你触发 · <b>完成挑战即开启放行窗口</b></span>
+            </div>
+          </div>
+          <div class="perf-x" aria-hidden="true"></div>
+          <div class="t-actions">
+            <button class="btn btn--primary"><svg class="icon"><use href="#i-pen-line"/></svg>编辑这条规则</button>
+            <button class="btn btn--ghost"><svg class="icon"><use href="#i-arrow-up-right"/></svg>控制台</button>
+          </div>
+          <div class="t-foot">
+            <div class="barcode" aria-hidden="true"></div>
+            <div class="serial">PG · GATE 02 · CHALLENGE 1 STEP</div>
+          </div>
+        </div>
+        <div class="note">
+          <span class="note-kicker">REVIEW NOTE · 审阅备注</span>
+          <code>reason: password-required</code> 已有；文案按挑战步骤数量区分「×1 / ×N」。此处不提供「直接前往闸门」动作——闸门只应由真实导航触发，保持摩擦的有意识性。
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="state-tag">
+          <span class="idx">A-4</span><span>等待开放</span>
+          <span class="reason">reason: cooldown</span>
+          <span class="when">快照 · 周一 21:40 · bilibili.com</span>
+        </div>
+        <div class="ticket">
+          <div class="t-head">
+            <div class="brand"><svg class="icon"><use href="#i-shield"/></svg>PILOT GUARDIAN</div>
+            <div class="ticket-no">GATE 01</div>
+          </div>
+          <div class="t-route">
+            <div class="kicker">CURRENT ROUTE · 当前航线</div>
+            <div class="route-line">
+              <div class="route-from">
+                <div class="domain">bilibili.com</div>
+                <div class="sub">当前页面</div>
+              </div>
+              <div class="route-path"><svg class="icon"><use href="#i-route"/></svg></div>
+              <span class="stamp stamp--red"><svg class="icon"><use href="#i-clock-3"/></svg>等待开放</span>
+            </div>
+            <div class="rule-ref">访问规则 <b>「视频平台」</b> · 优先级 01</div>
+            <div class="match-chip"><svg class="icon"><use href="#i-route"/></svg>命中模式 <code>https://*.bilibili.com/*</code></div>
+          </div>
+          <div class="t-basis">
+            <div class="kicker">DECISION BASIS · 决策依据</div>
+            <ul class="factor-list">
+              <li class="factor factor--decisive-hold">
+                <svg class="icon"><use href="#i-clock-3"/></svg>
+                <div class="f-copy">
+                  <div class="f-name">冷却期</div>
+                  <div class="f-sub">间隔 3 天 · 上次放行窗口 08-28 22:30 结束</div>
+                </div>
+                <span class="f-word">进行中</span>
+              </li>
+              <li class="factor factor--ok">
+                <svg class="icon"><use href="#i-alarm-clock"/></svg>
+                <div class="f-copy">
+                  <div class="f-name">开放时段</div>
+                  <div class="f-sub">20:00 – 23:00 · 开放中</div>
+                </div>
+                <span class="f-word">开放中</span>
+              </li>
+              <li class="factor factor--idle">
+                <svg class="icon"><use href="#i-key-round"/></svg>
+                <div class="f-copy">
+                  <div class="f-name">挑战序列</div>
+                  <div class="f-sub">文本挑战 ×1 · 冷却期结束后就绪</div>
+                </div>
+                <span class="f-word">待命</span>
+              </li>
+            </ul>
+            <div class="basis-next">
+              <span>下一次变化</span>
+              <span>冷却期结束 · <b>今日 22:30</b> 转为等待挑战</span>
+              <span>剩余 <b class="cd" data-seconds="3000">50:00</b></span>
+            </div>
+          </div>
+          <div class="perf-x" aria-hidden="true"></div>
+          <div class="t-actions">
+            <button class="btn btn--primary"><svg class="icon"><use href="#i-pen-line"/></svg>编辑这条规则</button>
+            <button class="btn btn--ghost"><svg class="icon"><use href="#i-arrow-up-right"/></svg>控制台</button>
+          </div>
+          <div class="t-foot">
+            <div class="barcode" aria-hidden="true"></div>
+            <div class="serial">PG · GATE 01 · INTERVAL 3D</div>
+          </div>
+        </div>
+        <div class="note">
+          <span class="note-kicker">REVIEW NOTE · 审阅备注</span>
+          三种等待来源（<code>cooldown</code> / <code>calendar-closed</code> / <code>hours-closed</code>）共用同一布局，只替换决定性行与「下一次变化」文案——例如非开放日时决定性行显示「开放日 · 下一次 09-05 周六」。
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="variant" id="variant-b">
+    <div class="variant-head">
+      <span class="no">方案 B</span>
+      <h2>迷你控制台</h2>
+      <span class="reason-tag">当前航线 + 全部航线总览</span>
+    </div>
+    <p class="variant-lede">
+      在方案 A 的信息之上增加「航线总览」：所有启用规则逐行列出当前状态与下一次变化，把弹窗变成一次浏览全部受控站点的仪表盘。评审关注点：信息密度与高度是否可接受？总览是否按「下一次开放时间」排序更好？「当前」行的辨识度？
+    </p>
+    <div class="panel-grid">
+
+      <div class="panel">
+        <div class="state-tag">
+          <span class="idx">B-1</span><span>未受控</span>
+          <span class="reason">reason: 无匹配</span>
+          <span class="when">快照 · 周一 10:00 · github.com</span>
+        </div>
+        <div class="ticket">
+          <div class="t-head">
+            <div class="brand"><svg class="icon"><use href="#i-shield"/></svg>PILOT GUARDIAN</div>
+            <div class="ticket-no">ALL ROUTES</div>
+          </div>
+          <div class="t-current">
+            <div class="kicker">CURRENT ROUTE · 当前航线</div>
+            <div class="cs-row">
+              <div>
+                <div class="domain">github.com</div>
+                <div class="cs-rule">未命中任何访问规则 · 不受控</div>
+              </div>
+              <span class="stamp-chip stamp-chip--gray"><svg class="icon"><use href="#i-circle-off"/></svg>未受控</span>
+            </div>
+            <p class="cs-decisive cs-decisive--gray">可为这个站点在控制台建立一条访问规则。</p>
+          </div>
+          <div class="perf-x" aria-hidden="true"></div>
+          <div class="t-list">
+            <div class="kicker">DEPARTURES · 航线总览</div>
+            <div class="route-row">
+              <span class="rr-idx">01</span>
+              <div class="rr-copy">
+                <div class="rr-name">视频平台</div>
+                <div class="rr-sub">下一次开放 08-31 22:30 · 冷却中</div>
+              </div>
+              <span class="stamp-chip stamp-chip--red">等待开放</span>
+            </div>
+            <div class="route-row">
+              <span class="rr-idx">02</span>
+              <div class="rr-copy">
+                <div class="rr-name">Linux 社区</div>
+                <div class="rr-sub">下一次开放日 09-05 周六 20:00</div>
+              </div>
+              <span class="stamp-chip stamp-chip--amber">等待挑战</span>
+            </div>
+            <div class="route-row">
+              <span class="rr-idx">03</span>
+              <div class="rr-copy">
+                <div class="rr-name">资讯流</div>
+                <div class="rr-sub">挑战就绪 · 访问时验证</div>
+              </div>
+              <span class="stamp-chip stamp-chip--amber">等待挑战</span>
+            </div>
+            <div class="route-row route-row--off">
+              <span class="rr-idx">04</span>
+              <div class="rr-copy">
+                <div class="rr-name">游戏门户</div>
+                <div class="rr-sub">已停用 · 不参与匹配</div>
+              </div>
+              <span class="stamp-chip stamp-chip--gray">已停用</span>
+            </div>
+          </div>
+          <div class="perf-x" aria-hidden="true"></div>
+          <div class="t-actions t-actions--stack">
+            <button class="btn btn--primary btn--block"><svg class="icon"><use href="#i-arrow-up-right"/></svg>打开控制台，建立访问规则</button>
+          </div>
+        </div>
+        <div class="note">
+          <span class="note-kicker">REVIEW NOTE · 审阅备注</span>
+          需要 <code>status:get-all</code>：后台对每条启用规则执行现有 evaluatePolicy，返回 <code>PublicAccessRule</code>（不含挑战答案）+ evaluation。
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="state-tag">
+          <span class="idx">B-2</span><span>已放行</span>
+          <span class="reason">reason: active-window</span>
+          <span class="when">快照 · 周六 20:04 · linux.do</span>
+        </div>
+        <div class="ticket">
+          <div class="t-head">
+            <div class="brand"><svg class="icon"><use href="#i-shield"/></svg>PILOT GUARDIAN</div>
+            <div class="ticket-no">ALL ROUTES</div>
+          </div>
+          <div class="t-current">
+            <div class="kicker">CURRENT ROUTE · 当前航线</div>
+            <div class="cs-row">
+              <div>
+                <div class="domain">linux.do</div>
+                <div class="cs-rule">访问规则 <b>「Linux 社区」</b> · GATE 02</div>
+              </div>
+              <span class="stamp-chip stamp-chip--green"><svg class="icon"><use href="#i-shield-check"/></svg>已放行</span>
+            </div>
+            <p class="cs-decisive cs-decisive--green">放行窗口进行中 · 剩余 <span class="cd" data-seconds="1560">26:00</span> · 关闭于 20:30</p>
+          </div>
+          <div class="perf-x" aria-hidden="true"></div>
+          <div class="t-list">
+            <div class="kicker">DEPARTURES · 航线总览</div>
+            <div class="route-row">
+              <span class="rr-idx">01</span>
+              <div class="rr-copy">
+                <div class="rr-name">视频平台</div>
+                <div class="rr-sub">下一次开放 08-31 22:30 · 冷却中</div>
+              </div>
+              <span class="stamp-chip stamp-chip--red">等待开放</span>
+            </div>
+            <div class="route-row route-row--current">
+              <span class="rr-idx">02</span>
+              <div class="rr-copy">
+                <div class="rr-name">Linux 社区<span class="rr-now">当前</span></div>
+                <div class="rr-sub">命中 https://linux.do/*</div>
+              </div>
+              <span class="stamp-chip stamp-chip--green">已放行</span>
+            </div>
+            <div class="route-row">
+              <span class="rr-idx">03</span>
+              <div class="rr-copy">
+                <div class="rr-name">资讯流</div>
+                <div class="rr-sub">挑战就绪 · 访问时验证</div>
+              </div>
+              <span class="stamp-chip stamp-chip--amber">等待挑战</span>
+            </div>
+            <div class="route-row route-row--off">
+              <span class="rr-idx">04</span>
+              <div class="rr-copy">
+                <div class="rr-name">游戏门户</div>
+                <div class="rr-sub">已停用 · 不参与匹配</div>
+              </div>
+              <span class="stamp-chip stamp-chip--gray">已停用</span>
+            </div>
+          </div>
+          <div class="perf-x" aria-hidden="true"></div>
+          <div class="t-actions t-actions--stack">
+            <button class="btn btn--primary btn--block"><svg class="icon"><use href="#i-arrow-up-right"/></svg>打开控制台</button>
+            <button class="btn btn--ghost btn--block"><svg class="icon"><use href="#i-pen-line"/></svg>编辑当前命中规则</button>
+          </div>
+        </div>
+        <div class="note">
+          <span class="note-kicker">REVIEW NOTE · 审阅备注</span>
+          当前行高亮 + 「当前」徽标回答「哪条规则管着这个站」。倒计时仅对当前行每秒刷新，其余行打开时计算一次。
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="state-tag">
+          <span class="idx">B-3</span><span>等待挑战</span>
+          <span class="reason">reason: password-required</span>
+          <span class="when">快照 · 周六 20:00 · linux.do</span>
+        </div>
+        <div class="ticket">
+          <div class="t-head">
+            <div class="brand"><svg class="icon"><use href="#i-shield"/></svg>PILOT GUARDIAN</div>
+            <div class="ticket-no">ALL ROUTES</div>
+          </div>
+          <div class="t-current">
+            <div class="kicker">CURRENT ROUTE · 当前航线</div>
+            <div class="cs-row">
+              <div>
+                <div class="domain">linux.do</div>
+                <div class="cs-rule">访问规则 <b>「Linux 社区」</b> · GATE 02</div>
+              </div>
+              <span class="stamp-chip stamp-chip--amber"><svg class="icon"><use href="#i-key-round"/></svg>等待挑战</span>
+            </div>
+            <p class="cs-decisive cs-decisive--amber">挑战就绪 · 完成文本挑战 ×1 后开启 30 分钟放行窗口</p>
+          </div>
+          <div class="perf-x" aria-hidden="true"></div>
+          <div class="t-list">
+            <div class="kicker">DEPARTURES · 航线总览</div>
+            <div class="route-row">
+              <span class="rr-idx">01</span>
+              <div class="rr-copy">
+                <div class="rr-name">视频平台</div>
+                <div class="rr-sub">下一次开放 08-31 22:30 · 冷却中</div>
+              </div>
+              <span class="stamp-chip stamp-chip--red">等待开放</span>
+            </div>
+            <div class="route-row route-row--current">
+              <span class="rr-idx">02</span>
+              <div class="rr-copy">
+                <div class="rr-name">Linux 社区<span class="rr-now">当前</span></div>
+                <div class="rr-sub">命中 https://linux.do/* · 开放时段 20:00–23:00</div>
+              </div>
+              <span class="stamp-chip stamp-chip--amber">等待挑战</span>
+            </div>
+            <div class="route-row">
+              <span class="rr-idx">03</span>
+              <div class="rr-copy">
+                <div class="rr-name">资讯流</div>
+                <div class="rr-sub">挑战就绪 · 访问时验证</div>
+              </div>
+              <span class="stamp-chip stamp-chip--amber">等待挑战</span>
+            </div>
+            <div class="route-row route-row--off">
+              <span class="rr-idx">04</span>
+              <div class="rr-copy">
+                <div class="rr-name">游戏门户</div>
+                <div class="rr-sub">已停用 · 不参与匹配</div>
+              </div>
+              <span class="stamp-chip stamp-chip--gray">已停用</span>
+            </div>
+          </div>
+          <div class="perf-x" aria-hidden="true"></div>
+          <div class="t-actions t-actions--stack">
+            <button class="btn btn--primary btn--block"><svg class="icon"><use href="#i-arrow-up-right"/></svg>打开控制台</button>
+            <button class="btn btn--ghost btn--block"><svg class="icon"><use href="#i-pen-line"/></svg>编辑当前命中规则</button>
+          </div>
+        </div>
+        <div class="note">
+          <span class="note-kicker">REVIEW NOTE · 审阅备注</span>
+          与 B-2 仅「当前航线」区不同：总览列表保持稳定，减少弹窗重绘跳动。
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="state-tag">
+          <span class="idx">B-4</span><span>等待开放</span>
+          <span class="reason">reason: cooldown</span>
+          <span class="when">快照 · 周一 21:40 · bilibili.com</span>
+        </div>
+        <div class="ticket">
+          <div class="t-head">
+            <div class="brand"><svg class="icon"><use href="#i-shield"/></svg>PILOT GUARDIAN</div>
+            <div class="ticket-no">ALL ROUTES</div>
+          </div>
+          <div class="t-current">
+            <div class="kicker">CURRENT ROUTE · 当前航线</div>
+            <div class="cs-row">
+              <div>
+                <div class="domain">bilibili.com</div>
+                <div class="cs-rule">访问规则 <b>「视频平台」</b> · GATE 01</div>
+              </div>
+              <span class="stamp-chip stamp-chip--red"><svg class="icon"><use href="#i-clock-3"/></svg>等待开放</span>
+            </div>
+            <p class="cs-decisive cs-decisive--red">冷却期进行中 · 剩余 <span class="cd" data-seconds="3000">50:00</span> · 22:30 转为等待挑战</p>
+          </div>
+          <div class="perf-x" aria-hidden="true"></div>
+          <div class="t-list">
+            <div class="kicker">DEPARTURES · 航线总览</div>
+            <div class="route-row route-row--current">
+              <span class="rr-idx">01</span>
+              <div class="rr-copy">
+                <div class="rr-name">视频平台<span class="rr-now">当前</span></div>
+                <div class="rr-sub">命中 https://*.bilibili.com/* · 冷却剩余 50 分钟</div>
+              </div>
+              <span class="stamp-chip stamp-chip--red">等待开放</span>
+            </div>
+            <div class="route-row">
+              <span class="rr-idx">02</span>
+              <div class="rr-copy">
+                <div class="rr-name">Linux 社区</div>
+                <div class="rr-sub">下一次开放日 09-05 周六 20:00</div>
+              </div>
+              <span class="stamp-chip stamp-chip--amber">等待挑战</span>
+            </div>
+            <div class="route-row">
+              <span class="rr-idx">03</span>
+              <div class="rr-copy">
+                <div class="rr-name">资讯流</div>
+                <div class="rr-sub">挑战就绪 · 访问时验证</div>
+              </div>
+              <span class="stamp-chip stamp-chip--amber">等待挑战</span>
+            </div>
+            <div class="route-row route-row--off">
+              <span class="rr-idx">04</span>
+              <div class="rr-copy">
+                <div class="rr-name">游戏门户</div>
+                <div class="rr-sub">已停用 · 不参与匹配</div>
+              </div>
+              <span class="stamp-chip stamp-chip--gray">已停用</span>
+            </div>
+          </div>
+          <div class="perf-x" aria-hidden="true"></div>
+          <div class="t-actions t-actions--stack">
+            <button class="btn btn--primary btn--block"><svg class="icon"><use href="#i-arrow-up-right"/></svg>打开控制台</button>
+            <button class="btn btn--ghost btn--block"><svg class="icon"><use href="#i-pen-line"/></svg>编辑当前命中规则</button>
+          </div>
+        </div>
+        <div class="note">
+          <span class="note-kicker">REVIEW NOTE · 审阅备注</span>
+          备选交互：总览按「下一次变化时间」升序排列（而非优先级），让最接近开放的航线排在最前；评审时请给出倾向。
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer class="review-foot">
+    <h2>两案共同的实现含义</h2>
+    <ol>
+      <li>方案 A 全部基于现有 <code>status:get</code>（rule + evaluation.reason + nextChangeAt），仅深链编辑需控制台支持 <code>?rule=&lt;id&gt;</code> 预选参数。</li>
+      <li>方案 B 需要新增 <code>status:get-all</code> 消息：后台遍历启用规则执行现有 evaluatePolicy，只返回 <code>PublicAccessRule</code>，挑战答案不出后台。</li>
+      <li>挑战答案等敏感字段继续留在后台；两案均不新增「快速绕过」类动作，保持有意识的访问摩擦。</li>
+      <li>印章色彩沿用语义：绿 = 放行窗口、琥珀 = 挑战、红 = 冷却 / 关闭，与闸门页文案语义一致。</li>
+    </ol>
+  </footer>
+</main>
+
+<script>
+  (function () {
+    var nodes = document.querySelectorAll('.cd');
+    if (!nodes.length) return;
+    var state = Array.prototype.map.call(nodes, function (n) {
+      return { node: n, left: parseInt(n.getAttribute('data-seconds'), 10) || 0 };
+    });
+    function render() {
+      state.forEach(function (s) {
+        if (s.left <= 0) return;
+        s.left -= 1;
+        var m = Math.floor(s.left / 60);
+        var sec = s.left % 60;
+        s.node.textContent = m + ':' + (sec < 10 ? '0' : '') + sec;
+      });
+    }
+    setInterval(render, 1000);
+  })();
+</script>
+
+</body>
+</html>

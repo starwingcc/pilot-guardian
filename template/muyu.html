@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>电子木鱼 · 敲木鱼小游戏</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    cursor: none; /* 隐藏系统光标，改由木鱼棒子替代 */
+    user-select: none;
+    -webkit-user-select: none;
+    font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+  }
+
+  body {
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(255, 190, 90, 0.08), transparent 55%),
+      radial-gradient(ellipse at 50% 120%, rgba(120, 60, 160, 0.15), transparent 60%),
+      linear-gradient(180deg, #12101c 0%, #1a1626 60%, #0d0b14 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+  }
+
+  h1 {
+    color: #e8c07a;
+    font-size: 34px;
+    letter-spacing: 10px;
+    text-shadow: 0 0 24px rgba(232, 192, 122, 0.35);
+    font-weight: 600;
+  }
+
+  .subtitle { color: #8b84a0; font-size: 14px; letter-spacing: 3px; margin-top: -14px; }
+
+  /* ---------- 木鱼 ---------- */
+  #fishWrap {
+    position: relative;
+    width: min(320px, 70vw);
+    filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.55));
+    transition: transform 0.12s ease-out;
+    touch-action: none;
+    z-index: 2;
+  }
+  #fishWrap.bonk { animation: bonk 0.18s ease-out; }
+  @keyframes bonk {
+    0%   { transform: scale(1); }
+    30%  { transform: scale(1.06, 0.90); }
+    70%  { transform: scale(0.97, 1.03); }
+    100% { transform: scale(1); }
+  }
+  #fishWrap svg { width: 100%; display: block; }
+
+  /* ---------- 计数与进度 ---------- */
+  #counter {
+    color: #f5e6c8;
+    font-size: 22px;
+    letter-spacing: 2px;
+    z-index: 2;
+  }
+  #counter b { color: #ffb84d; font-size: 30px; padding: 0 4px; }
+
+  #progressBar {
+    width: min(320px, 70vw);
+    height: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 99px;
+    overflow: hidden;
+    z-index: 2;
+  }
+  #progressFill {
+    height: 100%;
+    width: 0%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, #ffb84d, #ffd98a);
+    box-shadow: 0 0 12px rgba(255, 184, 77, 0.7);
+    transition: width 0.2s ease-out;
+  }
+
+  /* ---------- 木鱼棒子（追随鼠标的自定义光标） ---------- */
+  #mallet {
+    position: fixed;
+    left: 0; top: 0;
+    width: 84px;
+    pointer-events: none; /* 不拦截点击 */
+    z-index: 999;
+    transform-origin: 50% 85%; /* 以柄端（光标处）为轴心挥动 */
+    /* 静止：锤头偏左上方，与竖直方向成左45度 */
+    transform: translate(-50%, -85%) rotate(-45deg);
+    transition: transform 0.15s ease-out;
+    filter: drop-shadow(3px 6px 6px rgba(0, 0, 0, 0.45));
+  }
+  #mallet.swing {
+    /* 敲击：从上往下劈，摆动幅度最大60度（-45° → -105°） */
+    transform: translate(-50%, -85%) rotate(-105deg);
+    transition: transform 0.08s ease-in;
+  }
+
+  /* ---------- 敲击特效 ---------- */
+  .firework {
+    position: fixed;
+    border: 3px solid rgba(255, 200, 100, 0.85);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 998;
+    animation: ripple 0.5s ease-out forwards;
+  }
+  @keyframes ripple {
+    from { width: 10px; height: 10px; opacity: 1; }
+    to   { width: 110px; height: 110px; opacity: 0; }
+  }
+
+  .floatText {
+    position: fixed;
+    color: #ffd98a;
+    font-size: 20px;
+    font-weight: bold;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+    z-index: 998;
+    animation: floatUp 0.9s ease-out forwards;
+  }
+  @keyframes floatUp {
+    from { transform: translate(-50%, 0); opacity: 1; }
+    to   { transform: translate(-50%, -70px); opacity: 0; }
+  }
+
+  /* ---------- 经文浮现（3秒后消失） ---------- */
+  .sutraText {
+    position: fixed;
+    max-width: 80vw;
+    text-align: center;
+    color: #ffd98a;
+    font-size: 17px;
+    letter-spacing: 2px;
+    line-height: 1.6;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+    pointer-events: none;
+    z-index: 998;
+    animation: sutraFade 3s ease-out forwards;
+  }
+  @keyframes sutraFade {
+    0%   { opacity: 0; transform: translate(-50%, 0); }
+    12%  { opacity: 1; transform: translate(-50%, -12px); }
+    75%  { opacity: 1; transform: translate(-50%, -20px); }
+    100% { opacity: 0; transform: translate(-50%, -30px); }
+  }
+
+  /* ---------- 通关遮罩 ---------- */
+  #winOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 8, 18, 0.82);
+    backdrop-filter: blur(6px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s ease;
+    z-index: 1000;
+  }
+  #winOverlay.show { opacity: 1; pointer-events: auto; }
+  #winOverlay .big {
+    font-size: 56px;
+    color: #ffd98a;
+    letter-spacing: 14px;
+    text-shadow: 0 0 40px rgba(255, 200, 100, 0.6);
+  }
+  #winOverlay .small { color: #b8b0cc; letter-spacing: 3px; }
+
+  /* ---------- 静音按钮 ---------- */
+  #muteBtn {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1px solid rgba(232, 192, 122, 0.45);
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 20px;
+    z-index: 1001;
+    cursor: pointer;
+  }
+  #muteBtn:hover { background: rgba(255, 255, 255, 0.18); }
+
+  /* ---------- 通用按钮（通关两按钮 / 游戏页完成按钮） ---------- */
+  .gbtn {
+    padding: 10px 28px;
+    border-radius: 99px;
+    border: 1px solid rgba(232, 192, 122, 0.6);
+    background: rgba(255, 184, 77, 0.15);
+    color: #ffd98a;
+    font-size: 16px;
+    letter-spacing: 4px;
+    cursor: pointer;
+    z-index: 2;
+  }
+  .gbtn:hover { background: rgba(255, 184, 77, 0.35); }
+  .gbtn:disabled { opacity: 0.4; cursor: default; }
+  #winBtns { display: flex; gap: 16px; margin-top: 10px; }
+</style>
+</head>
+<body>
+
+  <h1>电 子 木 鱼</h1>
+  <p class="subtitle">敲 击 木 鱼 积 攒 功 德</p>
+
+  <div id="fishWrap" title="敲我！">
+    <svg viewBox="0 0 220 180" aria-label="木鱼">
+      <defs>
+        <radialGradient id="wood" cx="42%" cy="32%" r="78%">
+          <stop offset="0%"  stop-color="#cf9252"/>
+          <stop offset="55%" stop-color="#a06a2c"/>
+          <stop offset="100%" stop-color="#68390f"/>
+        </radialGradient>
+      </defs>
+      <ellipse cx="110" cy="96" rx="98" ry="74" fill="url(#wood)"/>
+      <!-- 嘴部开缝 -->
+      <path d="M22 108 Q110 146 198 108" stroke="#3c2008" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <!-- 头顶开缝 -->
+      <rect x="97" y="14" width="26" height="38" rx="13" fill="#3c2008"/>
+      <!-- 木纹 -->
+      <path d="M45 70 Q110 95 175 70" stroke="#7a4a18" stroke-width="3" fill="none" opacity="0.5"/>
+      <!-- 高光 -->
+      <ellipse cx="78" cy="58" rx="36" ry="22" fill="#ffffff" opacity="0.12"/>
+    </svg>
+  </div>
+
+  <div id="counter">功德 <b id="hitCount">0</b> / <span id="targetCount">10</span></div>
+  <div id="progressBar"><div id="progressFill"></div></div>
+  <!-- 选择"继续修行"后出现在这里，随时可结束挑战 -->
+  <button id="finishBarBtn" class="gbtn" hidden>完成挑战</button>
+
+  <!-- 木鱼棒子光标（方向旋转180度：锤头朝上，柄朝下） -->
+  <svg id="mallet" viewBox="0 0 100 110" aria-hidden="true">
+    <g transform="rotate(180 50 55)">
+      <rect x="43" y="2" width="14" height="66" rx="7" fill="#d9a066"/>
+      <rect x="43" y="2" width="6"  height="66" rx="3" fill="#b9824c" opacity="0.6"/>
+      <circle cx="50" cy="86" r="22" fill="#e8b04b"/>
+      <circle cx="50" cy="86" r="22" fill="none" stroke="#a06a1c" stroke-width="3"/>
+      <ellipse cx="42" cy="78" rx="8" ry="5" fill="#fff" opacity="0.35"/>
+    </g>
+  </svg>
+
+  <!-- 通关提示 -->
+  <div id="winOverlay">
+    <div class="big">功 德 圆 满</div>
+    <div class="small">通 关 成 功 ！</div>
+    <div id="winBtns">
+      <button id="continueBtn" class="gbtn">继续修行</button>
+      <button id="finishBtn" class="gbtn">完成挑战</button>
+    </div>
+  </div>
+
+  <!-- 背景佛乐：网易云免费曲目外链（VIP 歌会 404，换 id 即换歌） -->
+  <audio id="bgm" loop autoplay preload="auto"
+         src="https://music.163.com/song/media/outer/url?id=1373604201.mp3"></audio>
+
+  <!-- 静音按钮 -->
+  <button id="muteBtn" title="静音 / 取消静音">🔊</button>
+
+<script>
+  /* ================= 全局设置 ================= */
+  window.X = 10;              // ★ 通关所需敲击次数（改这里即可，全局变量）
+  window.BGM_START = 60;       // ★ 背景音乐从第几秒开始播放（秒）
+  /* =========================================== */
+
+  let hits = 0;
+
+  /* ---------- 心经文字，敲击时从上往下循环浮现 ---------- */
+  const SUTRA = [
+    '舍利子，色不异空，空不异色',
+    '色即是空，空即是色，受想行识，亦复如是。',
+    '舍利子，是诸法空相，不生不灭，不垢不净，不增不减。',
+    '是故空中无色，无受想行识，无眼耳鼻舌身意，无色声香味触法。',
+    '无眼界，乃至无意识界。无无明，亦无无明尽，乃至无老死，亦无老死尽。',
+    '无苦集灭道，无智亦无得。',
+  ];
+  let sutraIdx = 0;
+
+  const fishWrap   = document.getElementById('fishWrap');
+  const hitCountEl = document.getElementById('hitCount');
+  const targetEl   = document.getElementById('targetCount');
+  const progressEl = document.getElementById('progressFill');
+  const mallet     = document.getElementById('mallet');
+  const overlay    = document.getElementById('winOverlay');
+  const bgm        = document.getElementById('bgm');
+  bgm.volume = 0.5;
+  bgm.currentTime = window.BGM_START; // 未加载时设置即为默认起始位置，首次播放时生效
+
+  /* ---------- 静音按钮 ---------- */
+  const muteBtn = document.getElementById('muteBtn');
+  muteBtn.addEventListener('click', () => {
+    if (bgm.paused) { bgm.muted = false; bgm.play().catch(() => {}); } // 还没播就先播
+    else bgm.muted = !bgm.muted;
+    muteBtn.textContent = bgm.muted ? '🔇' : '🔊';
+  });
+
+  targetEl.textContent = window.X;
+
+  /* ---------- 棒子随鼠标 / 触屏移动 ---------- */
+  let mouseX = innerWidth / 2, mouseY = innerHeight / 2;
+  addEventListener('pointermove', e => {
+    mouseX = e.clientX; mouseY = e.clientY;
+    mallet.style.left = mouseX + 'px';
+    mallet.style.top  = mouseY + 'px';
+  });
+
+  /* 任意地方按下棒子都会挥动；敲到木鱼才计数 */
+  addEventListener('pointerdown', e => {
+    bgm.play().catch(() => {}); // 浏览器禁止自动播放，首次点击（用户手势）时启动
+    mouseX = e.clientX; mouseY = e.clientY;
+    mallet.style.left = mouseX + 'px';
+    mallet.style.top  = mouseY + 'px';
+    mallet.classList.add('swing');
+    setTimeout(() => mallet.classList.remove('swing'), 110);
+  });
+
+  /* ---------- 锤头位置（敲击波纹在锤头落点，而不是光标处） ---------- */
+  const HEAD_LEN = 58;                        // 轴心到锤头中心的像素距离
+  const STRIKE_ANGLE = -105 * Math.PI / 180;  // 与 #mallet.swing 的角度一致
+  function headStrikePos() {
+    return {
+      x: mouseX + HEAD_LEN * Math.sin(STRIKE_ANGLE),
+      y: mouseY - HEAD_LEN * Math.cos(STRIKE_ANGLE),
+    };
+  }
+
+  /* ---------- 敲击木鱼 ---------- */
+  fishWrap.addEventListener('pointerdown', e => {
+    hits++;
+    updateUI();
+    const p = headStrikePos();
+    spawnEffects(p.x, p.y);
+
+    fishWrap.classList.remove('bonk');
+    void fishWrap.offsetWidth; // 重启动画
+    fishWrap.classList.add('bonk');
+
+    if (hits === window.X) passGame(); // === 而非 >=：功德不清零，只在恰好达标那一下弹窗
+  });
+
+  function updateUI() {
+    hitCountEl.textContent = hits;
+    progressEl.style.width = Math.min(100, (hits / window.X) * 100) + '%';
+  }
+
+  function spawnEffects(x, y) {
+    // 扩散光环
+    const ring = document.createElement('div');
+    ring.className = 'firework';
+    ring.style.left = x + 'px';
+    ring.style.top  = y + 'px';
+    ring.style.transform = 'translate(-50%, -50%)';
+    document.body.appendChild(ring);
+    setTimeout(() => ring.remove(), 550);
+
+    // 漂浮文字
+    const txt = document.createElement('div');
+    txt.className = 'floatText';
+    txt.textContent = hits === window.X ? '功德圆满！' : '功德 +1';
+    txt.style.left = x + 'px';
+    txt.style.top  = (y - 20) + 'px';
+    document.body.appendChild(txt);
+    setTimeout(() => txt.remove(), 900);
+
+    // 经文浮现（循环）
+    const sutra = document.createElement('div');
+    sutra.className = 'sutraText';
+    sutra.textContent = SUTRA[sutraIdx++ % SUTRA.length];
+    sutra.style.left = x + 'px';
+    sutra.style.top  = (y - 75) + 'px';
+    document.body.appendChild(sutra);
+    setTimeout(() => sutra.remove(), 3000);
+  }
+
+  /* ---------- 通关：由玩家选择继续还是结束 ---------- */
+  function passGame() {
+    overlay.classList.add('show');
+  }
+
+  function finishChallenge() {
+    window.PilotGuardian?.complete(); // ★ 调用虚拟 API 表示挑战完成
+    finishBtn.disabled = true;
+    finishBarBtn.disabled = true;
+  }
+
+  const continueBtn  = document.getElementById('continueBtn');
+  const finishBtn    = document.getElementById('finishBtn');
+  const finishBarBtn = document.getElementById('finishBarBtn');
+  finishBtn.addEventListener('click', finishChallenge);
+  finishBarBtn.addEventListener('click', finishChallenge);
+  continueBtn.addEventListener('click', () => {
+    overlay.classList.remove('show'); // 返回游戏页，功德不清零
+    finishBarBtn.hidden = false;       // 下方出现"完成挑战"按钮
+  });
+</script>
+</body>
+</html>

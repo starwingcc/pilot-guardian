@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stroop 挑战</title>
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --panel-2: #334155;
+      --text: #e2e8f0;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --ok: #22c55e;
+      --bad: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      user-select: none;
+    }
+
+    .card {
+      background: var(--panel);
+      border-radius: 16px;
+      padding: 28px;
+      width: 100%;
+      max-width: 620px;
+      box-shadow: 0 12px 44px rgba(0, 0, 0, .45);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      text-align: center;
+      margin-bottom: 6px;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: .88rem;
+      text-align: center;
+      margin-bottom: 22px;
+      line-height: 1.6;
+    }
+
+    /* ---------- 配置界面 ---------- */
+    .rules {
+      background: var(--bg);
+      border: 1px solid var(--panel-2);
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-size: .88rem;
+      color: var(--muted);
+      line-height: 1.8;
+      margin-bottom: 20px;
+    }
+
+    .rules b {
+      color: var(--text);
+    }
+
+    .cfg-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .cfg-row label {
+      font-size: .95rem;
+    }
+
+    .cfg-row .unit {
+      color: var(--muted);
+      font-size: .85rem;
+      margin-left: 6px;
+    }
+
+    .cfg-row input {
+      width: 120px;
+      background: var(--bg);
+      border: 1px solid var(--panel-2);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+      padding: 9px 12px;
+      text-align: right;
+      outline: none;
+    }
+
+    .cfg-row input:focus {
+      border-color: var(--accent);
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      border: none;
+      border-radius: 10px;
+      background: var(--accent);
+      color: #082f49;
+      font-size: 1.05rem;
+      font-weight: 700;
+      padding: 13px;
+      cursor: pointer;
+      transition: transform .08s, filter .15s;
+    }
+
+    .btn:hover {
+      filter: brightness(1.1);
+    }
+
+    .btn:active {
+      transform: scale(.98);
+    }
+
+    .btn.ghost {
+      background: var(--panel-2);
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    .btn:disabled {
+      opacity: .55;
+      cursor: default;
+      filter: none;
+    }
+
+    /* ---------- 倒计时 ---------- */
+    #countdown {
+      font-size: 7rem;
+      font-weight: 800;
+      text-align: center;
+      padding: 60px 0;
+      color: var(--accent);
+      animation: pop .7s ease;
+    }
+
+    @keyframes pop {
+      0% {
+        transform: scale(1.6);
+        opacity: 0;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* ---------- 游戏界面 ---------- */
+    .hud {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: .85rem;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .hud .time-left {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hud .time-left.danger {
+      color: var(--bad);
+      font-weight: 700;
+    }
+
+    .progress {
+      height: 6px;
+      background: var(--bg);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .progress>div {
+      height: 100%;
+      width: 0;
+      background: var(--accent);
+      transition: width .15s;
+    }
+
+    #stimulus {
+      text-align: center;
+      font-size: clamp(56px, 16vw, 96px);
+      font-weight: 800;
+      letter-spacing: .08em;
+      padding: 34px 0 40px;
+      line-height: 1;
+    }
+
+    #stimulus.pop-in {
+      animation: popIn .12s ease;
+    }
+
+    @keyframes popIn {
+      0% {
+        transform: scale(.7);
+        opacity: 0;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    #stimulus.shake {
+      animation: shake .35s ease;
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-10px);
+      }
+
+      50% {
+        transform: translateX(10px);
+      }
+
+      75% {
+        transform: translateX(-6px);
+      }
+    }
+
+    .answers {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .ans-btn {
+      background: transparent;
+      border: 2px solid var(--panel-2);
+      border-radius: 10px;
+      color: var(--text);
+      padding: 14px 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform .07s, border-color .12s;
+    }
+
+    .ans-btn:hover {
+      border-color: var(--accent);
+    }
+
+    .ans-btn:active {
+      transform: scale(.95);
+    }
+
+    .ans-btn .name {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .ans-btn kbd {
+      font-family: inherit;
+      font-size: .7rem;
+      color: var(--muted);
+      background: var(--bg);
+      border-radius: 4px;
+      padding: 1px 6px;
+      margin-left: 6px;
+    }
+
+    .hint {
+      text-align: center;
+      color: var(--muted);
+      font-size: .78rem;
+      margin-top: 14px;
+    }
+
+    /* ---------- 结果界面 ---------- */
+    .result-emoji {
+      font-size: 3.4rem;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+
+    .result-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 4px;
+    }
+
+    .result-title.ok {
+      color: var(--ok);
+    }
+
+    .result-title.bad {
+      color: var(--bad);
+    }
+
+    .result-reason {
+      text-align: center;
+      color: var(--muted);
+      font-size: .9rem;
+      margin-bottom: 18px;
+      line-height: 1.7;
+    }
+
+    .stats {
+      background: var(--bg);
+      border: 1px solid var(--panel-2);
+      border-radius: 10px;
+      padding: 4px 16px;
+      margin-bottom: 20px;
+    }
+
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      font-size: .92rem;
+      border-bottom: 1px solid var(--panel-2);
+    }
+
+    .stat-row:last-child {
+      border-bottom: none;
+    }
+
+    .stat-row .v {
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-row .v.ok {
+      color: var(--ok);
+    }
+
+    .stat-row .v.bad {
+      color: var(--bad);
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-group .btn {
+      flex: 1;
+    }
+
+    @media (max-width: 420px) {
+      .answers {
+        gap: 8px;
+      }
+
+      .ans-btn kbd {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="card">
+
+    <!-- ========== 配置界面 ========== -->
+    <section id="configScreen">
+      <h1>🧠 Stroop 挑战</h1>
+      <p class="sub">经典认知干扰测试 · 颜色与语义的对抗</p>
+
+      <div class="rules">
+        📌 <b>规则</b>:屏幕中央会出现一个表示颜色的汉字,但文字的<b>实际颜色</b>可能与字义不同。<br>
+        👉 请点击文字的<b>实际颜色</b>(忽略字义)。<br>
+        🏆 <b>全部答对</b> 且 <b>总耗时 ≤ 时间阈值</b> 才算挑战成功;答错或超时立即失败。
+      </div>
+
+      <div class="cfg-row">
+        <label for="thresholdInput">⏱️ 时间阈值</label>
+        <span>
+          <input id="thresholdInput" type="number" min="3" max="600" step="1" value="20">
+          <span class="unit">秒</span>
+        </span>
+      </div>
+      <div class="cfg-row">
+        <label for="countInput">🔢 题目数量</label>
+        <span>
+          <input id="countInput" type="number" min="3" max="100" step="1" value="12">
+          <span class="unit">题</span>
+        </span>
+      </div>
+
+      <button class="btn" id="startBtn">开始挑战</button>
+      <p class="hint">支持键盘作答:按 <b>1 ~ 6</b> 键选择颜色</p>
+    </section>
+
+    <!-- ========== 倒计时 ========== -->
+    <section id="countdownScreen" class="hidden">
+      <div id="countdown">3</div>
+    </section>
+
+    <!-- ========== 游戏界面 ========== -->
+    <section id="gameScreen" class="hidden">
+      <div class="hud">
+        <span id="progressText">第 1 / 12 题</span>
+        <span>⏱️ 已用 <span id="elapsedText">0.0</span>s / 阈值 <span id="thresholdText">20</span>s</span>
+        <span class="time-left" id="timeLeftText"></span>
+      </div>
+      <div class="progress">
+        <div id="progressBar"></div>
+      </div>
+
+      <div id="stimulus">红</div>
+
+      <div class="answers" id="answers"></div>
+      <p class="hint">点击文字的<b>实际颜色</b>,不是字义 · 键盘 1~6 快捷作答</p>
+    </section>
+
+    <!-- ========== 结果界面 ========== -->
+    <section id="resultScreen" class="hidden">
+      <div class="result-emoji" id="resultEmoji">🎉</div>
+      <div class="result-title ok" id="resultTitle">挑战成功</div>
+      <p class="result-reason" id="resultReason"></p>
+
+      <div class="stats" id="statsBox"></div>
+
+      <div class="btn-group hidden" id="successBtns">
+        <button class="btn ghost" id="okRetryBtn">再来一次</button>
+        <button class="btn" id="completeBtn">完成挑战</button>
+      </div>
+      <div class="btn-group hidden" id="failBtns">
+        <button class="btn" id="retryBtn">再来一次</button>
+        <button class="btn ghost" id="backBtn">修改配置</button>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    "use strict";
+
+    /* ================= 数据 ================= */
+    const COLORS = [
+      { name: "红", css: "#f87171" },
+      { name: "黄", css: "#facc15" },
+      { name: "蓝", css: "#60a5fa" },
+      { name: "绿", css: "#4ade80" },
+      { name: "紫", css: "#c084fc" },
+      { name: "橙", css: "#fb923c" },
+    ];
+    const CONGRUENT_RATIO = 0.25; // 字义与颜色一致的比例
+
+    /* ================= 元素 ================= */
+    const $ = id => document.getElementById(id);
+    const screens = {
+      config: $("configScreen"),
+      countdown: $("countdownScreen"),
+      game: $("gameScreen"),
+      result: $("resultScreen"),
+    };
+    function show(name) {
+      for (const k in screens) screens[k].classList.toggle("hidden", k !== name);
+    }
+
+    /* ================= 状态 ================= */
+    let trials = [];        // [{word, ink}]
+    let idx = 0;
+    let totalCount = 0;
+    let thresholdMs = 0;
+    let startTime = 0;
+    let questionStart = 0;
+    let questionTimes = [];
+    let accepting = false;  // 是否接受作答
+    let rafId = null;
+
+    /* ================= 出题 ================= */
+    function randInt(n) { return Math.floor(Math.random() * n); }
+
+    function generateTrials(n) {
+      const list = [];
+      let prevWord = -1, prevInk = -1;
+      for (let i = 0; i < n; i++) {
+        let word, ink;
+        do {
+          word = randInt(COLORS.length);
+          if (Math.random() < CONGRUENT_RATIO) {
+            ink = word;
+          } else {
+            ink = (word + 1 + randInt(COLORS.length - 1)) % COLORS.length;
+          }
+        } while (word === prevWord || ink === prevInk); // 避免连续重复
+        list.push({ word, ink });
+        prevWord = word; prevInk = ink;
+      }
+      return list;
+    }
+
+    /* ================= 界面初始化 ================= */
+    function buildAnswerButtons() {
+      const box = $("answers");
+      box.innerHTML = "";
+      COLORS.forEach((c, i) => {
+        const btn = document.createElement("button");
+        btn.className = "ans-btn";
+        btn.innerHTML =
+          `<span class="name">${c.name}</span>` +
+          `<kbd>${i + 1}</kbd>`;
+        btn.addEventListener("click", () => answer(i));
+        box.appendChild(btn);
+      });
+    }
+
+    /* ================= 流程 ================= */
+    function readConfig() {
+      let t = parseInt($("thresholdInput").value, 10);
+      let n = parseInt($("countInput").value, 10);
+      if (isNaN(t)) t = 20;
+      if (isNaN(n)) n = 12;
+      t = Math.min(600, Math.max(3, t));
+      n = Math.min(100, Math.max(3, n));
+      $("thresholdInput").value = t;
+      $("countInput").value = n;
+      return { thresholdSec: t, count: n };
+    }
+
+    function startChallenge() {
+      const cfg = readConfig();
+      thresholdMs = cfg.thresholdSec * 1000;
+      totalCount = cfg.count;
+      trials = generateTrials(totalCount);
+      idx = 0;
+      questionTimes = [];
+
+      show("countdown");
+      let step = 3;
+      const el = $("countdown");
+      el.textContent = step;
+      const timer = setInterval(() => {
+        step--;
+        if (step > 0) {
+          el.textContent = step;
+          el.style.animation = "none";
+          void el.offsetWidth; // 重启动画
+          el.style.animation = "";
+        } else {
+          clearInterval(timer);
+          beginGame();
+        }
+      }, 700);
+    }
+
+    function beginGame() {
+      $("thresholdText").textContent = (thresholdMs / 1000).toString();
+      show("game");
+      startTime = performance.now();
+      rafId = requestAnimationFrame(tick);
+      showTrial();
+    }
+
+    function showTrial() {
+      const t = trials[idx];
+      const stim = $("stimulus");
+      stim.textContent = COLORS[t.word].name;
+      stim.style.color = COLORS[t.ink].css;
+      stim.classList.remove("pop-in");
+      void stim.offsetWidth;
+      stim.classList.add("pop-in");
+
+      $("progressText").textContent = `第 ${idx + 1} / ${totalCount} 题`;
+      $("progressBar").style.width = (idx / totalCount * 100) + "%";
+
+      questionStart = performance.now();
+      accepting = true;
+    }
+
+    function answer(choice) {
+      if (!accepting) return;
+      accepting = false;
+
+      const t = trials[idx];
+      questionTimes.push(performance.now() - questionStart);
+
+      if (choice === t.ink) {
+        idx++;
+        if (idx >= totalCount) {
+          finish({ success: true });
+        } else {
+          showTrial();
+        }
+      } else {
+        $("stimulus").classList.add("shake");
+        setTimeout(() => finish({ success: false, reason: "wrong", trial: t, choice }), 420);
+      }
+    }
+
+    function tick() {
+      const elapsed = performance.now() - startTime;
+      const remain = thresholdMs - elapsed;
+      $("elapsedText").textContent = (elapsed / 1000).toFixed(1);
+      const leftEl = $("timeLeftText");
+      if (remain >= 0) {
+        leftEl.textContent = "剩余 " + (remain / 1000).toFixed(1) + "s";
+        leftEl.classList.toggle("danger", remain < 3000);
+        rafId = requestAnimationFrame(tick);
+      } else {
+        finish({ success: false, reason: "timeout" });
+      }
+    }
+
+    /* ================= 结果 ================= */
+    function finish(result) {
+      if (rafId) cancelAnimationFrame(rafId);
+      const totalMs = performance.now() - startTime;
+      const withinTime = totalMs <= thresholdMs;
+      const success = result.success && withinTime;
+      const fmt = s => (s / 1000).toFixed(2);
+
+      $("resultEmoji").textContent = success ? "🎉" : "💥";
+      const titleEl = $("resultTitle");
+      titleEl.textContent = success ? "挑战成功!" : "挑战失败";
+      titleEl.className = "result-title " + (success ? "ok" : "bad");
+
+      // ---- 失败原因 ----
+      let reasonHtml = "";
+      if (!result.success && result.reason === "wrong") {
+        const { trial, choice } = result;
+        reasonHtml =
+          `第 ${idx + 1} 题答错了:文字「${COLORS[trial.word].name}」的实际颜色是` +
+          `<b style="color:${COLORS[trial.ink].css}">${COLORS[trial.ink].name}</b>,` +
+          `你选择了${COLORS[choice].name}。`;
+      } else if (result.reason === "timeout") {
+        reasonHtml = `⏰ 时间到!超过了 ${(thresholdMs / 1000)}s 的阈值。`;
+      } else if (result.success && !withinTime) {
+        reasonHtml = `全部答对,但超出了时间阈值。`;
+      } else {
+        reasonHtml = `${totalCount} 题全部答对,且在阈值内完成,漂亮!`;
+      }
+      $("resultReason").innerHTML = reasonHtml;
+
+      // ---- 统计 ----
+      const avg = questionTimes.length
+        ? questionTimes.reduce((a, b) => a + b, 0) / questionTimes.length
+        : 0;
+      const fastest = questionTimes.length ? Math.min(...questionTimes) : 0;
+      const timeCls = withinTime ? "ok" : "bad";
+
+      $("statsBox").innerHTML =
+        `<div class="stat-row"><span>总耗时</span><span class="v ${timeCls}">${fmt(totalMs)}s / 阈值 ${(thresholdMs / 1000)}s</span></div>` +
+        `<div class="stat-row"><span>答题进度</span><span class="v">${idx} / ${totalCount} 题</span></div>` +
+        `<div class="stat-row"><span>平均每题</span><span class="v">${Math.round(avg)} ms</span></div>` +
+        `<div class="stat-row"><span>最快单题</span><span class="v">${Math.round(fastest)} ms</span></div>`;
+
+      $("progressBar").style.width = (idx / totalCount * 100) + "%";
+      // 成功/失败共用结果页,只切换底部按钮组
+      $("successBtns").classList.toggle("hidden", !success);
+      $("failBtns").classList.toggle("hidden", success);
+      if (success) { // 重置按钮状态(上一局点过"完成挑战"会残留禁用)
+        const cb = $("completeBtn");
+        cb.disabled = false;
+        cb.textContent = "完成挑战";
+      }
+      show("result");
+    }
+
+    /* ================= 事件 ================= */
+    $("startBtn").addEventListener("click", startChallenge);
+    $("retryBtn").addEventListener("click", startChallenge);
+    $("backBtn").addEventListener("click", () => show("config"));
+    $("okRetryBtn").addEventListener("click", startChallenge);
+    $("completeBtn").addEventListener("click", () => {
+      window.PilotGuardian?.complete(); // 宿主注入的 API,未注入时静默跳过
+      const b = $("completeBtn");
+      b.disabled = true;
+      b.textContent = "已完成 ✓";
+    });
+
+    document.addEventListener("keydown", e => {
+      if (!accepting) return;
+      const n = parseInt(e.key, 10);
+      if (n >= 1 && n <= COLORS.length) answer(n - 1);
+    });
+
+    buildAnswerButtons();
+  </script>
+</body>
+
+</html>
